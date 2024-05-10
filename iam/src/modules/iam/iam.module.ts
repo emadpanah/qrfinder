@@ -13,7 +13,7 @@ import { IamRepository } from './database/repositories/iam.repository';
     MongooseModule.forFeature([
         { name: IAMUser.name, schema: IAMUserSchema },
       ],
-      'service',
+      'service', 
     ),
   ],
   controllers: [IamController],
