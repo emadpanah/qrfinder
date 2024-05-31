@@ -1,46 +1,33 @@
 // iam/database/repositories/iam.repository.ts
 import { Injectable } from '@nestjs/common';
-import { Connection } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
 import { InjectConnection } from '@nestjs/mongoose';
+import { Model, Connection } from 'mongoose';
 import { IAMUser, IAMUserDocument } from '../schemas/iam-user.schema';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class IamRepository {
-  //constructor(@InjectModel(IAMUser.name) private readonly iamUserModel: Model<IAMUserDocument>) {}
-  constructor(@InjectConnection('service') private connection: Connection) { }
+  constructor(
+    @InjectModel(IAMUser.name) private readonly iamUserModel: Model<IAMUserDocument>,
+    @InjectConnection('service') private connection: Connection
+  ) { }
 
-
-  async createUser(username: string, password: string): Promise<any> {
-    // const newUser = new this.iamUserModel({ username, password });
-    // return newUser.save();
-    const collection = this.connection.collection(
-      '_users',
-    );
-    // Insert the document
-    await collection.insertOne({
-      username: username,
-      password: password
+  async createUser(ethAddress: string, walletType: string): Promise<IAMUser> {
+    const userId = uuidv4(); // Generate UUID for userId
+    const newUser = new this.iamUserModel({
+      ethAddress,
+      userId,
+      walletType,
+      createdDate: new Date()
     });
-    const storedUser = await collection.findOne({ username: username });
-    if (!storedUser) {
-      // Handle the case where the agent is not found
-      throw new Error('User not found after insertion');
-    }
-    return storedUser;
+    return newUser.save();
   }
 
-  async findUserByUsername(username: string): Promise<any> {
-    //return this.iamUserModel.findOne({ username }).exec();
-    const collection = this.connection.collection(
-      '_users',
-    );
-    //const shareholders = await collection.findOne({ code_melli: { $regex: dto.shareHolderId} }); 
-    const foundUser = await collection.findOne({ username: username });
+  async findUserByAddress(ethAddress: string): Promise<IAMUser> {
+    const foundUser = await this.iamUserModel.findOne({ ethAddress }).exec();
     if (!foundUser) {
-      // Handle the case where the agent is not found
-      throw new Error('User not found by given username');
+      throw new Error('User not found by given address');
     }
     return foundUser;
   }

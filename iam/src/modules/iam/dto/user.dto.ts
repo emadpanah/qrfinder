@@ -1,15 +1,24 @@
 // user.dto.ts
-import { IsString, IsNotEmpty, MaxLength, MinLength } from 'class-validator';
+import { IsString, IsNotEmpty, MaxLength, MinLength, Length, IsDateString, IsUUID } from 'class-validator';
 
 export class UserDto {
   @IsString()
   @IsNotEmpty()
-  @MinLength(3)
-  @MaxLength(20)
-  username: string;
+  @Length(42, 42) // Exact length of an Ethereum address
+  ethAddress: string;
+
+  @IsUUID()
+  @IsNotEmpty()
+  userId: string;
+
   @IsString()
   @IsNotEmpty()
   @MinLength(8)
-  @MaxLength(50)
-  password: string;
+  @MaxLength(20)
+  walletType: string;
+
+  @IsDateString()
+  @IsNotEmpty()
+  createdDate: string;
 }
+

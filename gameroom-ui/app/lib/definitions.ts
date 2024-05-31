@@ -86,3 +86,11 @@ export type InvoiceForm = {
   amount: number;
   status: 'pending' | 'paid';
 };
+
+
+export interface AccountType {
+  address?: string;
+  balance?: string;
+  chainId?: string;
+  network?: string;
+}

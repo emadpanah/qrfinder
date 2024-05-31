@@ -1,4 +1,5 @@
 
+
   // whitepaper.tsx
 import React, { useState, useEffect } from 'react';
 
@@ -224,7 +225,7 @@ const WhitepaperPage: React.FC = () => {
                 <ul className="list-disc ml-8">
                     <li><strong>Data protection:</strong> We are committed to protecting user privacy and complying with data protection laws such as GDPR (General Data Protection Regulation) and CCPA (California Consumer Privacy Act).</li>
                     <li><strong>Financial regulations:</strong> We adhere to relevant financial regulations and anti-money laundering (AML) laws to prevent misuse of our platform for illicit activities.</li>
-                    <li><strong>Token regulations:</strong> Our platform's native tokens are designed and issued in compliance with applicable securities regulations and guidelines, ensuring transparency and legality.</li>
+                    <li><strong>Token regulations:</strong> Our platform&apos;s native tokens are designed and issued in compliance with applicable securities regulations and guidelines, ensuring transparency and legality.</li>
                     <li><strong>Smart contract audits:</strong> We conduct regular audits of our smart contracts by reputable third-party auditing firms to ensure security, reliability, and compliance with best practices.</li>
                     <li><strong>Legal counsel:</strong> We work closely with legal experts specializing in blockchain and cryptocurrency law to ensure that our platform and operations comply with relevant regulations in all jurisdictions where we operate.</li>
                 </ul>
@@ -258,11 +259,11 @@ const WhitepaperPage: React.FC = () => {
                 <h2 className="text-2xl font-bold mb-2">Conclusion</h2>
                 <p>Our decentralized product engagement platform represents a groundbreaking approach to enhancing user interaction with products and services in the digital realm. By leveraging blockchain technology and decentralized principles, we aim to revolutionize traditional engagement models and empower users with greater control, transparency, and incentives.</p>
                 
-                <p>Throughout this whitepaper, we have outlined the purpose and objectives of our platform, highlighted the challenges faced by traditional product engagement methods, and presented our innovative solution to address these challenges. We've provided insights into the technical architecture, tokenomics, and product details, as well as explored various use cases and market analysis.</p>
+                <p>Throughout this whitepaper, we have outlined the purpose and objectives of our platform, highlighted the challenges faced by traditional product engagement methods, and presented our innovative solution to address these challenges. We&apos;ve provided insights into the technical architecture, tokenomics, and product details, as well as explored various use cases and market analysis.</p>
                 
-                <p>As we embark on this journey to build a more decentralized and user-centric future, we invite you to join us in shaping the next generation of product engagement. Whether you're a user, developer, investor, or partner, there's a role for you to play in our ecosystem. Together, we can unlock new opportunities, drive innovation, and create lasting value for all stakeholders.</p>
+                <p>As we embark on this journey to build a more decentralized and user-centric future, we invite you to join us in shaping the next generation of product engagement. Whether you&apos;re a user, developer, investor, or partner, there&apos;s a role for you to play in our ecosystem. Together, we can unlock new opportunities, drive innovation, and create lasting value for all stakeholders.</p>
                 
-                <p>Thank you for taking the time to explore our whitepaper and learn more about our vision. We're excited about the possibilities that lie ahead and look forward to building a brighter future together.</p>
+                <p>Thank you for taking the time to explore our whitepaper and learn more about our vision. We&apos;re excited about the possibilities that lie ahead and look forward to building a brighter future together.</p>
             </section>
 
             <section id="references" className="mb-8">
