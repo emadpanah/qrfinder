@@ -21,57 +21,42 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.IamController = void 0;
+exports.UserLoginRepository = void 0;
 const common_1 = require("@nestjs/common");
-const iam_service_1 = require("../services/iam.service");
-const user_dto_1 = require("../dto/user.dto");
-let IamController = class IamController {
-    constructor(iamService) {
-        this.iamService = iamService;
+const mongoose_1 = require("@nestjs/mongoose");
+const mongoose_2 = require("mongoose");
+const user_login_schema_1 = require("../schemas/user-login.schema");
+let UserLoginRepository = class UserLoginRepository {
+    constructor(userLoginModel) {
+        this.userLoginModel = userLoginModel;
     }
-    register(body) {
+    createLogin(userId, token) {
         return __awaiter(this, void 0, void 0, function* () {
-            try {
-                const token = yield this.iamService.registerOrLogin(body);
-                return { token };
-            }
-            catch (error) {
-                throw error;
-            }
+            const newUserLogin = new this.userLoginModel({ userId, token, loginDate: new Date() });
+            return newUserLogin.save();
         });
     }
-    getHello() {
-        return this.iamService.getHello();
-    }
-    getUserLoginHistory(ethAddress) {
+    findLoginHistoryByEthAddress(ethAddress) {
         return __awaiter(this, void 0, void 0, function* () {
-            return this.iamService.getUserLoginHistory(ethAddress);
+            return this.userLoginModel
+                .find({ ethAddress })
+                .sort({ loginDate: -1 })
+                .exec();
+        });
+    }
+    findLatestLoginByEthAddress(ethAddress) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return this.userLoginModel
+                .findOne({ ethAddress })
+                .sort({ loginDate: -1 })
+                .exec();
         });
     }
 };
-exports.IamController = IamController;
-__decorate([
-    (0, common_1.Post)('/register'),
-    __param(0, (0, common_1.Body)(new common_1.ValidationPipe())),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [user_dto_1.UserDto]),
-    __metadata("design:returntype", Promise)
-], IamController.prototype, "register", null);
-__decorate([
-    (0, common_1.Post)('/getHello'),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", String)
-], IamController.prototype, "getHello", null);
-__decorate([
-    (0, common_1.Get)('/loginHistory/:ethAddress'),
-    __param(0, (0, common_1.Param)('ethAddress')),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
-    __metadata("design:returntype", Promise)
-], IamController.prototype, "getUserLoginHistory", null);
-exports.IamController = IamController = __decorate([
-    (0, common_1.Controller)('iam'),
-    __metadata("design:paramtypes", [iam_service_1.IamService])
-], IamController);
-//# sourceMappingURL=iam.controller.js.map
+exports.UserLoginRepository = UserLoginRepository;
+exports.UserLoginRepository = UserLoginRepository = __decorate([
+    (0, common_1.Injectable)(),
+    __param(0, (0, mongoose_1.InjectModel)(user_login_schema_1.UserLogin.name)),
+    __metadata("design:paramtypes", [mongoose_2.Model])
+], UserLoginRepository);
+//# sourceMappingURL=user-login.repository.js.map

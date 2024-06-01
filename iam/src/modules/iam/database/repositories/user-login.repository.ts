@@ -15,8 +15,18 @@ export class UserLoginRepository {
     return newUserLogin.save();
   }
 
-  async findLoginByEthAddress(ethAddress: string): Promise<UserLogin> {
-    return this.userLoginModel.findOne({ ethAddress }).exec();
+  async findLoginHistoryByEthAddress(ethAddress: string): Promise<UserLogin[]> {
+    return this.userLoginModel
+      .find({ ethAddress })
+      .sort({ loginDate: -1 }) // Sort by loginDate in descending order
+      .exec();
+  }
+
+  async findLatestLoginByEthAddress(ethAddress: string): Promise<UserLogin> {
+    return this.userLoginModel
+      .findOne({ ethAddress })
+      .sort({ loginDate: -1 }) // Sort by loginDate in descending order
+      .exec();
   }
 
 }

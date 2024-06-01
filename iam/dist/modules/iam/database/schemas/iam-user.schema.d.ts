@@ -25,8 +25,10 @@
 import { Document } from 'mongoose';
 export type IAMUserDocument = IAMUser & Document;
 export declare class IAMUser {
-    username: string;
-    password: string;
+    ethAddress: string;
+    userId: string;
+    walletType: string;
+    createdDate: Date;
 }
 export declare const IAMUserSchema: import("mongoose").Schema<IAMUser, import("mongoose").Model<IAMUser, any, any, any, Document<unknown, any, IAMUser> & IAMUser & {
     _id: import("mongoose").Types.ObjectId;

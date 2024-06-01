@@ -22,14 +22,12 @@
 /// <reference types="mongoose/types/validation" />
 /// <reference types="mongoose/types/virtuals" />
 /// <reference types="mongoose/types/inferschematype" />
-import { HydratedDocument } from 'mongoose';
-export type DIDDocument = HydratedDocument<DID>;
-export declare class DID {
-    username: string;
-    metamaskId: string;
+import { Model } from 'mongoose';
+import { UserLogin, UserLoginDocument } from '../schemas/user-login.schema';
+export declare class UserLoginRepository {
+    private readonly userLoginModel;
+    constructor(userLoginModel: Model<UserLoginDocument>);
+    createLogin(userId: string, token: string): Promise<UserLogin>;
+    findLoginHistoryByEthAddress(ethAddress: string): Promise<UserLogin[]>;
+    findLatestLoginByEthAddress(ethAddress: string): Promise<UserLogin>;
 }
-export declare const DIDSchema: import("mongoose").Schema<DID, import("mongoose").Model<DID, any, any, any, import("mongoose").Document<unknown, any, DID> & DID & {
-    _id: import("mongoose").Types.ObjectId;
-}, any>, {}, {}, {}, {}, import("mongoose").DefaultSchemaOptions, DID, import("mongoose").Document<unknown, {}, import("mongoose").FlatRecord<DID>> & import("mongoose").FlatRecord<DID> & {
-    _id: import("mongoose").Types.ObjectId;
-}>;

@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { IamModule } from './modules/iam/iam.module';
-//import { AuthModule } from './modules/auth/auth.module';
+//import { UserLoginModel } from './modules/auth/auth.module';
 import { HttpLoggerInterceptor } from './shared/inetrceptors/http-logger.interceptor';
 import { config } from './shared/config/config';
 import { MongooseModule } from '@nestjs/mongoose';
@@ -22,7 +22,7 @@ import { MongooseModule } from '@nestjs/mongoose';
       inject: [ConfigService],
     }),
     IamModule,
-   // AuthModule,
+  
   ],
   controllers: [],
   providers: [{ provide: APP_INTERCEPTOR, useClass: HttpLoggerInterceptor }],

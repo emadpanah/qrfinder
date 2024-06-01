@@ -3,6 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { IAMUser, IAMUserDocument } from '../database/schemas/iam-user.schema';
+import { UserLogin } from '../database/schemas/user-login.schema';
 import * as bcrypt from 'bcrypt';
 import { IamRepository } from '../database/repositories/iam.repository';
 import { UserLoginRepository } from '../database/repositories/user-login.repository';
@@ -26,39 +27,29 @@ export class IamService {
     return bcrypt.hash(password, salt);
   }
 
-  async register(dto: UserDto): Promise<string> {
+  async registerOrLogin(dto: UserDto): Promise<string> {
     // Check if the user already exists
-    const existingUser = await this.iamRepository.findUserByAddress(dto.ethAddress);
-    if (existingUser) {
-      throw new Error('User already exists');
+    const user = await this.iamRepository.findUserByAddress(dto.ethAddress);
+    if (user) {
+      // User exists, check if there is a valid token
+      const existingLoginInfo = await this.userLoginRepository.findLatestLoginByEthAddress(dto.ethAddress);
+      if (existingLoginInfo && this.isTokenValid(existingLoginInfo.token)) {
+        return existingLoginInfo.token; // Return existing valid token
+      }
+
+      // Generate a new token if no valid token exists
+      const newToken = sign({ ethAddress: dto.ethAddress }, this.tokenSecret, { expiresIn: '5h' });
+      await this.userLoginRepository.createLogin(dto.ethAddress, newToken);
+      return newToken;
     }
 
-   
-    // Create the user
+    // User does not exist, proceed with registration
     await this.iamRepository.createUser(dto.ethAddress, dto.walletType);
 
-    // Generate a new token
+    // Generate a new token for the new user
     const token = sign({ ethAddress: dto.ethAddress }, this.tokenSecret, { expiresIn: '5h' });
     await this.userLoginRepository.createLogin(dto.ethAddress, token);
 
-    return token;
-  }
-
-  async login(dto: UserDto): Promise<string> {
-    const user = await this.iamRepository.findUserByAddress(dto.ethAddress);
-    if (!user) {
-      throw new Error('User not found');
-    }
-
-    // Check if a valid token exists
-    const existingLogin = await this.userLoginRepository.findLoginByEthAddress(dto.ethAddress);
-    if (existingLogin && this.isTokenValid(existingLogin.token)) {
-      return existingLogin.token; // Return existing token if it's valid
-    }
-
-    // Generate a new token
-    const token = sign({ ethAddress: dto.ethAddress }, this.tokenSecret, { expiresIn: '5h' });
-    await this.userLoginRepository.createLogin(dto.ethAddress, token);
     return token;
   }
 
@@ -70,6 +61,10 @@ export class IamService {
     } catch (error) {
       return false;
     }
+  }
+
+  async getUserLoginHistory(ethAddress: string): Promise<UserLogin[]> {
+    return this.userLoginRepository.findLoginHistoryByEthAddress(ethAddress);
   }
 
   getHello(): string {

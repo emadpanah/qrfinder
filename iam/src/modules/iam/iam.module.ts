@@ -7,11 +7,14 @@ import {
   IAMUserSchema,
 } from './database/schemas/iam-user.schema';
 import { IamRepository } from './database/repositories/iam.repository';
+import { UserLoginRepository } from './database/repositories/user-login.repository';
+import { UserLogin, UserLoginSchema } from './database/schemas/user-login.schema';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
         { name: IAMUser.name, schema: IAMUserSchema },
+        { name: UserLogin.name, schema: UserLoginSchema },
       ],
       'service', 
     ),
@@ -20,6 +23,7 @@ import { IamRepository } from './database/repositories/iam.repository';
   providers: [
     IamService,
     IamRepository,
+    UserLoginRepository,
   ],
 })
 export class IamModule { }

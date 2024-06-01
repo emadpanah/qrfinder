@@ -17,15 +17,24 @@ exports.UserDto = UserDto;
 __decorate([
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsNotEmpty)(),
-    (0, class_validator_1.MinLength)(3),
-    (0, class_validator_1.MaxLength)(20),
+    (0, class_validator_1.Length)(42, 42),
     __metadata("design:type", String)
-], UserDto.prototype, "username", void 0);
+], UserDto.prototype, "ethAddress", void 0);
+__decorate([
+    (0, class_validator_1.IsUUID)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], UserDto.prototype, "userId", void 0);
 __decorate([
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsNotEmpty)(),
     (0, class_validator_1.MinLength)(8),
-    (0, class_validator_1.MaxLength)(50),
+    (0, class_validator_1.MaxLength)(20),
     __metadata("design:type", String)
-], UserDto.prototype, "password", void 0);
+], UserDto.prototype, "walletType", void 0);
+__decorate([
+    (0, class_validator_1.IsDateString)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], UserDto.prototype, "createdDate", void 0);
 //# sourceMappingURL=user.dto.js.map

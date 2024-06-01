@@ -9,21 +9,25 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.DIDSchema = exports.DID = void 0;
+exports.UserLoginSchema = exports.UserLogin = void 0;
 const mongoose_1 = require("@nestjs/mongoose");
-let DID = class DID {
+let UserLogin = class UserLogin {
 };
-exports.DID = DID;
+exports.UserLogin = UserLogin;
 __decorate([
-    (0, mongoose_1.Prop)(),
+    (0, mongoose_1.Prop)({ required: true }),
     __metadata("design:type", String)
-], DID.prototype, "username", void 0);
+], UserLogin.prototype, "userId", void 0);
 __decorate([
-    (0, mongoose_1.Prop)(),
+    (0, mongoose_1.Prop)({ required: true }),
     __metadata("design:type", String)
-], DID.prototype, "metamaskId", void 0);
-exports.DID = DID = __decorate([
+], UserLogin.prototype, "token", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: true, default: Date.now }),
+    __metadata("design:type", Date)
+], UserLogin.prototype, "loginDate", void 0);
+exports.UserLogin = UserLogin = __decorate([
     (0, mongoose_1.Schema)()
-], DID);
-exports.DIDSchema = mongoose_1.SchemaFactory.createForClass(DID);
-//# sourceMappingURL=iam-did.shema.js.map
+], UserLogin);
+exports.UserLoginSchema = mongoose_1.SchemaFactory.createForClass(UserLogin);
+//# sourceMappingURL=user-login.schema.js.map

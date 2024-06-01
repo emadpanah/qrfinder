@@ -11,17 +11,26 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.IAMUserSchema = exports.IAMUser = void 0;
 const mongoose_1 = require("@nestjs/mongoose");
+const uuid_1 = require("uuid");
 let IAMUser = class IAMUser {
 };
 exports.IAMUser = IAMUser;
 __decorate([
-    (0, mongoose_1.Prop)({ unique: true, required: true }),
+    (0, mongoose_1.Prop)({ unique: true, required: true, minlength: 42, maxlength: 100 }),
     __metadata("design:type", String)
-], IAMUser.prototype, "username", void 0);
+], IAMUser.prototype, "ethAddress", void 0);
 __decorate([
-    (0, mongoose_1.Prop)({ required: true }),
+    (0, mongoose_1.Prop)({ unique: true, required: true, default: uuid_1.v4 }),
     __metadata("design:type", String)
-], IAMUser.prototype, "password", void 0);
+], IAMUser.prototype, "userId", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: true, minlength: 8, maxlength: 20 }),
+    __metadata("design:type", String)
+], IAMUser.prototype, "walletType", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: true, default: Date.now }),
+    __metadata("design:type", Date)
+], IAMUser.prototype, "createdDate", void 0);
 exports.IAMUser = IAMUser = __decorate([
     (0, mongoose_1.Schema)()
 ], IAMUser);

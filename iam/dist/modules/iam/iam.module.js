@@ -13,6 +13,8 @@ const iam_service_1 = require("./services/iam.service");
 const mongoose_1 = require("@nestjs/mongoose");
 const iam_user_schema_1 = require("./database/schemas/iam-user.schema");
 const iam_repository_1 = require("./database/repositories/iam.repository");
+const user_login_repository_1 = require("./database/repositories/user-login.repository");
+const user_login_schema_1 = require("./database/schemas/user-login.schema");
 let IamModule = class IamModule {
 };
 exports.IamModule = IamModule;
@@ -21,12 +23,14 @@ exports.IamModule = IamModule = __decorate([
         imports: [
             mongoose_1.MongooseModule.forFeature([
                 { name: iam_user_schema_1.IAMUser.name, schema: iam_user_schema_1.IAMUserSchema },
+                { name: user_login_schema_1.UserLogin.name, schema: user_login_schema_1.UserLoginSchema },
             ], 'service'),
         ],
         controllers: [iam_controller_1.IamController],
         providers: [
             iam_service_1.IamService,
             iam_repository_1.IamRepository,
+            user_login_repository_1.UserLoginRepository,
         ],
     })
 ], IamModule);

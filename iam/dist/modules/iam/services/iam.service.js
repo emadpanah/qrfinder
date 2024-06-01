@@ -22,9 +22,13 @@ exports.IamService = void 0;
 const common_1 = require("@nestjs/common");
 const bcrypt = require("bcrypt");
 const iam_repository_1 = require("../database/repositories/iam.repository");
+const user_login_repository_1 = require("../database/repositories/user-login.repository");
+const jsonwebtoken_1 = require("jsonwebtoken");
+const jsonwebtoken_2 = require("jsonwebtoken");
 let IamService = class IamService {
-    constructor(iamRepository) {
+    constructor(iamRepository, userLoginRepository) {
         this.iamRepository = iamRepository;
+        this.userLoginRepository = userLoginRepository;
         this.tokenSecret = process.env.JWT_SECRET;
     }
     hashPassword(password) {
@@ -33,20 +37,36 @@ let IamService = class IamService {
             return bcrypt.hash(password, salt);
         });
     }
-    register(dto) {
+    registerOrLogin(dto) {
         return __awaiter(this, void 0, void 0, function* () {
-            const hashedPassword = yield this.hashPassword(dto.password);
-            return yield this.iamRepository.createUser(dto.username, hashedPassword);
+            const user = yield this.iamRepository.findUserByAddress(dto.ethAddress);
+            if (user) {
+                const existingLoginInfo = yield this.userLoginRepository.findLatestLoginByEthAddress(dto.ethAddress);
+                if (existingLoginInfo && this.isTokenValid(existingLoginInfo.token)) {
+                    return existingLoginInfo.token;
+                }
+                const newToken = (0, jsonwebtoken_1.sign)({ ethAddress: dto.ethAddress }, this.tokenSecret, { expiresIn: '5h' });
+                yield this.userLoginRepository.createLogin(dto.ethAddress, newToken);
+                return newToken;
+            }
+            yield this.iamRepository.createUser(dto.ethAddress, dto.walletType);
+            const token = (0, jsonwebtoken_1.sign)({ ethAddress: dto.ethAddress }, this.tokenSecret, { expiresIn: '5h' });
+            yield this.userLoginRepository.createLogin(dto.ethAddress, token);
+            return token;
         });
     }
-    login(dto) {
+    isTokenValid(token) {
+        try {
+            (0, jsonwebtoken_2.verify)(token, this.tokenSecret);
+            return true;
+        }
+        catch (error) {
+            return false;
+        }
+    }
+    getUserLoginHistory(ethAddress) {
         return __awaiter(this, void 0, void 0, function* () {
-            const user = yield this.iamRepository.findUserByUsername(dto.username);
-            if (!user || !(yield bcrypt.compare(dto.password, user.password))) {
-                throw new Error('Invalid credentials');
-            }
-            const token = this.tokenSecret;
-            return token;
+            return this.userLoginRepository.findLoginHistoryByEthAddress(ethAddress);
         });
     }
     getHello() {
@@ -56,6 +76,7 @@ let IamService = class IamService {
 exports.IamService = IamService;
 exports.IamService = IamService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [iam_repository_1.IamRepository])
+    __metadata("design:paramtypes", [iam_repository_1.IamRepository,
+        user_login_repository_1.UserLoginRepository])
 ], IamService);
 //# sourceMappingURL=iam.service.js.map

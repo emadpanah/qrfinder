@@ -1,4 +1,6 @@
 export declare class UserDto {
-    username: string;
-    password: string;
+    ethAddress: string;
+    userId: string;
+    walletType: string;
+    createdDate: string;
 }

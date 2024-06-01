@@ -22,12 +22,15 @@
 /// <reference types="mongoose/types/validation" />
 /// <reference types="mongoose/types/virtuals" />
 /// <reference types="mongoose/types/inferschematype" />
-import { Model, Connection } from 'mongoose';
-import { IAMUser, IAMUserDocument } from '../schemas/iam-user.schema';
-export declare class IamRepository {
-    private readonly iamUserModel;
-    private connection;
-    constructor(iamUserModel: Model<IAMUserDocument>, connection: Connection);
-    createUser(ethAddress: string, walletType: string): Promise<IAMUser>;
-    findUserByAddress(ethAddress: string): Promise<IAMUser>;
+import { Document } from 'mongoose';
+export type UserLoginDocument = UserLogin & Document;
+export declare class UserLogin {
+    userId: string;
+    token: string;
+    loginDate: Date;
 }
+export declare const UserLoginSchema: import("mongoose").Schema<UserLogin, import("mongoose").Model<UserLogin, any, any, any, Document<unknown, any, UserLogin> & UserLogin & {
+    _id: import("mongoose").Types.ObjectId;
+}, any>, {}, {}, {}, {}, import("mongoose").DefaultSchemaOptions, UserLogin, Document<unknown, {}, import("mongoose").FlatRecord<UserLogin>> & import("mongoose").FlatRecord<UserLogin> & {
+    _id: import("mongoose").Types.ObjectId;
+}>;
