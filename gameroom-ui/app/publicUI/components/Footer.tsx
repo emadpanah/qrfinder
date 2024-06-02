@@ -1,11 +1,13 @@
-// app/publicUI/components/Footer.tsx
+import Link from 'next/link';
+
 const Footer = () => {
-    return (
-      <footer className="bg-gray-800 text-white p-4 text-center">
-        <p>&copy; 2024 Your Company. All rights reserved.</p>
-      </footer>
-    );
-  };
-  
-  export default Footer;
-  
+  return (
+    <footer className="bg-gray-800 text-white p-4 text-center">
+      <p>
+        &copy; 2024 <Link href="https://farschain.com" className="underline">farschain.com</Link> All rights reserved.
+      </p>
+    </footer>
+  );
+};
+
+export default Footer;
