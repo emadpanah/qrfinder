@@ -5,9 +5,12 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { ethers } from 'ethers';
+import  GameHeader  from './gameHeader';
+
 
 
 import { AccountType } from "@/app/lib/definitions";
+
 
 const GameAppPage: React.FC = () => {
   const router = useRouter();
@@ -26,8 +29,7 @@ const GameAppPage: React.FC = () => {
         // Get the connected Ethereum address
         const address = accounts[0];
         // Check address in console of web browser
-        console.log("connected to MetaMask with address: ", address);
-        alert('1');
+        console.log("connected to MetaMask with address: ", address);0
          // Create an ethers.js provider using the injected provider from MetaMask
         const provider = new ethers.BrowserProvider(ethereum);
         // Get the account balance
@@ -57,6 +59,10 @@ const GameAppPage: React.FC = () => {
   }, []);
 
   return (
+    <div
+    className={`h-full flex flex-col before:from-white after:from-sky-200 py-2`}
+  >
+    <GameHeader  {...accountData}  />
     <div className="flex flex-col flex-1 justify-center items-center">
     <div className="grid gap-4">
       <Image
@@ -71,6 +77,7 @@ const GameAppPage: React.FC = () => {
         Connect to MetaMask
       </button>
     </div>
+  </div>
   </div>
   );
 };
