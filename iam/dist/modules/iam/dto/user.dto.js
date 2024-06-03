@@ -9,7 +9,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.UserDto = void 0;
+exports.UserInsertDto = exports.UserDto = void 0;
 const class_validator_1 = require("class-validator");
 class UserDto {
 }
@@ -17,19 +17,14 @@ exports.UserDto = UserDto;
 __decorate([
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsNotEmpty)(),
-    (0, class_validator_1.Length)(42, 42),
+    (0, class_validator_1.Length)(42, 100),
     __metadata("design:type", String)
 ], UserDto.prototype, "ethAddress", void 0);
 __decorate([
-    (0, class_validator_1.IsUUID)(),
-    (0, class_validator_1.IsNotEmpty)(),
-    __metadata("design:type", String)
-], UserDto.prototype, "userId", void 0);
-__decorate([
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsNotEmpty)(),
-    (0, class_validator_1.MinLength)(8),
-    (0, class_validator_1.MaxLength)(20),
+    (0, class_validator_1.MinLength)(3),
+    (0, class_validator_1.MaxLength)(50),
     __metadata("design:type", String)
 ], UserDto.prototype, "walletType", void 0);
 __decorate([
@@ -37,4 +32,20 @@ __decorate([
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
 ], UserDto.prototype, "createdDate", void 0);
+class UserInsertDto {
+}
+exports.UserInsertDto = UserInsertDto;
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.Length)(42, 100),
+    __metadata("design:type", String)
+], UserInsertDto.prototype, "ethAddress", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.MinLength)(3),
+    (0, class_validator_1.MaxLength)(50),
+    __metadata("design:type", String)
+], UserInsertDto.prototype, "walletType", void 0);
 //# sourceMappingURL=user.dto.js.map

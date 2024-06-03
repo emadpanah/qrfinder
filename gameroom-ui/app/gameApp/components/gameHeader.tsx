@@ -1,5 +1,5 @@
 // app/layout.tsx
-import '../ui/global.css'; // Import global styles if you have any
+import '../../ui/global.css'; // Import global styles if you have any
 import { ReactNode } from 'react';
 import { AccountType } from "@/app/lib/definitions";
 

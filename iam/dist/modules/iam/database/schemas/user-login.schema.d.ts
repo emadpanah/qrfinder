@@ -25,7 +25,7 @@
 import { Document } from 'mongoose';
 export type UserLoginDocument = UserLogin & Document;
 export declare class UserLogin {
-    userId: string;
+    ethAddress: string;
     token: string;
     loginDate: Date;
 }

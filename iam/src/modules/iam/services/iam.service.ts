@@ -7,7 +7,7 @@ import { UserLogin } from '../database/schemas/user-login.schema';
 import * as bcrypt from 'bcrypt';
 import { IamRepository } from '../database/repositories/iam.repository';
 import { UserLoginRepository } from '../database/repositories/user-login.repository';
-import { UserDto } from '../dto/user.dto'; // Import UserDto
+import { UserDto, UserInsertDto } from '../dto/user.dto'; // Import UserDto
 import { sign } from 'jsonwebtoken';
 import { verify } from 'jsonwebtoken';
 
@@ -27,7 +27,7 @@ export class IamService {
     return bcrypt.hash(password, salt);
   }
 
-  async registerOrLogin(dto: UserDto): Promise<string> {
+  async registerOrLogin(dto: UserInsertDto): Promise<string> {
     // Check if the user already exists
     const user = await this.iamRepository.findUserByAddress(dto.ethAddress);
     if (user) {
@@ -44,7 +44,7 @@ export class IamService {
     }
 
     // User does not exist, proceed with registration
-    await this.iamRepository.createUser(dto.ethAddress, dto.walletType);
+    await this.iamRepository.createUser(dto);
 
     // Generate a new token for the new user
     const token = sign({ ethAddress: dto.ethAddress }, this.tokenSecret, { expiresIn: '5h' });

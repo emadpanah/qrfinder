@@ -26,7 +26,6 @@ import { Document } from 'mongoose';
 export type IAMUserDocument = IAMUser & Document;
 export declare class IAMUser {
     ethAddress: string;
-    userId: string;
     walletType: string;
     createdDate: Date;
 }

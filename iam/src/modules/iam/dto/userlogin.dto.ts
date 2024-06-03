@@ -9,26 +9,12 @@ export class UserDto {
 
   @IsString()
   @IsNotEmpty()
-  @MinLength(3)
-  @MaxLength(50)
-  walletType: string;
+  @MinLength(8)
+  @MaxLength(100)
+  token: string;
 
   @IsDateString()
   @IsNotEmpty()
   createdDate: string;
-}
-
-export class UserInsertDto {
-  @IsString()
-  @IsNotEmpty()
-  @Length(42, 100) // Exact length of an Ethereum address
-  ethAddress: string;
-
-  @IsString()
-  @IsNotEmpty()
-  @MinLength(3)
-  @MaxLength(50)
-  walletType: string;
-
 }
 

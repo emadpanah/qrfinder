@@ -49,7 +49,7 @@ let IamService = class IamService {
                 yield this.userLoginRepository.createLogin(dto.ethAddress, newToken);
                 return newToken;
             }
-            yield this.iamRepository.createUser(dto.ethAddress, dto.walletType);
+            yield this.iamRepository.createUser(dto);
             const token = (0, jsonwebtoken_1.sign)({ ethAddress: dto.ethAddress }, this.tokenSecret, { expiresIn: '5h' });
             yield this.userLoginRepository.createLogin(dto.ethAddress, token);
             return token;

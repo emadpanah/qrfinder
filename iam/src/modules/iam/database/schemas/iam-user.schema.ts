@@ -10,10 +10,7 @@ export class IAMUser {
   @Prop({ unique: true, required: true, minlength: 42, maxlength: 100 })
   ethAddress: string;
 
-  @Prop({ unique: true, required: true, default: uuidv4 })
-  userId: string;
-
-  @Prop({ required: true, minlength: 8, maxlength: 20 })
+  @Prop({ required: true, minlength: 3, maxlength: 50 })
   walletType: string;
 
   @Prop({ required: true, default: Date.now })

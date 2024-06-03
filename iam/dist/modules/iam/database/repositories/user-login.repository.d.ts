@@ -22,12 +22,11 @@
 /// <reference types="mongoose/types/validation" />
 /// <reference types="mongoose/types/virtuals" />
 /// <reference types="mongoose/types/inferschematype" />
-import { Model } from 'mongoose';
-import { UserLogin, UserLoginDocument } from '../schemas/user-login.schema';
+import { Connection } from 'mongoose';
 export declare class UserLoginRepository {
-    private readonly userLoginModel;
-    constructor(userLoginModel: Model<UserLoginDocument>);
-    createLogin(userId: string, token: string): Promise<UserLogin>;
-    findLoginHistoryByEthAddress(ethAddress: string): Promise<UserLogin[]>;
-    findLatestLoginByEthAddress(ethAddress: string): Promise<UserLogin>;
+    private connection;
+    constructor(connection: Connection);
+    createLogin(newEthAddress: string, newToken: string): Promise<any>;
+    findLoginHistoryByEthAddress(searchEthAddress: string): Promise<any>;
+    findLatestLoginByEthAddress(searchEthAddress: string): Promise<any>;
 }

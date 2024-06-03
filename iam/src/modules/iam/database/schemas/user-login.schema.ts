@@ -6,8 +6,8 @@ export type UserLoginDocument = UserLogin & Document;
 
 @Schema()
 export class UserLogin {
-  @Prop({ required: true })
-  userId: string; // Or any other unique identifier for the user
+  @Prop({ unique: true, required: true, minlength: 42, maxlength: 100 })
+  ethAddress: string; // Or any other unique identifier for the user
 
   @Prop({ required: true })
   token: string;

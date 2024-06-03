@@ -5,31 +5,42 @@ import { InjectConnection } from '@nestjs/mongoose';
 import { Model, Connection } from 'mongoose';
 import { IAMUser, IAMUserDocument } from '../schemas/iam-user.schema';
 import { v4 as uuidv4 } from 'uuid';
+import { UserDto, UserInsertDto } from '../../dto/user.dto'; 
 
 @Injectable()
 export class IamRepository {
   constructor(
-    @InjectModel(IAMUser.name) private readonly iamUserModel: Model<IAMUserDocument>,
     @InjectConnection('service') private connection: Connection
   ) { }
 
-  async createUser(ethAddress: string, walletType: string): Promise<IAMUser> {
+  async createUser(dto: UserInsertDto): Promise<any> {
+    const collection = this.connection.collection('_iamuser'
+    );
     const userId = uuidv4(); // Generate UUID for userId
-    const newUser = new this.iamUserModel({
-      ethAddress,
-      userId,
-      walletType,
-      createdDate: new Date()
+    await collection.insertOne({
+      ethAddress: dto.ethAddress,
+      walletType: dto.walletType,
+      createdDate: new Date().toISOString(),
     });
-    return newUser.save();
+    const user = await collection.findOne({ ethAddress: dto.ethAddress });
+    if (!user) {
+      // Handle the case where the agent is not found
+      throw new Error('Insert not completed.');
+    }
+    // Return the inserted document
+    return user;
   }
 
-  async findUserByAddress(ethAddress: string): Promise<IAMUser> {
-    const foundUser = await this.iamUserModel.findOne({ ethAddress }).exec();
-    if (!foundUser) {
-      throw new Error('User not found by given address');
+  async findUserByAddress(EthAddress: string): Promise<any> {
+    const collection = this.connection.collection('_iamuser'
+  );
+    const user = await collection.findOne({ ethAddress: EthAddress });
+    if (!user) {
+      // Handle the case where the agent is not found
+      throw new Error('user not found.');
     }
-    return foundUser;
+    // Return the inserted document
+    return user;
   }
 
   // ... add more repository methods as needed

@@ -25,38 +25,40 @@ exports.UserLoginRepository = void 0;
 const common_1 = require("@nestjs/common");
 const mongoose_1 = require("@nestjs/mongoose");
 const mongoose_2 = require("mongoose");
-const user_login_schema_1 = require("../schemas/user-login.schema");
 let UserLoginRepository = class UserLoginRepository {
-    constructor(userLoginModel) {
-        this.userLoginModel = userLoginModel;
+    constructor(connection) {
+        this.connection = connection;
     }
-    createLogin(userId, token) {
+    createLogin(newEthAddress, newToken) {
         return __awaiter(this, void 0, void 0, function* () {
-            const newUserLogin = new this.userLoginModel({ userId, token, loginDate: new Date() });
-            return newUserLogin.save();
+            const collection = this.connection.collection('_userlogin');
+            yield collection.insertOne({
+                ethAddress: newEthAddress,
+                token: newToken,
+                createdDate: new Date().toISOString(),
+            });
+            return newToken;
         });
     }
-    findLoginHistoryByEthAddress(ethAddress) {
+    findLoginHistoryByEthAddress(searchEthAddress) {
         return __awaiter(this, void 0, void 0, function* () {
-            return this.userLoginModel
-                .find({ ethAddress })
-                .sort({ loginDate: -1 })
-                .exec();
+            const collection = this.connection.collection('_userlogin');
+            const userlogins = yield collection.find({ ethAddress: searchEthAddress });
+            return userlogins;
         });
     }
-    findLatestLoginByEthAddress(ethAddress) {
+    findLatestLoginByEthAddress(searchEthAddress) {
         return __awaiter(this, void 0, void 0, function* () {
-            return this.userLoginModel
-                .findOne({ ethAddress })
-                .sort({ loginDate: -1 })
-                .exec();
+            const collection = this.connection.collection('_userlogin');
+            const userlogins = yield collection.findOne({ ethAddress: searchEthAddress }, { sort: { loginDate: -1 } });
+            return userlogins;
         });
     }
 };
 exports.UserLoginRepository = UserLoginRepository;
 exports.UserLoginRepository = UserLoginRepository = __decorate([
     (0, common_1.Injectable)(),
-    __param(0, (0, mongoose_1.InjectModel)(user_login_schema_1.UserLogin.name)),
-    __metadata("design:paramtypes", [mongoose_2.Model])
+    __param(0, (0, mongoose_1.InjectConnection)('service')),
+    __metadata("design:paramtypes", [mongoose_2.Connection])
 ], UserLoginRepository);
 //# sourceMappingURL=user-login.repository.js.map

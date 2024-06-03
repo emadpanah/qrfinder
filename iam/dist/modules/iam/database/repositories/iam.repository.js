@@ -24,43 +24,43 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.IamRepository = void 0;
 const common_1 = require("@nestjs/common");
 const mongoose_1 = require("@nestjs/mongoose");
-const mongoose_2 = require("@nestjs/mongoose");
-const mongoose_3 = require("mongoose");
-const iam_user_schema_1 = require("../schemas/iam-user.schema");
+const mongoose_2 = require("mongoose");
 const uuid_1 = require("uuid");
 let IamRepository = class IamRepository {
-    constructor(iamUserModel, connection) {
-        this.iamUserModel = iamUserModel;
+    constructor(connection) {
         this.connection = connection;
     }
-    createUser(ethAddress, walletType) {
+    createUser(dto) {
         return __awaiter(this, void 0, void 0, function* () {
+            const collection = this.connection.collection('_iamuser');
             const userId = (0, uuid_1.v4)();
-            const newUser = new this.iamUserModel({
-                ethAddress,
-                userId,
-                walletType,
-                createdDate: new Date()
+            yield collection.insertOne({
+                ethAddress: dto.ethAddress,
+                walletType: dto.walletType,
+                createdDate: new Date().toISOString(),
             });
-            return newUser.save();
+            const user = yield collection.findOne({ ethAddress: dto.ethAddress });
+            if (!user) {
+                throw new Error('Insert not completed.');
+            }
+            return user;
         });
     }
-    findUserByAddress(ethAddress) {
+    findUserByAddress(EthAddress) {
         return __awaiter(this, void 0, void 0, function* () {
-            const foundUser = yield this.iamUserModel.findOne({ ethAddress }).exec();
-            if (!foundUser) {
-                throw new Error('User not found by given address');
+            const collection = this.connection.collection('_iamuser');
+            const user = yield collection.findOne({ ethAddress: EthAddress });
+            if (!user) {
+                throw new Error('user not found.');
             }
-            return foundUser;
+            return user;
         });
     }
 };
 exports.IamRepository = IamRepository;
 exports.IamRepository = IamRepository = __decorate([
     (0, common_1.Injectable)(),
-    __param(0, (0, mongoose_1.InjectModel)(iam_user_schema_1.IAMUser.name)),
-    __param(1, (0, mongoose_2.InjectConnection)('service')),
-    __metadata("design:paramtypes", [mongoose_3.Model,
-        mongoose_3.Connection])
+    __param(0, (0, mongoose_1.InjectConnection)('service')),
+    __metadata("design:paramtypes", [mongoose_2.Connection])
 ], IamRepository);
 //# sourceMappingURL=iam.repository.js.map

@@ -22,12 +22,11 @@
 /// <reference types="mongoose/types/validation" />
 /// <reference types="mongoose/types/virtuals" />
 /// <reference types="mongoose/types/inferschematype" />
-import { Model, Connection } from 'mongoose';
-import { IAMUser, IAMUserDocument } from '../schemas/iam-user.schema';
+import { Connection } from 'mongoose';
+import { UserInsertDto } from '../../dto/user.dto';
 export declare class IamRepository {
-    private readonly iamUserModel;
     private connection;
-    constructor(iamUserModel: Model<IAMUserDocument>, connection: Connection);
-    createUser(ethAddress: string, walletType: string): Promise<IAMUser>;
-    findUserByAddress(ethAddress: string): Promise<IAMUser>;
+    constructor(connection: Connection);
+    createUser(dto: UserInsertDto): Promise<any>;
+    findUserByAddress(EthAddress: string): Promise<any>;
 }

@@ -54,7 +54,7 @@ __decorate([
     (0, common_1.Post)('/register'),
     __param(0, (0, common_1.Body)(new common_1.ValidationPipe())),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [user_dto_1.UserDto]),
+    __metadata("design:paramtypes", [user_dto_1.UserInsertDto]),
     __metadata("design:returntype", Promise)
 ], IamController.prototype, "register", null);
 __decorate([

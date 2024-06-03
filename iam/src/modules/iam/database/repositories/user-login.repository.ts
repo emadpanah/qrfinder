@@ -1,32 +1,47 @@
 // iam/database/repositories/user-login-info.repository.ts
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { InjectConnection } from '@nestjs/mongoose';
+import { Model, Connection } from 'mongoose';
 import { UserLogin, UserLoginDocument } from '../schemas/user-login.schema';
 
 @Injectable()
 export class UserLoginRepository {
   constructor(
-    @InjectModel(UserLogin.name) private readonly userLoginModel: Model<UserLoginDocument>
+   @InjectConnection('service') private connection: Connection
   ) {}
 
-  async createLogin(userId: string, token: string): Promise<UserLogin> {
-    const newUserLogin = new this.userLoginModel({ userId, token, loginDate: new Date() });
-    return newUserLogin.save();
+  async createLogin(newEthAddress: string, newToken: string): Promise<any> {
+    const collection = this.connection.collection( '_userlogin',
+    );
+
+    await collection.insertOne({
+      ethAddress: newEthAddress,
+      token: newToken,
+      createdDate: new Date().toISOString(),
+    });
+
+    return newToken;
   }
 
-  async findLoginHistoryByEthAddress(ethAddress: string): Promise<UserLogin[]> {
-    return this.userLoginModel
-      .find({ ethAddress })
-      .sort({ loginDate: -1 }) // Sort by loginDate in descending order
-      .exec();
+  async findLoginHistoryByEthAddress(searchEthAddress: string): Promise<any> {
+    
+    const collection = this.connection.collection( '_userlogin',
+    );
+
+    const userlogins = await collection.find({ ethAddress: searchEthAddress });
+  
+    return userlogins;
   }
 
-  async findLatestLoginByEthAddress(ethAddress: string): Promise<UserLogin> {
-    return this.userLoginModel
-      .findOne({ ethAddress })
-      .sort({ loginDate: -1 }) // Sort by loginDate in descending order
-      .exec();
+  async findLatestLoginByEthAddress(searchEthAddress: string): Promise<any> {
+    const collection = this.connection.collection( '_userlogin',
+    );
+
+    const userlogins = await collection.findOne({ ethAddress: searchEthAddress },
+      { sort: { loginDate: -1 } });
+  
+    return userlogins;
   }
 
 }
