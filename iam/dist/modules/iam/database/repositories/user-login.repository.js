@@ -31,7 +31,7 @@ let UserLoginRepository = class UserLoginRepository {
     }
     createLogin(newEthAddress, newToken) {
         return __awaiter(this, void 0, void 0, function* () {
-            const collection = this.connection.collection('_userlogin');
+            const collection = this.connection.collection('_userlogins');
             yield collection.insertOne({
                 ethAddress: newEthAddress,
                 token: newToken,
@@ -42,14 +42,14 @@ let UserLoginRepository = class UserLoginRepository {
     }
     findLoginHistoryByEthAddress(searchEthAddress) {
         return __awaiter(this, void 0, void 0, function* () {
-            const collection = this.connection.collection('_userlogin');
+            const collection = this.connection.collection('_userlogins');
             const userlogins = yield collection.find({ ethAddress: searchEthAddress });
             return userlogins;
         });
     }
     findLatestLoginByEthAddress(searchEthAddress) {
         return __awaiter(this, void 0, void 0, function* () {
-            const collection = this.connection.collection('_userlogin');
+            const collection = this.connection.collection('_userlogins');
             const userlogins = yield collection.findOne({ ethAddress: searchEthAddress }, { sort: { loginDate: -1 } });
             return userlogins;
         });

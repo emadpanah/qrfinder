@@ -32,7 +32,7 @@ let IamRepository = class IamRepository {
     }
     createUser(dto) {
         return __awaiter(this, void 0, void 0, function* () {
-            const collection = this.connection.collection('_iamuser');
+            const collection = this.connection.collection('_iamusers');
             const userId = (0, uuid_1.v4)();
             yield collection.insertOne({
                 ethAddress: dto.ethAddress,
@@ -48,11 +48,8 @@ let IamRepository = class IamRepository {
     }
     findUserByAddress(EthAddress) {
         return __awaiter(this, void 0, void 0, function* () {
-            const collection = this.connection.collection('_iamuser');
+            const collection = this.connection.collection('_iamusers');
             const user = yield collection.findOne({ ethAddress: EthAddress });
-            if (!user) {
-                throw new Error('user not found.');
-            }
             return user;
         });
     }

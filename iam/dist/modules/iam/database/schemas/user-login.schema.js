@@ -27,7 +27,7 @@ __decorate([
     __metadata("design:type", Date)
 ], UserLogin.prototype, "loginDate", void 0);
 exports.UserLogin = UserLogin = __decorate([
-    (0, mongoose_1.Schema)()
+    (0, mongoose_1.Schema)({ collection: '_userlogins' })
 ], UserLogin);
 exports.UserLoginSchema = mongoose_1.SchemaFactory.createForClass(UserLogin);
 //# sourceMappingURL=user-login.schema.js.map

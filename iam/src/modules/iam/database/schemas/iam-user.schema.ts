@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 export type IAMUserDocument = IAMUser & Document;
 
-@Schema()
+@Schema({ collection: '_iamusers' })
 export class IAMUser {
   @Prop({ unique: true, required: true, minlength: 42, maxlength: 100 })
   ethAddress: string;

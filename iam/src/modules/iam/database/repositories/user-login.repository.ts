@@ -12,7 +12,7 @@ export class UserLoginRepository {
   ) {}
 
   async createLogin(newEthAddress: string, newToken: string): Promise<any> {
-    const collection = this.connection.collection( '_userlogin',
+    const collection = this.connection.collection( '_userlogins',
     );
 
     await collection.insertOne({
@@ -26,7 +26,7 @@ export class UserLoginRepository {
 
   async findLoginHistoryByEthAddress(searchEthAddress: string): Promise<any> {
     
-    const collection = this.connection.collection( '_userlogin',
+    const collection = this.connection.collection( '_userlogins',
     );
 
     const userlogins = await collection.find({ ethAddress: searchEthAddress });
@@ -35,7 +35,7 @@ export class UserLoginRepository {
   }
 
   async findLatestLoginByEthAddress(searchEthAddress: string): Promise<any> {
-    const collection = this.connection.collection( '_userlogin',
+    const collection = this.connection.collection( '_userlogins',
     );
 
     const userlogins = await collection.findOne({ ethAddress: searchEthAddress },

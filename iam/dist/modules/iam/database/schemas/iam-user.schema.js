@@ -27,7 +27,7 @@ __decorate([
     __metadata("design:type", Date)
 ], IAMUser.prototype, "createdDate", void 0);
 exports.IAMUser = IAMUser = __decorate([
-    (0, mongoose_1.Schema)()
+    (0, mongoose_1.Schema)({ collection: '_iamusers' })
 ], IAMUser);
 exports.IAMUserSchema = mongoose_1.SchemaFactory.createForClass(IAMUser);
 //# sourceMappingURL=iam-user.schema.js.map

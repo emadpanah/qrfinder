@@ -14,7 +14,7 @@ export class IamRepository {
   ) { }
 
   async createUser(dto: UserInsertDto): Promise<any> {
-    const collection = this.connection.collection('_iamuser'
+    const collection = this.connection.collection('_iamusers'
     );
     const userId = uuidv4(); // Generate UUID for userId
     await collection.insertOne({
@@ -32,13 +32,9 @@ export class IamRepository {
   }
 
   async findUserByAddress(EthAddress: string): Promise<any> {
-    const collection = this.connection.collection('_iamuser'
+    const collection = this.connection.collection('_iamusers'
   );
     const user = await collection.findOne({ ethAddress: EthAddress });
-    if (!user) {
-      // Handle the case where the agent is not found
-      throw new Error('user not found.');
-    }
     // Return the inserted document
     return user;
   }

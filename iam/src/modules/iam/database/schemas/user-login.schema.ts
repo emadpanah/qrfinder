@@ -4,7 +4,7 @@ import { Document } from 'mongoose';
 
 export type UserLoginDocument = UserLogin & Document;
 
-@Schema()
+@Schema({ collection: '_userlogins' })
 export class UserLogin {
   @Prop({ unique: true, required: true, minlength: 42, maxlength: 100 })
   ethAddress: string; // Or any other unique identifier for the user
