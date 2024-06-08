@@ -1,12 +1,12 @@
 import React from 'react';
 import { useRouter } from 'next/navigation';
 
-interface HubButtonProps {
+interface GameButtonProps {
   label: string;
   route: string;
 }
 
-const HubButton: React.FC<HubButtonProps> = ({ label, route }) => {
+const GameButton: React.FC<GameButtonProps> = ({ label, route }) => {
   const router = useRouter();
 
   return (
@@ -19,4 +19,4 @@ const HubButton: React.FC<HubButtonProps> = ({ label, route }) => {
   );
 };
 
-export default HubButton;
+export default GameButton;

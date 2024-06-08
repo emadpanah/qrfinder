@@ -5,7 +5,7 @@ interface HeaderProps extends Partial<AccountType> {}
 
 const Header: React.FC<HeaderProps> = ({ }) => {
   return (
-    <div className="px-6 md:px-12 sm:px-2 bg-gray-800 text-white p-4 text-center">
+    <div className="px-6 md:px-12 sm:px-2 bg-indigo-900 text-white p-4 text-center">
       <div className="flex justify-between items-center">
         <div className="flex-1 flex items-center gap-2">
         <GameLogo />

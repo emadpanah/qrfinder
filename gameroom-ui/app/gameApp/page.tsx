@@ -5,8 +5,9 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { ethers } from 'ethers';
 import GameHeader from './components/gameHeader';
-import HubButton from './components/HubButton';
+import HubButton from './components/hubButton';
 import { AccountType } from "@/app/lib/definitions";
+import { PiHandTapBold , PiSkullBold , PiMegaphoneBold  , PiRocketBold   } from 'react-icons/pi';
 
 const GameAppPage: React.FC = () => {
   const router = useRouter();
@@ -51,6 +52,7 @@ const GameAppPage: React.FC = () => {
     }
   }
 
+  
   useEffect(() => {
     checkMetaMask();
   }, []);
@@ -74,12 +76,12 @@ const GameAppPage: React.FC = () => {
             </button>
           </div>
         ) : (
-          <div className="grid gap-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <HubButton label="My Games" route="/gameApp/pages/page1" />
-              <HubButton label="New Games" route="/gameApp/pages/page2" />
-              <HubButton label="Refferals" route="/gameApp/pages/page3" />
-              <HubButton label="Create Game" route="/gameApp/pages/page4" />
+          <div className="grid gap-4 pt-4 md:pt-8 lg:pt-12">
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <HubButton label="My Games" route="/gameApp/pages/page1" icon={<PiHandTapBold />} />
+              <HubButton label="New Games" route="/gameApp/pages/page2" icon={<PiSkullBold  />} />
+              <HubButton label="Referrals" route="/gameApp/pages/page3" icon={<PiMegaphoneBold  />} />
+              <HubButton label="Create Game" route="/gameApp/pages/page4" icon={<PiRocketBold  />} />
             </div>
           </div>
         )}
