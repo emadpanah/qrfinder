@@ -4,16 +4,16 @@ import { useRouter } from 'next/navigation';
 
 interface HubButtonProps {
   label: string;
-  route: string;
+  onClick: () => void;
   icon?: React.ReactNode;
 }
 
-const HubButton: React.FC<HubButtonProps> = ({ label, route, icon }) => {
+const HubButton: React.FC<HubButtonProps> = ({ label, onClick, icon }) => {
   const router = useRouter();
 
   return (
     <button
-      onClick={() => router.push(route)}
+      onClick={onClick}
       className="relative inline-flex items-center justify-center p-4 px-6 py-3 overflow-hidden font-medium text-indigo-600 transition duration-300 ease-out border-2 border-indigo-500 rounded-lg  shadow-md group"
       style={{ width: '200px', height: '200px' }} // Set width and height explicitly
     >

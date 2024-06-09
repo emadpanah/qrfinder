@@ -94,3 +94,15 @@ export interface AccountType {
   chainId?: string;
   network?: string;
 }
+
+export interface TapGameModel {
+  id: number;
+  title: string;
+  description: string;
+  needToken: number;
+  tapAlgorithm: string;
+  winnerLimit:string;
+  winnerAddresses: string[];
+  activeDate: string;
+  image: string;
+}
