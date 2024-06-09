@@ -1,6 +1,5 @@
-// page.tsx
 'use client';
-// GameAppPage.tsx
+
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
@@ -8,7 +7,7 @@ import { ethers } from 'ethers';
 import GameHeader from './components/gameHeader';
 import HubButton from './components/hubButton';
 import MyGames from './components/myGames';
-import TapGame from './components/tapGame'; // Import TapGame
+import TapGame from './components/tapGame'; // Import the TapGame component
 import { AccountType } from '@/app/lib/definitions';
 import { PiHandTapBold, PiSkullBold, PiMegaphoneBold, PiRocketBold } from 'react-icons/pi';
 
@@ -19,7 +18,7 @@ enum ActiveSection {
   NewGames,
   Referrals,
   CreateGame,
-  TapGame, // Add the new section
+  TapGame, // Add TapGame section
 }
 
 const GameAppPage: React.FC = () => {
@@ -27,7 +26,7 @@ const GameAppPage: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [accountData, setAccountData] = useState<AccountType>({});
   const [activeSection, setActiveSection] = useState<ActiveSection>(ActiveSection.MetaMaskLogin);
-  const [selectedGameId, setSelectedGameId] = useState<number | null>(null); // Add state for selected game ID
+  const [selectedGameId, setSelectedGameId] = useState<number | null>(null);
 
   async function checkMetaMask() {
     const ethereum = window.ethereum;
@@ -60,7 +59,7 @@ const GameAppPage: React.FC = () => {
     checkMetaMask();
   }, []);
 
-  const handleGameButtonDoubleClick = (gameId: number) => {
+  const handleGameDoubleClick = (gameId: number) => {
     setSelectedGameId(gameId);
     setActiveSection(ActiveSection.TapGame);
   };
@@ -95,7 +94,7 @@ const GameAppPage: React.FC = () => {
           </div>
         );
       case ActiveSection.MyGames:
-        return <MyGames onDoubleClick={handleGameButtonDoubleClick} />;
+        return <MyGames onGameDoubleClick={handleGameDoubleClick} />;
       case ActiveSection.NewGames:
         return <div>New Games Component</div>;
       case ActiveSection.Referrals:
@@ -103,7 +102,7 @@ const GameAppPage: React.FC = () => {
       case ActiveSection.CreateGame:
         return <div>Create Game Component</div>;
       case ActiveSection.TapGame:
-        return selectedGameId !== null ? <TapGame gameId={selectedGameId} /> : <div>No game selected</div>;
+        return selectedGameId !== null ? <TapGame gameId={selectedGameId} /> : null;
       default:
         return null;
     }
@@ -118,5 +117,6 @@ const GameAppPage: React.FC = () => {
     </div>
   );
 };
+
 
 export default GameAppPage;
