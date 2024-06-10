@@ -16,3 +16,23 @@ input[type='number']::-webkit-outer-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
+
+.star-animation {
+  position: absolute;
+  width: 100px;
+  height: 100px;
+  background-image: url('./star-m.png');
+  animation: starMove 1s linear;
+}
+
+@keyframes starMove {
+  0% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-100px);
+  }
+}
+
