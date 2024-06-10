@@ -1,13 +1,12 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { TapGameModel } from '../../lib/definitions';
 import { PiHandTapBold, PiClipboardBold, PiRocketBold, PiChartBarBold, PiArrowLeftBold } from 'react-icons/pi';
 import { FiUserPlus } from 'react-icons/fi';
 import QRCode from 'qrcode.react';
 import '../../ui/global.css';
- 
 
 enum Tabs {
   Ref,
@@ -53,54 +52,68 @@ const fetchTapGame = async (gameId: number): Promise<TapGameModel> => {
   });
 };
 
-
-const TabContent: React.FC<{ activeTab: Tabs; tapGame: TapGameModel; handleTap: () => void; tokenCount: number }> = ({ activeTab, tapGame, handleTap, tokenCount }) => {
-  
-  const [starPosition, setStarPosition] = useState({ x: 0, y: 0 });
+const TabContent: React.FC<{ activeTab: Tabs; tapGame: TapGameModel; handleTap: () => void; tokenCount: number; maxTokenCount: number; countdownPosition: { x: number; y: number; show: boolean }; setCountdownPosition: (pos: { x: number; y: number; show: boolean }) => void; }> = ({ activeTab, tapGame, handleTap, tokenCount, maxTokenCount, countdownPosition, setCountdownPosition }) => {
+  const [starPosition, setStarPosition] = useState<{ x: number; y: number; show: boolean }>({ x: 0, y: 0, show: false });
 
   const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (maxTokenCount <= 0) return;
+
+    e.preventDefault(); // Prevent the default behavior
+    e.stopPropagation(); // Stop propagation to avoid any other click events
+
     const rect = e.currentTarget.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
-    setStarPosition({ x, y });
+    setStarPosition({ x, y, show: true });
 
     // Call the handleTap function
     handleTap();
   };
-  
-  switch (activeTab) {
-    case Tabs.Ref:
-      return (
+
+  return (
+    <>
+      {activeTab === Tabs.Ref && (
         <div className="flex flex-col items-center">
           <div>Referral Content for {tapGame.title}</div>
           <QRCode value={`https://example.com/referral?gameId=${tapGame.id}`} size={150} />
         </div>
-      );
-    case Tabs.Task:
-      return <div>Task Content for {tapGame.title}</div>;
-    case Tabs.Tap:
-      return (
+      )}
+      {activeTab === Tabs.Task && <div>Task Content for {tapGame.title}</div>}
+      {activeTab === Tabs.Tap && (
         <div className="flex flex-col items-center relative">
           <div className="text-3xl font-bold">{tapGame.needToken}</div>
           <div className="text-sm text-gray-500">{tapGame.title}</div>
-          <div onClick={handleClick} className="relative">
-           <img src={tapGame.image} alt={tapGame.title} className="my-4 w-48 h-48" />
-           {starPosition.x !== 0 && starPosition.y !== 0 && (
-            <div
-              className="star-animation"
-              style={{ left: starPosition.x, top: starPosition.y }}
-              onAnimationEnd={() => setStarPosition({ x: 0, y: 0 })}
-            />
+          <div onClick={handleClick} className="relative noselect">
+            <img src={tapGame.image} alt={tapGame.title} className="my-4 w-48 h-48 noselect" />
+            {starPosition.show && (
+              <div
+                className="star-animation"
+                style={{ left: starPosition.x, top: starPosition.y }}
+                onAnimationEnd={() => setStarPosition({ ...starPosition, show: false })}
+              >
+                +10
+              </div>
+            )}
+            {countdownPosition.show && (
+              <div
+                className="countdown-animation"
+                style={{ left: countdownPosition.x, top: countdownPosition.y }}
+                onAnimationEnd={() => setCountdownPosition({ ...countdownPosition, show: false })}
+              >
+                -5
+              </div>
             )}
           </div>
           <div className="flex items-center">
             <div className="text-lg font-bold">{tokenCount}</div>
-            <div className="text-sm text-gray-500">/ 1000</div>
+            <div className="text-sm text-gray-500">/ {maxTokenCount}</div>
+          </div>
+          <div className="w-full bg-gray-200 h-4 rounded-full overflow-hidden">
+            <div className="bg-blue-500 h-full" style={{ width: `${(tokenCount / maxTokenCount) * 100}%` }}></div>
           </div>
         </div>
-      );
-    case Tabs.Boost:
-      return (
+      )}
+      {activeTab === Tabs.Boost && (
         <div className="flex flex-col items-center">
           <div>Your daily boosters:</div>
           <div className="flex flex-col items-center">
@@ -129,9 +142,8 @@ const TabContent: React.FC<{ activeTab: Tabs; tapGame: TapGameModel; handleTap: 
             </div>
           </div>
         </div>
-      );
-    case Tabs.Stats:
-      return (
+      )}
+      {activeTab === Tabs.Stats && (
         <div className="flex flex-col items-center">
           <div>Total Share Balance:</div>
           <div className="text-3xl font-bold">156.769 T</div>
@@ -144,23 +156,48 @@ const TabContent: React.FC<{ activeTab: Tabs; tapGame: TapGameModel; handleTap: 
           <div className="mt-4">Online Players:</div>
           <div className="text-lg">498 477</div>
         </div>
-      );
-    default:
-      return null;
-  }
+      )}
+    </>
+  );
 };
 
 const TapGame: React.FC<{ gameId: number }> = ({ gameId }) => {
   const router = useRouter();
   const [tapGame, setTapGame] = useState<TapGameModel | null>(null);
   const [activeTab, setActiveTab] = useState<Tabs>(Tabs.Tap); // Default to Tap tab
-  const [tokenCount, setTokenCount] = useState<number>(1000); // Start token count from 1000
+  const [tokenCount, setTokenCount] = useState<number>(0); // Start token count from 0
+  const [maxTokenCount, setMaxTokenCount] = useState<number>(1000); // Start max token count from 1000
+  const [countdownPosition, setCountdownPosition] = useState<{ x: number; y: number; show: boolean }>({ x: 0, y: 0, show: false });
+  const lastClickTimeRef = useRef<number>(Date.now());
 
-  const handleTap = () => {
+  const handleTap = useCallback(() => {
+    if (maxTokenCount <= 0) return;
+
     // Increment token count by 10 on each tap
     setTokenCount(prevCount => prevCount + 10);
-    console.log(tokenCount);
-  };
+    // Decrement max token count by 10 on each tap
+    setMaxTokenCount(prevMax => prevMax - 10);
+    lastClickTimeRef.current = Date.now();
+  }, [maxTokenCount]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const currentTime = Date.now();
+      if (currentTime - lastClickTimeRef.current >= 2000) {
+        setTokenCount(prevCount => {
+          if (prevCount > 0) {
+            const x = Math.random() * 192; // Random x within the width of the image (192px)
+            const y = 192; // Fixed y position at the bottom of the image
+            setCountdownPosition({ x, y, show: true });
+          }
+          return Math.max(0, prevCount - 5);
+        });
+        setMaxTokenCount(prevMax => Math.min(1000, prevMax + 5));
+      }
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     const loadTapGame = async () => {
@@ -169,19 +206,19 @@ const TapGame: React.FC<{ gameId: number }> = ({ gameId }) => {
         setTapGame(gameData);
       } catch (error) {
         console.error('Error fetching tap game:', error);
+        setTapGame(null);
       }
     };
 
     loadTapGame();
   }, [gameId]);
 
-
   if (!tapGame) return <div>Loading...</div>;
 
   return (
     <div className="flex flex-col items-center p-4 h-full">
       <div className="flex-1 w-full p-4 border rounded">
-        <TabContent activeTab={activeTab} tapGame={tapGame} tokenCount={tokenCount} handleTap={handleTap} />
+        <TabContent activeTab={activeTab} tapGame={tapGame} tokenCount={tokenCount} maxTokenCount={maxTokenCount} handleTap={handleTap} countdownPosition={countdownPosition} setCountdownPosition={setCountdownPosition} />
       </div>
       <div className="flex space-x-4 mt-4 w-full justify-around">
         <button
