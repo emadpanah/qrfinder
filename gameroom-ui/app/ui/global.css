@@ -74,3 +74,38 @@ input[type='number']::-webkit-outer-spin-button {
     transform: translateY(-100px);
   }
 }
+
+.ticker-wrapper {
+  width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  box-sizing: border-box;
+  height: 2rem; /* Set a fixed height for the ticker */
+  display: flex;
+  align-items: center;
+}
+
+.ticker {
+  display: inline-block;
+  padding-left: 100%;
+  animation: ticker 15s linear infinite;
+}
+
+@keyframes ticker {
+  0% {
+    transform: translateX(100%);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+.noselect {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+
+

@@ -81,7 +81,11 @@ const TabContent: React.FC<{ activeTab: Tabs; tapGame: TapGameModel; handleTap: 
       {activeTab === Tabs.Task && <div>Task Content for {tapGame.title}</div>}
       {activeTab === Tabs.Tap && (
         <div className="flex flex-col items-center relative">
-          <div className="text-3xl font-bold">{tapGame.needToken}</div>
+          <div className="ticker-wrapper">
+            <div className="ticker">
+              {tapGame.title} - {tapGame.needToken} Tokens - Active : {tapGame.activeDate} 
+            </div>
+          </div>
           <div className="text-sm text-gray-500">{tapGame.title}</div>
           <div onClick={handleClick} className="relative noselect">
             <img src={tapGame.image} alt={tapGame.title} className="my-4 w-48 h-48 noselect" />
@@ -109,7 +113,7 @@ const TabContent: React.FC<{ activeTab: Tabs; tapGame: TapGameModel; handleTap: 
             <div className="text-sm text-gray-500">/ {maxTokenCount}</div>
           </div>
           <div className="w-full bg-gray-200 h-4 rounded-full overflow-hidden">
-            <div className="bg-blue-500 h-full" style={{ width: `${(tokenCount / maxTokenCount) * 100}%` }}></div>
+            <div className="bg-blue-500 h-full" style={{ width: `${(tokenCount / 1000) * 100}%` }}></div>
           </div>
         </div>
       )}
