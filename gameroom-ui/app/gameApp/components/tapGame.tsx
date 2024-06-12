@@ -52,22 +52,23 @@ const fetchTapGame = async (gameId: number): Promise<TapGameModel> => {
   });
 };
 
-const TabContent: React.FC<{ activeTab: Tabs; tapGame: TapGameModel; handleTap: () => void; tokenCount: number; maxTokenCount: number; countdownPosition: { x: number; y: number; show: boolean }; setCountdownPosition: (pos: { x: number; y: number; show: boolean }) => void; }> = ({ activeTab, tapGame, handleTap, tokenCount, maxTokenCount, countdownPosition, setCountdownPosition }) => {
-  const [starPosition, setStarPosition] = useState<{ x: number; y: number; show: boolean }>({ x: 0, y: 0, show: false });
+type Position = {
+  x: number;
+  y: number;
+  show: boolean;
+  type: string;
+};
+
+const TabContent: React.FC<{ activeTab: Tabs; tapGame: TapGameModel; handleTap: (e: React.MouseEvent<HTMLDivElement>) => void; tokenCount: number; maxTokenCount: number; countdownPosition: Position; setCountdownPosition: (pos: Position) => void; }> = ({ activeTab, tapGame, handleTap, tokenCount, maxTokenCount, countdownPosition, setCountdownPosition }) => {  const [starPosition, setStarPosition] = useState<Position>({ x: 0, y: 0, show: false, type: '+10' });
 
   const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (maxTokenCount <= 0) return;
-
     e.preventDefault(); // Prevent the default behavior
     e.stopPropagation(); // Stop propagation to avoid any other click events
-
     const rect = e.currentTarget.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
-    setStarPosition({ x, y, show: true });
-
-    // Call the handleTap function
-    handleTap();
+    handleTap(e);
   };
 
   return (
@@ -89,24 +90,26 @@ const TabContent: React.FC<{ activeTab: Tabs; tapGame: TapGameModel; handleTap: 
           <div className="text-sm text-gray-500">{tapGame.title}</div>
           <div onClick={handleClick} className="relative noselect">
             <img src={tapGame.image} alt={tapGame.title} className="my-4 w-48 h-48 noselect" />
-            {starPosition.show && (
-              <div
+            {starPosition.show && starPosition.type === '+10' && (
+            <div
                 className="star-animation"
                 style={{ left: starPosition.x, top: starPosition.y }}
                 onAnimationEnd={() => setStarPosition({ ...starPosition, show: false })}
-              >
+            >
                 +10
-              </div>
-            )}
-            {countdownPosition.show && (
-              <div
-                className="countdown-animation"
-                style={{ left: countdownPosition.x, top: countdownPosition.y }}
-                onAnimationEnd={() => setCountdownPosition({ ...countdownPosition, show: false })}
-              >
-                -5
-              </div>
-            )}
+            </div>
+        )}
+       {countdownPosition.show && (
+    <div
+        className="countdown-animation"
+        style={{ left: countdownPosition.x, top: countdownPosition.y, color: countdownPosition.type === '+10' ? '#0f0' : '#f00' }}
+        onAnimationEnd={() => setCountdownPosition({ ...countdownPosition, show: false })}
+    >
+        {countdownPosition.type}
+    </div>
+)}
+
+
           </div>
           <div className="flex items-center">
             <div className="text-lg font-bold">{tokenCount}</div>
@@ -170,40 +173,98 @@ const TapGame: React.FC<{ gameId: number }> = ({ gameId }) => {
   const [tapGame, setTapGame] = useState<TapGameModel | null>(null);
   const [activeTab, setActiveTab] = useState<Tabs>(Tabs.Tap); // Default to Tap tab
   const [tokenCount, setTokenCount] = useState<number>(0); // Start token count from 0
-  const [maxTokenCount, setMaxTokenCount] = useState<number>(1000); // Start max token count from 1000
-  const [countdownPosition, setCountdownPosition] = useState<{ x: number; y: number; show: boolean }>({ x: 0, y: 0, show: false });
+  const [maxTokenCount, setMaxTokenCount] = useState<number>(1010); // Start max token count from 1000
+  const [countdownPosition, setCountdownPosition] = useState<Position>({ x: 0, y: 0, show: false, type: '-10' });
   const lastClickTimeRef = useRef<number>(Date.now());
-
-  const handleTap = useCallback(() => {
+  const clickTimesRef = useRef<number[]>([]);
+  const [mouseMovements, setMouseMovements] = useState<number>(0);
+  const MIN_MOUSE_MOVEMENTS = 5;
+  const handleTap = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     if (maxTokenCount <= 0) return;
 
-    // Increment token count by 10 on each tap
-    setTokenCount(prevCount => prevCount + 10);
-    // Decrement max token count by 10 on each tap
-    setMaxTokenCount(prevMax => prevMax - 10);
-    lastClickTimeRef.current = Date.now();
-  }, [maxTokenCount]);
+    const hiddenField = document.getElementById("honeypot-field") as HTMLInputElement;
+    if (hiddenField && hiddenField.value !== "") {
+      alert("Suspicious behavior detected. Please do not fill out hidden fields.");
+      return;
+    }
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const currentTime = Date.now();
-      if (currentTime - lastClickTimeRef.current >= 2000) {
-        setTokenCount(prevCount => {
-          if (prevCount > 0) {
-            const x = Math.random() * 192; // Random x within the width of the image (192px)
-            const y = 192; // Fixed y position at the bottom of the image
-            setCountdownPosition({ x, y, show: true });
-          }
-          return Math.max(0, prevCount - 5);
-        });
-        setMaxTokenCount(prevMax => Math.min(1000, prevMax + 5));
-      }
-    }, 2000);
+    // console.log('move-'+mouseMovements);
+    // if (mouseMovements < MIN_MOUSE_MOVEMENTS) {
+    //   alert("Suspicious behavior detected. Please interact more with the page.");
+    //   return;
+    // }
+    const currentTime = Date.now();
+    const clickInterval = currentTime - lastClickTimeRef.current;
 
-    return () => clearInterval(interval);
-  }, []);
+    // Add the click interval to the array
+    clickTimesRef.current.push(clickInterval);
 
-  useEffect(() => {
+    // If there are more than 10 intervals, remove the oldest one
+    if (clickTimesRef.current.length > 10) {
+      clickTimesRef.current.shift();
+    }
+
+    // Check for suspicious patterns
+    const averageClickInterval = clickTimesRef.current.reduce((a, b) => a + b, 0) / clickTimesRef.current.length;
+    //console.log(averageClickInterval);
+    if (averageClickInterval < 120) {
+      alert("Suspicious clicking behavior detected. Please slow down.");
+      return;
+    }
+
+    lastClickTimeRef.current = currentTime;
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    if (tokenCount >= 1000) {
+      setTokenCount(prevCount => Math.max(0, prevCount - 100));
+      setMaxTokenCount(prevMax => Math.min(1000, prevMax + 100));
+      setCountdownPosition({ x, y, show: true, type: '-100' });
+    } else {
+      setTokenCount(prevCount => prevCount + 10);
+      setMaxTokenCount(prevMax => prevMax - 10);
+      setCountdownPosition({ x, y, show: true, type: '+10' });
+    }
+}, [tokenCount, maxTokenCount]);
+
+useEffect(() => {
+  const handleMouseMove = () => {
+    setMouseMovements(prev => prev + 1);
+  };
+
+    window.addEventListener('mousemove', handleMouseMove);
+
+  const interval = setInterval(() => {
+    const currentTime = Date.now();
+    if (currentTime - lastClickTimeRef.current >= 2000) {
+      setTokenCount(prevCount => {
+        if (prevCount > 0) {  // Add this check to prevent tokenCount from going below zero
+          const x = Math.random() * 192; // Random x within the width of the image (192px)
+          const y = 192; // Fixed y position at the bottom of the image
+          setCountdownPosition({ x, y, show: true, type: '-10' });
+          return Math.max(0, prevCount - 10); // Ensure tokenCount doesn't go below zero
+        }
+        return prevCount; // Do nothing if prevCount is already 0
+      });
+      setMaxTokenCount(prevMax => Math.min(1010, prevMax + 10));
+    }
+  }, 2000);
+  
+  return () => {
+    window.removeEventListener('mousemove', handleMouseMove);
+    clearInterval(interval);
+  };
+
+}, [mouseMovements]);
+
+useEffect(() => {
+
+    //return () => clearInterval(interval);
     const loadTapGame = async () => {
       try {
         const gameData = await fetchTapGame(gameId);
@@ -215,15 +276,25 @@ const TapGame: React.FC<{ gameId: number }> = ({ gameId }) => {
     };
 
     loadTapGame();
-  }, [gameId]);
+
+}, [gameId]);
+
 
   if (!tapGame) return <div>Loading...</div>;
 
   return (
     <div className="flex flex-col items-center p-4 h-full">
       <div className="flex-1 w-full p-4 border rounded">
-        <TabContent activeTab={activeTab} tapGame={tapGame} tokenCount={tokenCount} maxTokenCount={maxTokenCount} handleTap={handleTap} countdownPosition={countdownPosition} setCountdownPosition={setCountdownPosition} />
-      </div>
+    <TabContent 
+        activeTab={activeTab} 
+        tapGame={tapGame} 
+        tokenCount={tokenCount} 
+        maxTokenCount={maxTokenCount} 
+        handleTap={handleTap} 
+        countdownPosition={countdownPosition} 
+        setCountdownPosition={setCountdownPosition} 
+    />
+</div>
       <div className="flex space-x-4 mt-4 w-full justify-around">
         <button
           onClick={() => router.push('/myGames')}
