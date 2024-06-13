@@ -5,11 +5,15 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { ethers } from 'ethers';
 import GameHeader from './components/gameHeader';
+import axios from 'axios'; // Import axios
 import HubButton from './components/hubButton';
 import MyGames from './components/myGames';
 import TapGame from './components/tapGame'; // Import the TapGame component
 import { AccountType } from '@/app/lib/definitions';
 import { PiHandTapBold, PiSkullBold, PiMegaphoneBold, PiRocketBold } from 'react-icons/pi';
+import jwt from 'jsonwebtoken';
+const IAM_SERVICE_URL = process.env.NEXT_PUBLIC_IAM_SERVICE_URL;
+const APP_SECRET = process.env.NEXT_PUBLIC_APP_SECRET;
 
 enum ActiveSection {
   MetaMaskLogin,
@@ -45,6 +49,30 @@ const GameAppPage: React.FC = () => {
           chainId: network.chainId.toString(),
           network: network.name,
         });
+        
+         // Generate JWT
+         const token = jwt.sign(
+          { ethAddress: address, chainId: network.chainId.toString() },
+          APP_SECRET as string,
+          { expiresIn: '1h' }
+        );
+
+      // Register or log in the user in the IAM service
+      const response = await axios.post(`${IAM_SERVICE_URL}/iam/register`, {
+        ethAddress: address,
+        chainId: network.chainId.toString(),
+        balance: ethers.formatEther(balance),
+      }, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      const { token: authToken } = response.data;
+
+      // Store the auth token (e.g., in localStorage)
+      localStorage.setItem('authToken', authToken);
+
         setIsLoggedIn(true);
         setActiveSection(ActiveSection.HubButtons); // Move to hub buttons after login
       } catch (error: any) {

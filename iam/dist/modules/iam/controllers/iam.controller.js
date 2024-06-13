@@ -25,6 +25,7 @@ exports.IamController = void 0;
 const common_1 = require("@nestjs/common");
 const iam_service_1 = require("../services/iam.service");
 const user_dto_1 = require("../dto/user.dto");
+const jwt_auth_guard_1 = require("../guards/jwt-auth.guard");
 let IamController = class IamController {
     constructor(iamService) {
         this.iamService = iamService;
@@ -52,6 +53,7 @@ let IamController = class IamController {
 exports.IamController = IamController;
 __decorate([
     (0, common_1.Post)('/register'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     __param(0, (0, common_1.Body)(new common_1.ValidationPipe())),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [user_dto_1.UserInsertDto]),
@@ -65,6 +67,7 @@ __decorate([
 ], IamController.prototype, "getHello", null);
 __decorate([
     (0, common_1.Get)('/loginHistory/:ethAddress'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     __param(0, (0, common_1.Param)('ethAddress')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),

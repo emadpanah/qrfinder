@@ -8,6 +8,7 @@ import { FiUserPlus } from 'react-icons/fi';
 import QRCode from 'qrcode.react';
 import '../../ui/global.css';
 import { pressStart2P } from '../../ui/fonts';
+import Image from 'next/image';
 
 
 enum Tabs {
@@ -95,7 +96,7 @@ const TabContent: React.FC<{ activeTab: Tabs; tapGame: TapGameModel; handleTap: 
 
           <div className="text-sm text-gray-500">{tapGame.title}</div>
           <div onClick={handleClick} className="relative noselect">
-            <img src={tapGame.image} alt={tapGame.title} className="my-4 w-48 h-48 noselect" />
+            <Image src={tapGame.image} alt={tapGame.title} className="my-4 w-48 h-48 noselect" />
             {starPosition.show && starPosition.type === '+10' && (
             <div
                 className="star-animation"

@@ -1,14 +1,16 @@
 // iam/controllers/iam.controller.ts
-import { Controller, Post, Body, ValidationPipe, Get, Param  } from '@nestjs/common';
+import { Controller, Post, Body, ValidationPipe, Get, Param, UseGuards } from '@nestjs/common';
 import { IamService } from '../services/iam.service';
 import { UserDto, UserInsertDto} from '../dto/user.dto'; // Import UserDto
 import { UserLogin } from '../database/schemas/user-login.schema'
+import { JwtAuthGuard } from '../guards/jwt-auth.guard'; // Import the guard
 
 @Controller('iam')
 export class IamController {
   constructor(private readonly iamService: IamService) {}
 
   @Post('/register')
+  @UseGuards(JwtAuthGuard) // Apply the guard
   async register(@Body(new ValidationPipe()) body: UserInsertDto): Promise<{ token: string }> {
     try {
       const token = await this.iamService.registerOrLogin(body);
@@ -26,6 +28,7 @@ export class IamController {
   }
 
   @Get('/loginHistory/:ethAddress')
+  @UseGuards(JwtAuthGuard) // Apply the guard
   async getUserLoginHistory(@Param('ethAddress') ethAddress: string): Promise<UserLogin[]> {
     return this.iamService.getUserLoginHistory(ethAddress);
   }
