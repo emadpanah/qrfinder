@@ -82,17 +82,17 @@ const GameAppPage: React.FC = () => {
             </button>
           </div>
         );
-      case ActiveSection.HubButtons:
-        return (
-          <div className="grid gap-4 pt-4 md:pt-8 lg:pt-12">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <HubButton label="My Games" onClick={() => setActiveSection(ActiveSection.MyGames)} icon={<PiHandTapBold />} />
-              <HubButton label="New Games" onClick={() => setActiveSection(ActiveSection.NewGames)} icon={<PiSkullBold />} />
-              <HubButton label="Referrals" onClick={() => setActiveSection(ActiveSection.Referrals)} icon={<PiMegaphoneBold />} />
-              <HubButton label="Create Game" onClick={() => setActiveSection(ActiveSection.CreateGame)} icon={<PiRocketBold />} />
+        case ActiveSection.HubButtons:
+          return (
+            <div className="grid gap-4 pt-4 md:pt-8 lg:pt-12">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <HubButton label="My Games" onClick={() => setActiveSection(ActiveSection.MyGames)} icon={<PiHandTapBold />} />
+                <HubButton label="New Games" onClick={() => setActiveSection(ActiveSection.NewGames)} icon={<PiSkullBold />} />
+                <HubButton label="4cash Exchange" onClick={() => window.location.href = 'https://4cash.exchange'} icon={<PiMegaphoneBold />} />
+                <HubButton label="Create Game" onClick={() => setActiveSection(ActiveSection.CreateGame)} icon={<PiRocketBold />} />
+              </div>
             </div>
-          </div>
-        );
+          );        
       case ActiveSection.MyGames:
         return <MyGames onGameDoubleClick={handleGameDoubleClick} />;
       case ActiveSection.NewGames:

@@ -7,6 +7,8 @@ import { PiHandTapBold, PiClipboardBold, PiRocketBold, PiChartBarBold, PiArrowLe
 import { FiUserPlus } from 'react-icons/fi';
 import QRCode from 'qrcode.react';
 import '../../ui/global.css';
+import { pressStart2P } from '../../ui/fonts';
+
 
 enum Tabs {
   Ref,
@@ -87,6 +89,10 @@ const TabContent: React.FC<{ activeTab: Tabs; tapGame: TapGameModel; handleTap: 
               {tapGame.title} - {tapGame.needToken} Tokens - Active : {tapGame.activeDate} 
             </div>
           </div>
+          <div className="my-2 bg-yellow-300 w-full flex items-center justify-center" style={{ height: 'calc(0.5 * 192px)' }}>
+            <p className={`${pressStart2P.className} text-center font-bold`}>Advertisement Panel</p>
+          </div>
+
           <div className="text-sm text-gray-500">{tapGame.title}</div>
           <div onClick={handleClick} className="relative noselect">
             <img src={tapGame.image} alt={tapGame.title} className="my-4 w-48 h-48 noselect" />
