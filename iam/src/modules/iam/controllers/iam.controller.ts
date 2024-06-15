@@ -4,15 +4,17 @@ import { IamService } from '../services/iam.service';
 import { UserDto, UserInsertDto} from '../dto/user.dto'; // Import UserDto
 import { UserLogin } from '../database/schemas/user-login.schema'
 import { JwtAuthGuard } from '../guards/jwt-auth.guard'; // Import the guard
+import { Logger } from '@nestjs/common';
 
 @Controller('iam')
 export class IamController {
+  private readonly logger = new Logger(IamService.name);
   constructor(private readonly iamService: IamService) {}
 
-  @Post('/register')
-  @UseGuards(JwtAuthGuard) // Apply the guard
+  @Post('/register') // Apply the guard
   async register(@Body(new ValidationPipe()) body: UserInsertDto): Promise<{ token: string }> {
     try {
+      this.logger.log(`Attempting to register or login user with address:`);
       const token = await this.iamService.registerOrLogin(body);
       return {token};
     } catch (error) {

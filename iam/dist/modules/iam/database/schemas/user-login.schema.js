@@ -15,13 +15,13 @@ let UserLogin = class UserLogin {
 };
 exports.UserLogin = UserLogin;
 __decorate([
-    (0, mongoose_1.Prop)({ unique: true, required: true, minlength: 42, maxlength: 100 }),
-    __metadata("design:type", String)
-], UserLogin.prototype, "ethAddress", void 0);
-__decorate([
-    (0, mongoose_1.Prop)({ required: true }),
+    (0, mongoose_1.Prop)({ unique: true, required: true }),
     __metadata("design:type", String)
 ], UserLogin.prototype, "token", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: true, minlength: 42, maxlength: 100 }),
+    __metadata("design:type", String)
+], UserLogin.prototype, "ethAddress", void 0);
 __decorate([
     (0, mongoose_1.Prop)({ required: true, default: Date.now }),
     __metadata("design:type", Date)

@@ -4,7 +4,7 @@ import { IsString, IsNotEmpty, MaxLength, MinLength, Length, IsDateString } from
 export class UserDto {
   @IsString()
   @IsNotEmpty()
-  @Length(42, 100) // Exact length of an Ethereum address
+  @Length(42, 100) 
   ethAddress: string;
 
   @IsString()
@@ -21,7 +21,7 @@ export class UserDto {
 export class UserInsertDto {
   @IsString()
   @IsNotEmpty()
-  @Length(42, 100) // Exact length of an Ethereum address
+  @Length(42, 100) 
   ethAddress: string;
 
   @IsString()
@@ -30,5 +30,11 @@ export class UserInsertDto {
   @MaxLength(50)
   walletType: string;
 
+  @IsString()
+  @IsNotEmpty()
+  clientSecret: string;
+
 }
+
+
 

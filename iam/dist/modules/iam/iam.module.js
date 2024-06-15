@@ -26,7 +26,7 @@ const iam_repository_1 = require("./database/repositories/iam.repository");
 const user_login_repository_1 = require("./database/repositories/user-login.repository");
 const iam_user_schema_1 = require("./database/schemas/iam-user.schema");
 const user_login_schema_1 = require("./database/schemas/user-login.schema");
-const jwt_auth_guard_1 = require("./guards/jwt-auth.guard");
+const auth_service_1 = require("./services/auth.service");
 let IamModule = class IamModule {
 };
 exports.IamModule = IamModule;
@@ -42,8 +42,9 @@ exports.IamModule = IamModule = __decorate([
                 imports: [config_1.ConfigModule],
                 useFactory: (configService) => __awaiter(void 0, void 0, void 0, function* () {
                     return ({
-                        secret: configService.get('APP_SECRET'),
-                        signOptions: { expiresIn: '1h' },
+                        secret: configService.get('JWT_SECRET') || 'default_app_secret',
+                        signOptions: { expiresIn: '10s' },
+                        global: true,
                     });
                 }),
                 inject: [config_1.ConfigService],
@@ -54,7 +55,7 @@ exports.IamModule = IamModule = __decorate([
             iam_service_1.IamService,
             iam_repository_1.IamRepository,
             user_login_repository_1.UserLoginRepository,
-            jwt_auth_guard_1.JwtAuthGuard,
+            auth_service_1.AuthService
         ],
     })
 ], IamModule);

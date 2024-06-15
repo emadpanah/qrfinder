@@ -23,12 +23,13 @@ const common_1 = require("@nestjs/common");
 const bcrypt = require("bcrypt");
 const iam_repository_1 = require("../database/repositories/iam.repository");
 const user_login_repository_1 = require("../database/repositories/user-login.repository");
+const auth_service_1 = require("./auth.service");
 const jsonwebtoken_1 = require("jsonwebtoken");
-const jsonwebtoken_2 = require("jsonwebtoken");
 let IamService = class IamService {
-    constructor(iamRepository, userLoginRepository) {
+    constructor(iamRepository, userLoginRepository, authService) {
         this.iamRepository = iamRepository;
         this.userLoginRepository = userLoginRepository;
+        this.authService = authService;
         this.tokenSecret = process.env.JWT_SECRET;
     }
     hashPassword(password) {
@@ -39,30 +40,50 @@ let IamService = class IamService {
     }
     registerOrLogin(dto) {
         return __awaiter(this, void 0, void 0, function* () {
-            const user = yield this.iamRepository.findUserByAddress(dto.ethAddress);
-            if (user) {
-                const existingLoginInfo = yield this.userLoginRepository.findLatestLoginByEthAddress(dto.ethAddress);
-                if (existingLoginInfo && this.isTokenValid(existingLoginInfo.token)) {
-                    return existingLoginInfo.token;
+            try {
+                console.log(process.env.NEXT_PUBLIC_APP_SECRET);
+                console.log(dto.clientSecret);
+                if (process.env.NEXT_PUBLIC_APP_SECRET != dto.clientSecret)
+                    throw new common_1.UnauthorizedException();
+                console.log('register');
+                const user = yield this.iamRepository.findUserByAddress(dto.ethAddress);
+                if (user) {
+                    console.log('old user');
+                    const existingLoginInfo = yield this.userLoginRepository.findLatestLoginByEthAddress(dto.ethAddress);
+                    if (existingLoginInfo) {
+                        try {
+                            console.log('existingLoginInfo : ' + existingLoginInfo.token);
+                            yield this.authService.verifyJwt(existingLoginInfo.token, existingLoginInfo.ethAddress);
+                            return existingLoginInfo.token;
+                        }
+                        catch (error) {
+                            if (error instanceof jsonwebtoken_1.TokenExpiredError) {
+                                console.log('Token expired, generating new token');
+                                const newToken = yield this.authService.generateJwt(dto.ethAddress);
+                                console.log(newToken);
+                                yield this.userLoginRepository.createLogin(dto.ethAddress, newToken);
+                                return newToken;
+                            }
+                            else {
+                                throw error;
+                            }
+                        }
+                    }
+                    console.log('new token');
+                    const newToken = yield this.authService.generateJwt(dto.ethAddress);
+                    yield this.userLoginRepository.createLogin(dto.ethAddress, newToken);
+                    return newToken;
                 }
-                const newToken = (0, jsonwebtoken_1.sign)({ ethAddress: dto.ethAddress }, this.tokenSecret, { expiresIn: '5h' });
-                yield this.userLoginRepository.createLogin(dto.ethAddress, newToken);
-                return newToken;
+                console.log('new user');
+                yield this.iamRepository.createUser(dto);
+                const token = yield this.authService.generateJwt(dto.ethAddress);
+                yield this.userLoginRepository.createLogin(dto.ethAddress, token);
+                return token;
             }
-            yield this.iamRepository.createUser(dto);
-            const token = (0, jsonwebtoken_1.sign)({ ethAddress: dto.ethAddress }, this.tokenSecret, { expiresIn: '5h' });
-            yield this.userLoginRepository.createLogin(dto.ethAddress, token);
-            return token;
+            catch (error) {
+                throw error;
+            }
         });
-    }
-    isTokenValid(token) {
-        try {
-            (0, jsonwebtoken_2.verify)(token, this.tokenSecret);
-            return true;
-        }
-        catch (error) {
-            return false;
-        }
     }
     getUserLoginHistory(ethAddress) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -77,6 +98,6 @@ exports.IamService = IamService;
 exports.IamService = IamService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [iam_repository_1.IamRepository,
-        user_login_repository_1.UserLoginRepository])
+        user_login_repository_1.UserLoginRepository, auth_service_1.AuthService])
 ], IamService);
 //# sourceMappingURL=iam.service.js.map

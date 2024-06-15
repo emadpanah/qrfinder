@@ -25,8 +25,8 @@
 import { Document } from 'mongoose';
 export type UserLoginDocument = UserLogin & Document;
 export declare class UserLogin {
-    ethAddress: string;
     token: string;
+    ethAddress: string;
     loginDate: Date;
 }
 export declare const UserLoginSchema: import("mongoose").Schema<UserLogin, import("mongoose").Model<UserLogin, any, any, any, Document<unknown, any, UserLogin> & UserLogin & {

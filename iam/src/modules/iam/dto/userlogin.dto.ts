@@ -1,7 +1,7 @@
 // user.dto.ts
 import { IsString, IsNotEmpty, MaxLength, MinLength, Length, IsDateString } from 'class-validator';
 
-export class UserDto {
+export class UserLoginDto {
   @IsString()
   @IsNotEmpty()
   @Length(42, 100) // Exact length of an Ethereum address
@@ -17,4 +17,3 @@ export class UserDto {
   @IsNotEmpty()
   createdDate: string;
 }
-

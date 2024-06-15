@@ -13,7 +13,7 @@ import { AccountType } from '@/app/lib/definitions';
 import { PiHandTapBold, PiSkullBold, PiMegaphoneBold, PiRocketBold } from 'react-icons/pi';
 import jwt from 'jsonwebtoken';
 const IAM_SERVICE_URL = process.env.NEXT_PUBLIC_IAM_SERVICE_URL;
-const APP_SECRET = process.env.NEXT_PUBLIC_APP_SECRET;
+const APP_SECRET = process.env.NEXT_PUBLIC_APP_SECRET || 'default_app_secret'; // Use a default value if the environment variable is not set
 
 enum ActiveSection {
   MetaMaskLogin,
@@ -33,6 +33,7 @@ const GameAppPage: React.FC = () => {
   const [selectedGameId, setSelectedGameId] = useState<number | null>(null);
 
   async function checkMetaMask() {
+    //console.log('checkmeta');
     const ethereum = window.ethereum;
     if (typeof ethereum !== 'undefined') {
       try {
@@ -40,6 +41,7 @@ const GameAppPage: React.FC = () => {
           method: 'eth_requestAccounts',
         });
         const address = accounts[0];
+        console.log(address);
         const provider = new ethers.BrowserProvider(ethereum);
         const balance = await provider.getBalance(address);
         const network = await provider.getNetwork();
@@ -49,34 +51,23 @@ const GameAppPage: React.FC = () => {
           chainId: network.chainId.toString(),
           network: network.name,
         });
-        
-         // Generate JWT
-         const token = jwt.sign(
-          { ethAddress: address, chainId: network.chainId.toString() },
-          APP_SECRET as string,
-          { expiresIn: '1h' }
-        );
-
+       
       // Register or log in the user in the IAM service
       const response = await axios.post(`${IAM_SERVICE_URL}/iam/register`, {
         ethAddress: address,
-        chainId: network.chainId.toString(),
-        balance: ethers.formatEther(balance),
-      }, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        walletType:'metamask',
+        clientSecret: APP_SECRET
       });
 
       const { token: authToken } = response.data;
-
+      //console.log(authToken);
       // Store the auth token (e.g., in localStorage)
       localStorage.setItem('authToken', authToken);
 
         setIsLoggedIn(true);
         setActiveSection(ActiveSection.HubButtons); // Move to hub buttons after login
       } catch (error: any) {
-        alert(`Please log in MetaMask`);
+        alert(`Please log in MetaMask - `+ error);
       }
     } else {
       alert('MetaMask not installed');

@@ -48,4 +48,9 @@ __decorate([
     (0, class_validator_1.MaxLength)(50),
     __metadata("design:type", String)
 ], UserInsertDto.prototype, "walletType", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], UserInsertDto.prototype, "clientSecret", void 0);
 //# sourceMappingURL=user.dto.js.map

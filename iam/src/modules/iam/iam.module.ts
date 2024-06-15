@@ -10,6 +10,7 @@ import { UserLoginRepository } from './database/repositories/user-login.reposito
 import { IAMUser, IAMUserSchema } from './database/schemas/iam-user.schema';
 import { UserLogin, UserLoginSchema } from './database/schemas/user-login.schema';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { AuthService } from './services/auth.service';
 
 @Module({
   imports: [
@@ -21,8 +22,9 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
-        secret: configService.get<string>('APP_SECRET'),
-        signOptions: { expiresIn: '1h' },
+        secret: configService.get<string>('JWT_SECRET')|| 'default_app_secret',
+        signOptions: { expiresIn: '10s' },
+        global: true,
       }),
       inject: [ConfigService],
     }),
@@ -32,7 +34,8 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
     IamService,
     IamRepository,
     UserLoginRepository,
-    JwtAuthGuard,
+    //JwtAuthGuard,
+    AuthService
   ],
 })
 export class IamModule {}

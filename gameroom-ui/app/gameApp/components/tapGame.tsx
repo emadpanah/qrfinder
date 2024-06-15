@@ -86,7 +86,7 @@ const TabContent: React.FC<{ activeTab: Tabs; tapGame: TapGameModel; handleTap: 
       {activeTab === Tabs.Tap && (
         <div className="flex flex-col items-center relative">
           <div className="ticker-wrapper">
-            <div className="ticker">
+            <div  className={'${pressStart2P.className} ticker '}>
               {tapGame.title} - {tapGame.needToken} Tokens - Active : {tapGame.activeDate} 
             </div>
           </div>

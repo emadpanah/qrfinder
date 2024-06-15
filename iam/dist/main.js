@@ -13,6 +13,7 @@ const core_1 = require("@nestjs/core");
 const common_1 = require("@nestjs/common");
 const winston_1 = require("winston");
 const nest_winston_1 = require("nest-winston");
+const config_1 = require("@nestjs/config");
 const app_module_1 = require("./app.module");
 function bootstrap() {
     return __awaiter(this, void 0, void 0, function* () {
@@ -33,6 +34,12 @@ function bootstrap() {
             }),
         });
         app.useGlobalPipes(new common_1.ValidationPipe({ transform: true }));
+        const configService = app.get(config_1.ConfigService);
+        app.enableCors({
+            origin: configService.get('CORS_ORIGIN'),
+            methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+            credentials: true,
+        });
         yield app.listen(process.env.PORT);
     });
 }

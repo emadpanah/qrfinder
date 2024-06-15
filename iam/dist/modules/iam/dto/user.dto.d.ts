@@ -6,4 +6,5 @@ export declare class UserDto {
 export declare class UserInsertDto {
     ethAddress: string;
     walletType: string;
+    clientSecret: string;
 }
