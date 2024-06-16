@@ -51,6 +51,16 @@ const GameAppPage: React.FC = () => {
           chainId: network.chainId.toString(),
           network: network.name,
         });
+
+        // const signResult = await ethereum.request({
+        //   method: 'personal_sign',
+        //   params: ['test msg', address],
+        // });
+
+        // console.log('signResult : ' + signResult);
+
+        
+
        
       // Register or log in the user in the IAM service
       const response = await axios.post(`${IAM_SERVICE_URL}/iam/register`, {
@@ -59,15 +69,33 @@ const GameAppPage: React.FC = () => {
         clientSecret: APP_SECRET
       });
 
-      const { token: authToken } = response.data;
+      const { token: authToken, isNewToken } = response.data;
       console.log(authToken);
       // Store the auth token (e.g., in localStorage)
       localStorage.setItem('authToken', authToken);
+      if(isNewToken)
+        {
+            const per =
+          await window.ethereum.request({
+            "method": "wallet_requestPermissions",
+            "params": [
+              {
+                "eth_accounts": {address}
+              }
+            ]
+          }); 
+        }
 
         setIsLoggedIn(true);
         setActiveSection(ActiveSection.HubButtons); // Move to hub buttons after login
       } catch (error: any) {
-        alert(`Please log in MetaMask - `+ error);
+        if(error.code == 4001)
+          {
+            alert('Please confirm on MetaMask');
+            checkMetaMask();
+            return;
+          }
+        alert(`Please log in MetaMask - `+ error.code);
       }
     } else {
       alert('MetaMask not installed');

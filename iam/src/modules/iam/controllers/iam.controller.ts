@@ -12,11 +12,10 @@ export class IamController {
   constructor(private readonly iamService: IamService) {}
 
   @Post('/register') // Apply the guard
-  async register(@Body(new ValidationPipe()) body: UserInsertDto): Promise<{ token: string }> {
+  async register(@Body(new ValidationPipe()) body: UserInsertDto): Promise<{ token: string, isNewToken: boolean }> {
     try {
-      this.logger.log(`Attempting to register or login user with address:`);
       const token = await this.iamService.registerOrLogin(body);
-      return {token};
+      return { token: token.token, isNewToken: token.isNewToken };
     } catch (error) {
       // Log the error or handle it as necessary
       throw error; // Re-throw the error for NestJS to handle
