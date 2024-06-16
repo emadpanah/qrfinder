@@ -26,7 +26,7 @@ export class IamController {
 
   @Post('/getHello')
   getHello(): string {
-    return this.iamService.getHello();
+    return this.iamService.getHello(); 
   }
 
   @Get('/loginHistory/:ethAddress')
