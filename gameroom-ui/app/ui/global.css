@@ -1,17 +1,30 @@
+/* app/ui/global.css */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer utilities {
+  .text-black {
+    color: #000000; /* Define the custom class for text-black */
+  }
+}
+
+/* Additional custom styles */
+body.light {
+  @apply bg-white text-black;
+}
+
+
+body.dark {
+  @apply bg-gray-900 text-white;
+}
 
 input[type='number'] {
   -moz-appearance: textfield;
   appearance: textfield;
 }
 
-input[type='number']::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-
+input[type='number']::-webkit-inner-spin-button,
 input[type='number']::-webkit-outer-spin-button {
   -webkit-appearance: none;
   margin: 0;

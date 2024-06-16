@@ -15,7 +15,7 @@ export class AuthService {
         iat: Math.floor(Date.now() / 1000), // Issued at time
       };
       return this.jwtService.sign(payload,{secret: secret,
-        expiresIn: '10s',});
+        expiresIn: '120s',});
   }
 
   async verifyJwt(token: string, ethAddress: string): Promise<any> {

@@ -60,7 +60,7 @@ const GameAppPage: React.FC = () => {
       });
 
       const { token: authToken } = response.data;
-      //console.log(authToken);
+      console.log(authToken);
       // Store the auth token (e.g., in localStorage)
       localStorage.setItem('authToken', authToken);
 
