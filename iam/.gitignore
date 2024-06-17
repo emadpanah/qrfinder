@@ -10,3 +10,5 @@
 # local logs
 # Ignore the logs directory and its contents
 logs/
+
+/dist
