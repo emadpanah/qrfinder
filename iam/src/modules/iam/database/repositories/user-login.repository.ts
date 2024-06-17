@@ -39,7 +39,7 @@ export class UserLoginRepository {
     );
 
     const userlogins = await collection.findOne({ ethAddress: searchEthAddress },
-      { sort: { loginDate: -1 } });
+      { sort: { createdDate: -1 } });
   
     return userlogins;
   }
