@@ -1,0 +1,32 @@
+@import url('https://fonts.googleapis.com/css2?family=Fantasy&display=swap');
+
+@keyframes colorChange {
+  0% {
+    color: red;
+  }
+  50% {
+    color: green;
+  }
+  100% {
+    color: red;
+  }
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  text-align: center;
+}
+
+.title {
+  font-family: 'Fantasy', cursive;
+  font-size: 2em;
+  animation: colorChange 2s infinite;
+}
+
+.qrCode {
+  margin-top: 20px;
+}

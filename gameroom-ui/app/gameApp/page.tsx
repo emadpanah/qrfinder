@@ -41,7 +41,6 @@ const GameAppPage: React.FC = () => {
           method: 'eth_requestAccounts',
         });
         const address = accounts[0];
-        console.log(address);
         const provider = new ethers.BrowserProvider(ethereum);
         const balance = await provider.getBalance(address);
         const network = await provider.getNetwork();
@@ -70,7 +69,6 @@ const GameAppPage: React.FC = () => {
       });
 
       const { token: authToken, isNewToken } = response.data;
-      console.log(authToken);
       // Store the auth token (e.g., in localStorage)
       localStorage.setItem('authToken', authToken);
       if(isNewToken)
