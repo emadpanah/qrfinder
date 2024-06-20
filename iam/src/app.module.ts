@@ -6,6 +6,7 @@ import { IamModule } from './modules/iam/iam.module';
 import { HttpLoggerInterceptor } from './shared/inetrceptors/http-logger.interceptor';
 import { config } from './shared/config/config';
 import { MongooseModule } from '@nestjs/mongoose';
+import { BotModule } from './modules/bot/bot.module';
 
 @Module({
   imports: [
@@ -22,7 +23,7 @@ import { MongooseModule } from '@nestjs/mongoose';
       inject: [ConfigService],
     }),
     IamModule,
-  
+    BotModule
   ],
   controllers: [],
   providers: [{ provide: APP_INTERCEPTOR, useClass: HttpLoggerInterceptor }],

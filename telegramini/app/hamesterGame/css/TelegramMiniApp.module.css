@@ -2,13 +2,13 @@
 
 @keyframes colorChange {
   0% {
-    color: red;
+    color: rgb(0, 66, 247);
   }
   50% {
-    color: green;
+    color: rgb(0, 253, 42);
   }
   100% {
-    color: red;
+    color: rgb(255, 0, 0);
   }
 }
 
@@ -22,9 +22,8 @@
 }
 
 .title {
-  font-family: 'Fantasy', cursive;
-  font-size: 2em;
   animation: colorChange 2s infinite;
+  font-size: 40px;
 }
 
 .qrCode {

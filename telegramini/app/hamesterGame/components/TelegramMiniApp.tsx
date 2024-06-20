@@ -7,6 +7,7 @@ import styles from '../../hamesterGame/css/TelegramMiniApp.module.css';
 
 import React, { useEffect } from 'react';
 import  QRCode  from 'qrcode.react';
+import { noto } from '@/public/fonts';
 
 const TelegramMiniApp: React.FC = () => {
   useEffect(() => {
@@ -23,8 +24,8 @@ const TelegramMiniApp: React.FC = () => {
 
   return (
     <div className={styles.container}>
-      <h1 className={styles.title}>Welcome to Telegram Mini App</h1>
-      <div className={styles.qrCode}>
+       <h1 className={`${styles.title} ${noto.className}  `}>ハムスター テレグラム ミニアプリへようこそ</h1>
+     <div className={styles.qrCode}>
         <QRCode value="https://farschain.com" size={256} />
       </div>
     </div>

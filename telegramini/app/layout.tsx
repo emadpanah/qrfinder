@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { inter } from "../public/fonts";
+import { noto } from "../public/fonts";
 import '../app/globals.css';
 
 export const metadata: Metadata = {
@@ -15,7 +15,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       
-      <body className={inter.className}>{children}</body>
+      <body className={noto.className}>{children}</body>
     </html>
   );
 }
