@@ -13,9 +13,9 @@ export class BotService implements OnModuleInit {
   onModuleInit() {
     this.bot.onText(/\/start/, (msg) => {
       const chatId = msg.chat.id;
-      this.bot.sendMessage(chatId, 'Open Mini App', {
+      this.bot.sendMessage(chatId, 'در صورتی که از بازار کریپتو جامانده اید و احساس می کنید برای ورود به این بازار دیر کرده اید، ما یه شانس مجدد در اختیار شما قرار خواهیم داد، با در یافت توکن ما شانس جدیدی برای سرمایه گزاری در اختیار دارید', {
         reply_markup: {
-          inline_keyboard: [[{ text: 'Open Mini App', web_app: { url: 'https://t.farschain.com' } }]],
+          inline_keyboard: [[{ text: 'شروع بازی', web_app: { url: 'https://t.farschain.com' } }]],
         },
       });
     });

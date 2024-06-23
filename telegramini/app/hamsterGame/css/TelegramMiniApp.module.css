@@ -1,0 +1,75 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap');
+
+@keyframes colorChange {
+  0% {
+    color: rgb(0, 66, 247);
+  }
+  50% {
+    color: rgb(0, 253, 42);
+  }
+  100% {
+    color: rgb(255, 0, 0);
+  }
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  text-align: center;
+}
+
+.containerItems {
+  text-align: -webkit-center;
+}
+
+.title {
+  animation: colorChange 2s infinite;
+}
+
+.qrCode {
+  margin-top: 20px;
+}
+
+.button {
+  margin-top: 20px;
+  padding: 10px 20px;
+  font-size: 1.2em;
+  background-color: #4CAF50; /* Green */
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.button:hover {
+  background-color: #45a049;
+}
+
+.telegramId {
+  margin-bottom: 20px;
+  font-size: 1.2em;
+  color: #333;
+}
+
+.tokens {
+  margin-bottom: 20px;
+  font-size: 1.2em;
+  color: #333;
+}
+
+.coinImage {
+  width: 200px;
+  height: 200px;
+  margin-top: 20px;
+}
+
+.loading {
+  font-size: 1.5em;
+  color: #333;
+  height: 200px;
+  padding-top: 100px;
+}
+

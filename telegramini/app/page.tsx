@@ -1,7 +1,7 @@
 
 
 import React from 'react';
-import TelegramMiniApp from '../app/hamesterGame/components/TelegramMiniApp';
+import TelegramMiniApp from './hamsterGame/components/TelegramMiniApp';
 
 const HomePage: React.FC = () => {
   return (

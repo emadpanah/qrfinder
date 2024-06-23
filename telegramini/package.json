@@ -9,11 +9,17 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@tonconnect/sdk": "^3.0.3",
+    "@tonconnect/ui": "^2.0.5",
+    "@tonconnect/ui-react": "^2.0.5",
     "next": "14.2.4",
     "qrcode.react": "^3.1.0",
     "react": "^18",
     "react-dom": "^18",
-    "react-icons": "^5.2.1"
+    "react-icons": "^5.2.1",
+    "ton": "^13.9.0",
+    "ton-core": "^0.53.0",
+    "ton-crypto": "^3.2.0"
   },
   "devDependencies": {
     "@types/node": "^20",
