@@ -1,11 +1,8 @@
 // iam/database/repositories/iam.repository.ts
 import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
 import { InjectConnection } from '@nestjs/mongoose';
-import { Model, Connection } from 'mongoose';
-import { IAMUser, IAMUserDocument } from '../schemas/iam-user.schema';
-import { v4 as uuidv4 } from 'uuid';
-import { UserDto, UserInsertDto } from '../../dto/user.dto'; 
+import { Connection } from 'mongoose';
+import {  UserInsertDto } from '../../dto/user.dto'; 
 
 @Injectable()
 export class IamRepository {
@@ -16,7 +13,6 @@ export class IamRepository {
   async createUser(dto: UserInsertDto): Promise<any> {
     const collection = this.connection.collection('_iamusers'
     );
-    const userId = uuidv4(); // Generate UUID for userId
     await collection.insertOne({
       ethAddress: dto.ethAddress,
       walletType: dto.walletType,

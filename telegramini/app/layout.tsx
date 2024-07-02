@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { byekan } from "../public/fonts";
+import { byekan, inter } from "../public/fonts";
 import '../app/globals.css';
 
 export const metadata: Metadata = {
@@ -15,7 +15,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       
-      <body className={byekan.className}>{children}</body>
+      <body className={inter.className}>{children}</body>
     </html>
   );
 }

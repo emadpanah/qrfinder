@@ -7,17 +7,21 @@ export class BotService implements OnModuleInit {
   private readonly bot: TelegramBot;
 
   constructor() {
-    this.bot = new TelegramBot('7361197724:AAFeAvuqnid2Fdg3xtZOFUNs0P5yjXpOqOs', { polling: true });
+    this.bot = new TelegramBot('6879591689:AAErBS8Z3JEsO7kZZ9xBrpv7E1Tutu1v2YM', { polling: true });
   }
 
   onModuleInit() {
     this.bot.onText(/\/start/, (msg) => {
-      const chatId = msg.chat.id;
-      this.bot.sendMessage(chatId, 'در صورتی که از بازار کریپتو جامانده اید و احساس می کنید برای ورود به این بازار دیر کرده اید، ما یه شانس مجدد در اختیار شما قرار خواهیم داد، با در یافت توکن ما شانس جدیدی برای سرمایه گزاری در اختیار دارید', {
-        reply_markup: {
-          inline_keyboard: [[{ text: 'شروع بازی', web_app: { url: 'https://t.farschain.com' } }]],
-        },
-      });
+        const chatId = msg.chat.id;
+        this.bot.sendMessage(chatId, 'If you have missed the cryptocurrency market and feel that it is too late to enter, we will give you another chance. By receiving our token, you will have a new opportunity to invest.', {
+            reply_markup: {
+                inline_keyboard: [
+                    [{ text: 'Launch ICO Site', web_app: { url: 'https://4bridges.ch/en/porsche-cayman-token/' } }],
+                    [{ text: 'Launch Game', web_app: { url: 'https://t.farschain.com' } }]
+                ]
+            }
+        });
     });
-  }
+}
+
 }

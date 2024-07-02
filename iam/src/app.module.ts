@@ -7,6 +7,7 @@ import { HttpLoggerInterceptor } from './shared/inetrceptors/http-logger.interce
 import { config } from './shared/config/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { BotModule } from './modules/bot/bot.module';
+import { ProductModule } from './modules/product/product.module';
 
 @Module({
   imports: [
@@ -23,7 +24,8 @@ import { BotModule } from './modules/bot/bot.module';
       inject: [ConfigService],
     }),
     IamModule,
-    BotModule
+    BotModule,
+    ProductModule,
   ],
   controllers: [],
   providers: [{ provide: APP_INTERCEPTOR, useClass: HttpLoggerInterceptor }],
