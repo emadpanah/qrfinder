@@ -3,7 +3,6 @@ import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
 import { ProductDto } from '../../../product/dto/product.dto';
 
-
 @Injectable()
 export class RedisRepository {
   private redis: Redis;
@@ -22,17 +21,13 @@ export class RedisRepository {
 
   async getProducts(): Promise<ProductDto[]> {
     const productData = await this.get(
-    //"philippiTelegramProducts"
-    "philippiget_Products_by_page_count__602f53ca0d-294c-4abc-a6f2-dbc3ef8181ec200000000"    
+      //"philippiTelegramProducts"
+      // 'philippiget_Products_by_page_count__602f53ca0d-294c-4abc-a6f2-dbc3ef8181ec200000000',
+      'philippiget_Products_by_page_count__6762f53ca0d-294c-4abc-a6f2-dbc3ef8181ec200000000'
     );
     if (productData) {
-      return JSON.parse(productData) as ProductDto[];
+      return JSON.parse(JSON.parse(productData)) as ProductDto[];
     }
     return [];
   }
-
-
-
-
 }
-
