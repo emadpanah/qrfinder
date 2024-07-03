@@ -32,11 +32,12 @@ export class ChatGptBotService implements OnModuleInit {
     const products = this.getProductsList();
     const stream = await this.openai.chat.completions.create({
       "messages": [
-        { role: "system", content: "You are a helpful assistant and help to find Melika " },
+        { role: "system", content: "You are a helpful assistant and help to find good product " },
         { role: "system", content: "Cayman token is new Ton jeton token." },
         { role: "system", content: "This bot is owned by 4Cash company." },
         { role: "system", content: "We are 4Cash company, providing excellent services in web3." },
         { role: "system", content: "Emad Panah is CTO in 4cash exchange" },
+        //{ role: 'user', content: `Here is the list of available products:\n${productsListString}` },
         {
         "role": "user",
         "content": prompt
@@ -59,7 +60,7 @@ export class ChatGptBotService implements OnModuleInit {
   //   process.stdout.write(chunk.choices[0]?.delta?.content || '');
   //   // return chunk.choices[0]?.delta?.content;
   // }
-  
+
     } catch (error) {
       console.error('Error fetching response from ChatGPT:', error);
       return 'Error fetching response from ChatGPT.';
