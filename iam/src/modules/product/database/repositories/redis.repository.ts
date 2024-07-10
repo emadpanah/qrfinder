@@ -23,7 +23,7 @@ export class RedisRepository {
     const productData = await this.get(
       //"philippiTelegramProducts"
       // 'philippiget_Products_by_page_count__602f53ca0d-294c-4abc-a6f2-dbc3ef8181ec200000000',
-      'philippiget_Products_by_page_count__6762f53ca0d-294c-4abc-a6f2-dbc3ef8181ec200000000'
+      'TelegramProducts'
     );
     if (productData) {
       return JSON.parse(JSON.parse(productData)) as ProductDto[];
