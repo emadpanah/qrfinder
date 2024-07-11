@@ -8,6 +8,7 @@ import { config } from './shared/config/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { BotModule } from './modules/bot/bot.module';
 import { ProductModule } from './modules/product/product.module';
+import { QRModule } from './modules/qr/qr.module';  
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { ProductModule } from './modules/product/product.module';
     IamModule,
     BotModule,
     ProductModule,
+    QRModule,
   ],
   controllers: [],
   providers: [{ provide: APP_INTERCEPTOR, useClass: HttpLoggerInterceptor }],
