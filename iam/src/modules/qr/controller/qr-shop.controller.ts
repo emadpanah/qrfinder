@@ -1,6 +1,6 @@
 import { Controller, Post, Body, Get, Param, ValidationPipe } from '@nestjs/common';
 import { ShopService } from '../services/qr-shop.service';
-import { ShopDto, ShopInsertDto } from '../dto/shop.dto';
+import { ShopDto } from '../dto/shop.dto';
 import { Logger } from '@nestjs/common';
 
 @Controller('shops')
@@ -10,7 +10,7 @@ export class ShopController {
   constructor(private readonly shopService: ShopService) {}
 
   @Post('/create')
-  async createShop(@Body(new ValidationPipe()) body: ShopInsertDto): Promise<ShopDto> {
+  async createShop(@Body(new ValidationPipe()) body: ShopDto): Promise<ShopDto> {
     try {
       const shop = await this.shopService.createShop(body);
       return shop;

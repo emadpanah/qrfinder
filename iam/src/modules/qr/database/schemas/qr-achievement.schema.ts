@@ -5,7 +5,11 @@ export type AchievementDocument = Achievement & Document;
 
 @Schema({ collection: '_qrachievements' })
 export class Achievement {
-  @Prop({ type: Types.ObjectId, ref: 'Campaign', required: true })
+
+  @Prop({ type: Types.ObjectId, auto: true })
+  Id: Types.ObjectId;
+
+  @Prop({ type: Types.ObjectId, required: true })
   campaignId: Types.ObjectId;
 
   @Prop({ required: true })
@@ -15,12 +19,12 @@ export class Achievement {
   description: string;
 
   @Prop({ required: true })
-  type: 'ordered' | 'unordered'; // Type of achievement
+  type: 'ordered' | 'unordered';
 
   @Prop({ required: true })
   target: number;
 
-  @Prop({ required: true })
+  @Prop({ type: Object, required: true })
   reward: {
     tokens: number;
     products: string[];
@@ -29,11 +33,14 @@ export class Achievement {
   @Prop({ required: true })
   expirationDate: Date;
 
-  @Prop({ required: true })
+  @Prop({
+    type: Object,
+    required: true,
+  })
   expectedLocation: {
     lat: number;
     lon: number;
-    allowedRange: number; // in meters
+    allowedRange: number;
   };
 }
 

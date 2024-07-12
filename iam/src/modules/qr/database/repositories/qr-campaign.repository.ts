@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectConnection } from '@nestjs/mongoose';
 import { Connection, Types } from 'mongoose';
-import { CampaignInsertDto } from '../../dto/campaign.dto';
+import { CampaignDto } from '../../dto/campaign.dto';
 
 @Injectable()
 export class CampaignRepository {
@@ -9,7 +9,7 @@ export class CampaignRepository {
     @InjectConnection('service') private connection: Connection
   ) {}
 
-  async createCampaign(dto: CampaignInsertDto): Promise<any> {
+  async createCampaign(dto: CampaignDto): Promise<any> {
     const collection = this.connection.collection('_qrcampaigns');
     await collection.insertOne(dto);
     const campaign = await collection.findOne({ name: dto.name });

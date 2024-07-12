@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectConnection } from '@nestjs/mongoose';
 import { Connection, Types } from 'mongoose';
-import { ShopInsertDto } from '../../dto/shop.dto';
+import { ShopDto } from '../../dto/shop.dto';
 
 @Injectable()
 export class ShopRepository {
@@ -9,7 +9,7 @@ export class ShopRepository {
     @InjectConnection('service') private connection: Connection
   ) {}
 
-  async createShop(dto: ShopInsertDto): Promise<any> {
+  async createShop(dto: ShopDto): Promise<any> {
     const collection = this.connection.collection('_qrshops');
     await collection.insertOne(dto);
     const shop = await collection.findOne({ name: dto.name });

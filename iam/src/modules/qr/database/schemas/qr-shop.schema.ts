@@ -5,6 +5,9 @@ export type ShopDocument = Shop & Document;
 
 @Schema({ collection: '_qrshops' })
 export class Shop {
+  @Prop({ type: Types.ObjectId, auto: true })
+  Id: Types.ObjectId;
+
   @Prop({ required: true })
   name: string;
 

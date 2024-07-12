@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ShopService } from './services/qr-shop.service';
+import { QRService } from './services/qr.service';
 import { ShopController } from './controller/qr-shop.controller';
 import { ShopRepository } from './database/repositories/qr-shop.repository';
 import { Shop, ShopSchema } from './database/schemas/qr-shop.schema';
@@ -24,6 +25,6 @@ import { Achievement, AchievementSchema } from './database/schemas/qr-achievemen
     ], 'service'),
   ],
   controllers: [ShopController, CampaignController, AchievementController],
-  providers: [ShopService, ShopRepository, CampaignService, CampaignRepository, AchievementService, AchievementRepository],
+  providers: [QRService, ShopService, ShopRepository, CampaignService, CampaignRepository, AchievementService, AchievementRepository],
 })
 export class QRModule {}

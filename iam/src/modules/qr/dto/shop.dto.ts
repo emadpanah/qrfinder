@@ -1,20 +1,11 @@
+// shop.dto.ts
 import { IsString, IsNotEmpty, IsArray } from 'class-validator';
 import { Types } from 'mongoose';
-
 export class ShopDto {
   @IsString()
   @IsNotEmpty()
-  name: string;
+  Id: Types.ObjectId;
 
-  @IsString()
-  @IsNotEmpty()
-  description: string;
-
-  @IsArray()
-  campaigns: Types.ObjectId[];
-}
-
-export class ShopInsertDto {
   @IsString()
   @IsNotEmpty()
   name: string;
@@ -24,5 +15,5 @@ export class ShopInsertDto {
   description: string;
 
   @IsArray()
-  campaigns: Types.ObjectId[];
+  campaigns: string[];
 }
