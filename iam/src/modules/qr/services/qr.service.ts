@@ -1,10 +1,8 @@
-// src/modules/qr/services/qr.service.ts
 import { Injectable } from '@nestjs/common';
 import { AchievementRepository } from '../database/repositories/qr-achievement.repository';
 import { Achievement } from '../database/schemas/qr-achievement.schema';
 import * as QRCode from 'qrcode';
 import { Types } from 'mongoose';
-import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class QRService {
@@ -18,11 +16,12 @@ export class QRService {
 
     // Save QR Code in the database
     await this.achievementRepository.saveQRCode({
-      Id:  new Types.ObjectId(),
+      Id: new Types.ObjectId(),
       achievementId: new Types.ObjectId(achievementId),
       code: qrCode,
       latitude: 0, // Replace with actual latitude
       longitude: 0, // Replace with actual longitude
+      order: qrIndex,
       expirationDate: new Date(new Date().setMonth(new Date().getMonth() + 2)),
     });
 
@@ -42,7 +41,6 @@ export class QRService {
 
     if (achievement.type === 'ordered') {
       // Check if the scan order is correct
-      // Assume a method to get user progress exists
       const userProgress = await this.getUserProgress(userId, new Types.ObjectId(achievementId));
       if (userProgress && userProgress.currentStep !== qrIndex - 1) {
         throw new Error('Incorrect QR scan order');

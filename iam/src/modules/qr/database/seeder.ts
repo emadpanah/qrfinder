@@ -7,7 +7,6 @@ import { QRService } from '../services/qr.service';
 import { ShopDto } from '../dto/shop.dto';
 import { CampaignDto } from '../dto/campaign.dto';
 import { AchievementDto } from '../dto/achievement.dto';
-import { v4 as uuidv4 } from 'uuid';
 import { Types } from 'mongoose';
 
 async function bootstrap() {
@@ -75,9 +74,9 @@ async function bootstrap() {
     },
   };
 
-  const caymanAchievement: AchievementDto = {
+  const caymanAchievementUnordered: AchievementDto = {
     Id: new Types.ObjectId(),
-    name: 'Cayman Token QR Hunt',
+    name: 'Cayman Token QR Hunt (Unordered)',
     description: 'Scan 10 QR codes to earn 2000 tokens.',
     campaignId: createdCaymanCampaign.Id,
     type: 'unordered',
@@ -91,8 +90,25 @@ async function bootstrap() {
     },
   };
 
+  const caymanAchievementOrdered: AchievementDto = {
+    Id: new Types.ObjectId(),
+    name: 'Cayman Token QR Hunt (Ordered)',
+    description: 'Scan 10 QR codes in the specified order to earn 2000 tokens.',
+    campaignId: createdCaymanCampaign.Id,
+    type: 'ordered',
+    target: 10,
+    reward: { tokens: 2000, products: [] },
+    expirationDate: new Date(new Date().setMonth(new Date().getMonth() + 2)),
+    expectedLocation: {
+      lat: 0, // replace with actual latitude
+      lon: 0, // replace with actual longitude
+      allowedRange: 1000,
+    },
+  };
+
   const createdMaghaziAchievement = await achievementService.createAchievement(maghaziAchievement);
-  const createdCaymanAchievement = await achievementService.createAchievement(caymanAchievement);
+  const createdCaymanAchievementUnordered = await achievementService.createAchievement(caymanAchievementUnordered);
+  const createdCaymanAchievementOrdered = await achievementService.createAchievement(caymanAchievementOrdered);
 
   // Generate QR codes for Maghazi Achievement
   for (let i = 1; i <= maghaziAchievement.target; i++) {
@@ -104,14 +120,24 @@ async function bootstrap() {
     console.log(`Maghazi QR Code ${i}: ${qrCode}`);
   }
 
-  // Generate QR codes for Cayman Achievement
-  for (let i = 1; i <= caymanAchievement.target; i++) {
+  // Generate QR codes for Cayman Achievement (Unordered)
+  for (let i = 1; i <= caymanAchievementUnordered.target; i++) {
     const qrCode = await qrService.generateQRCode(
       createdCaymanCampaign.Id.toString(),
-      createdCaymanAchievement.Id.toString(),
+      createdCaymanAchievementUnordered.Id.toString(),
       i
     );
-    console.log(`Cayman QR Code ${i}: ${qrCode}`);
+    console.log(`Cayman (Unordered) QR Code ${i}: ${qrCode}`);
+  }
+
+  // Generate QR codes for Cayman Achievement (Ordered)
+  for (let i = 1; i <= caymanAchievementOrdered.target; i++) {
+    const qrCode = await qrService.generateQRCode(
+      createdCaymanCampaign.Id.toString(),
+      createdCaymanAchievementOrdered.Id.toString(),
+      i
+    );
+    console.log(`Cayman (Ordered) QR Code ${i}: ${qrCode}`);
   }
 
   console.log('Fake data added successfully');

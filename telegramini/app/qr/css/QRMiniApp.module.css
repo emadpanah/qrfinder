@@ -1,0 +1,81 @@
+/* QRMiniApp.module.css */
+
+.container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background-color: #1a1a1a;
+    color: #fff;
+    min-height: 100vh;
+  }
+  
+  .title {
+    font-size: 24px;
+    margin-bottom: 20px;
+  }
+  
+  .walletSelector {
+    margin-bottom: 20px;
+  }
+  
+  .tokens {
+    font-size: 18px;
+    margin-bottom: 20px;
+  }
+  
+  .campaignBox {
+    background-color: #333;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    width: 100%;
+    max-width: 600px;
+  }
+  
+  .campaignTitle {
+    font-size: 20px;
+    margin-bottom: 10px;
+  }
+  
+  .campaignDescription {
+    font-size: 16px;
+    margin-bottom: 10px;
+  }
+  
+  .achievements {
+    margin-top: 10px;
+  }
+  
+  .achievementBox {
+    background-color: #444;
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 10px;
+  }
+  
+  .achievementTitle {
+    font-size: 18px;
+    margin-bottom: 5px;
+  }
+  
+  .achievementDescription {
+    font-size: 14px;
+    margin-bottom: 5px;
+  }
+  
+  .button {
+    background-color: #007bff;
+    color: #fff;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 10px;
+  }
+  
+  .button:hover {
+    background-color: #0056b3;
+  }
+  

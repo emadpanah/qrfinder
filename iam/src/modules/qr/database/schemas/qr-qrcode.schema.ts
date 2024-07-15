@@ -22,6 +22,9 @@ export class QRCode {
   longitude: number;
 
   @Prop({ required: true })
+  order: number;
+
+  @Prop({ required: true })
   expirationDate: Date;
 }
 

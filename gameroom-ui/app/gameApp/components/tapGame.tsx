@@ -1,3 +1,4 @@
+// app/gameApp/components/tapGame.tsx
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';

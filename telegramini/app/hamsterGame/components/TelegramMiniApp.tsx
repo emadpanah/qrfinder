@@ -7,7 +7,7 @@ import React, { useEffect, useState } from 'react';
 import QRCode from 'qrcode.react';
 import { inter } from '../../../public/fonts';
 import { TonConnectButton } from '@tonconnect/ui-react'
-import { TonConnectUIProvider } from "@tonconnect/ui-react"
+import { THEME, TonConnectUIProvider } from "@tonconnect/ui-react"
 
 const manifestUrl = 'https://gist.githubusercontent.com/siandreev/75f1a2ccf2f3b4e2771f6089aeb06d7f/raw/d4986344010ec7a2d1cc8a2a9baa57de37aaccb8/gistfile1.txt';
 
@@ -66,7 +66,7 @@ const TelegramMiniApp: React.FC = () => {
   };
 
   return (
-    <TonConnectUIProvider manifestUrl={manifestUrl}>
+    <TonConnectUIProvider manifestUrl={manifestUrl} uiPreferences={{ theme: THEME.DARK }}>
       <div className={styles.container}>
         <TonConnectButton />
         {telegramId && <div className={styles.telegramId}>Telegram ID: {telegramId}</div>}

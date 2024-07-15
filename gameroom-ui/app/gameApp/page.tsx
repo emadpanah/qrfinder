@@ -1,19 +1,21 @@
+// app/gameApp/page.tsx
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { ethers } from 'ethers';
 import GameHeader from './components/gameHeader';
-import axios from 'axios'; // Import axios
+import axios from 'axios';
 import HubButton from './components/hubButton';
 import MyGames from './components/myGames';
-import TapGame from './components/tapGame'; // Import the TapGame component
+import TapGame from './components/tapGame';
 import { AccountType } from '@/app/lib/definitions';
 import { PiHandTapBold, PiSkullBold, PiMegaphoneBold, PiRocketBold } from 'react-icons/pi';
 import jwt from 'jsonwebtoken';
+
 const IAM_SERVICE_URL = process.env.NEXT_PUBLIC_IAM_SERVICE_URL;
-const APP_SECRET = process.env.NEXT_PUBLIC_APP_SECRET || 'default_app_secret'; // Use a default value if the environment variable is not set
+const APP_SECRET = process.env.NEXT_PUBLIC_APP_SECRET || 'default_app_secret';
 
 enum ActiveSection {
   MetaMaskLogin,
@@ -22,18 +24,22 @@ enum ActiveSection {
   NewGames,
   Referrals,
   CreateGame,
-  TapGame, // Add TapGame section
+  TapGame,
 }
 
 const GameAppPage: React.FC = () => {
   const router = useRouter();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [accountData, setAccountData] = useState<AccountType>({});
+  const [accountData, setAccountData] = useState<AccountType>({
+    address: null,
+    balance: null,
+    chainId: null,
+    network: null,
+  });
   const [activeSection, setActiveSection] = useState<ActiveSection>(ActiveSection.MetaMaskLogin);
   const [selectedGameId, setSelectedGameId] = useState<number | null>(null);
 
-  async function checkMetaMask() {
-    //console.log('checkmeta');
+  const checkMetaMask = useCallback(async () => {
     const ethereum = window.ethereum;
     if (typeof ethereum !== 'undefined') {
       try {
@@ -51,58 +57,43 @@ const GameAppPage: React.FC = () => {
           network: network.name,
         });
 
-        // const signResult = await ethereum.request({
-        //   method: 'personal_sign',
-        //   params: ['test msg', address],
-        // });
+        const response = await axios.post(`${IAM_SERVICE_URL}/iam/register`, {
+          ethAddress: address,
+          walletType: 'metamask',
+          clientSecret: APP_SECRET,
+        });
 
-        // console.log('signResult : ' + signResult);
-
-        
-
-       
-      // Register or log in the user in the IAM service
-      const response = await axios.post(`${IAM_SERVICE_URL}/iam/register`, {
-        ethAddress: address,
-        walletType:'metamask',
-        clientSecret: APP_SECRET
-      });
-
-      const { token: authToken, isNewToken } = response.data;
-      // Store the auth token (e.g., in localStorage)
-      localStorage.setItem('authToken', authToken);
-      if(isNewToken)
-        {
-            const per =
+        const { token: authToken, isNewToken } = response.data;
+        localStorage.setItem('authToken', authToken);
+        if (isNewToken) {
           await window.ethereum.request({
-            "method": "wallet_requestPermissions",
-            "params": [
+            method: "wallet_requestPermissions",
+            params: [
               {
-                "eth_accounts": {address}
-              }
-            ]
-          }); 
+                eth_accounts: { address },
+              },
+            ],
+          });
         }
 
         setIsLoggedIn(true);
-        setActiveSection(ActiveSection.HubButtons); // Move to hub buttons after login
+        setActiveSection(ActiveSection.HubButtons);
       } catch (error: any) {
-        if(error.code == 4001)
-          {
-            alert('Please confirm on MetaMask');
-            checkMetaMask();
-            return;
-          }
-        alert(`Please log in MetaMask - `+ error.code);
+        if (error.code == 4001) {
+          alert('Please confirm on MetaMask');
+          checkMetaMask();
+          return;
+        }
+        alert(`Please log in MetaMask - ` + error.code);
       }
     } else {
       alert('MetaMask not installed');
     }
-  }
+  }, [setAccountData, setIsLoggedIn, setActiveSection]);
 
   useEffect(() => {
     checkMetaMask();
-  }, []);
+  }, [checkMetaMask]);
 
   const handleGameDoubleClick = (gameId: number) => {
     setSelectedGameId(gameId);
@@ -127,17 +118,17 @@ const GameAppPage: React.FC = () => {
             </button>
           </div>
         );
-        case ActiveSection.HubButtons:
-          return (
-            <div className="grid gap-4 pt-4 md:pt-8 lg:pt-12">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <HubButton label="My Games" onClick={() => setActiveSection(ActiveSection.MyGames)} icon={<PiHandTapBold />} />
-                <HubButton label="New Games" onClick={() => setActiveSection(ActiveSection.NewGames)} icon={<PiSkullBold />} />
-                <HubButton label="4cash Exchange" onClick={() => window.location.href = 'https://4cash.exchange'} icon={<PiMegaphoneBold />} />
-                <HubButton label="Create Game" onClick={() => setActiveSection(ActiveSection.CreateGame)} icon={<PiRocketBold />} />
-              </div>
+      case ActiveSection.HubButtons:
+        return (
+          <div className="grid gap-4 pt-4 md:pt-8 lg:pt-12">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <HubButton label="My Games" onClick={() => setActiveSection(ActiveSection.MyGames)} icon={<PiHandTapBold />} />
+              <HubButton label="New Games" onClick={() => setActiveSection(ActiveSection.NewGames)} icon={<PiSkullBold />} />
+              <HubButton label="4cash Exchange" onClick={() => window.location.href = 'https://4cash.exchange'} icon={<PiMegaphoneBold />} />
+              <HubButton label="Create Game" onClick={() => setActiveSection(ActiveSection.CreateGame)} icon={<PiRocketBold />} />
             </div>
-          );        
+          </div>
+        );
       case ActiveSection.MyGames:
         return <MyGames onGameDoubleClick={handleGameDoubleClick} />;
       case ActiveSection.NewGames:
@@ -162,6 +153,5 @@ const GameAppPage: React.FC = () => {
     </div>
   );
 };
-
 
 export default GameAppPage;
