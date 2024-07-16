@@ -1,4 +1,4 @@
-'use client';
+'use client'; // Add this line at the top
 
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
@@ -7,10 +7,6 @@ import CampaignButton from './components/CampaignButton';
 import MyAchievements from './components/MyAchievements';
 import CampaignDetails from './components/CampaignDetails'; // Ensure this is imported
 import { AccountType, Campaign } from '@/app/lib/definitions';
-import { TonConnectButton } from '@tonconnect/ui-react'
-import { THEME,TonConnectUIProvider } from "@tonconnect/ui-react"
-
-const manifestUrl = 'https://gist.githubusercontent.com/siandreev/75f1a2ccf2f3b4e2771f6089aeb06d7f/raw/d4986344010ec7a2d1cc8a2a9baa57de37aaccb8/gistfile1.txt';
 
 enum ActiveSection {
   Campaigns,
@@ -72,15 +68,12 @@ const QRAppPage: React.FC = () => {
   };
 
   return (
-    <TonConnectUIProvider manifestUrl={manifestUrl} uiPreferences={{ theme: THEME.DARK }}>
-      <div className={`h-full flex flex-col before:from-white after:from-sky-200 py-2`}>
-        <CampaignHeader {...accountData} />
-        <div className="flex flex-col flex-1 justify-center items-center">
-          <TonConnectButton />
-          {renderActiveSection()}
-        </div>
+    <div className={`h-full flex flex-col before:from-white after:from-sky-200 py-2`}>
+      <CampaignHeader {...accountData} />
+      <div className="flex flex-col flex-1 justify-center items-center">
+        {renderActiveSection()}
       </div>
-    </TonConnectUIProvider>
+    </div>
   );
 };
 
