@@ -7,7 +7,7 @@ export default function gameLogo() {
       className={` flex flex-row items-center leading-none text-white`}
     >
       <PiRobotBold  className="h-6 w-6 rotate-[10deg]" />
-      <p className="text-[18px]">Decentralized Product Engagement Platform</p>
+      <p className="text-[18px]">MAD</p>
     </div>
   );
 }
