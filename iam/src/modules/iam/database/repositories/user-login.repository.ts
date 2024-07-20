@@ -11,12 +11,12 @@ export class UserLoginRepository {
    @InjectConnection('service') private connection: Connection
   ) {}
 
-  async createLogin(newEthAddress: string, newToken: string): Promise<any> {
+  async createLogin(newAddress: string, newToken: string): Promise<any> {
     const collection = this.connection.collection( '_userlogins',
     );
 
     await collection.insertOne({
-      ethAddress: newEthAddress,
+      address: newAddress,
       token: newToken,
       createdDate: new Date().toISOString(),
     });
@@ -24,21 +24,21 @@ export class UserLoginRepository {
     return newToken;
   }
 
-  async findLoginHistoryByEthAddress(searchEthAddress: string): Promise<any> {
+  async findLoginHistoryByAddress(searchAddress: string): Promise<any> {
     
     const collection = this.connection.collection( '_userlogins',
     );
 
-    const userlogins = await collection.find({ ethAddress: searchEthAddress });
+    const userlogins = await collection.find({ address: searchAddress });
   
     return userlogins;
   }
 
-  async findLatestLoginByEthAddress(searchEthAddress: string): Promise<any> {
+  async findLatestLoginByAddress(searchAddress: string): Promise<any> {
     const collection = this.connection.collection( '_userlogins',
     );
 
-    const userlogins = await collection.findOne({ ethAddress: searchEthAddress },
+    const userlogins = await collection.findOne({ address: searchAddress },
       { sort: { createdDate: -1 } });
   
     return userlogins;

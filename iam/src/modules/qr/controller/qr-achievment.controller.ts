@@ -3,7 +3,7 @@ import { AchievementService } from '../services/qr-achievment.service';
 import { AchievementDto } from '../dto/achievement.dto';
 import { Logger } from '@nestjs/common';
 
-@Controller('achievements')
+@Controller('qr-achievements')
 export class AchievementController {
   private readonly logger = new Logger(AchievementController.name);
 

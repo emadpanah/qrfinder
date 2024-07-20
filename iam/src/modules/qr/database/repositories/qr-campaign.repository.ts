@@ -25,5 +25,14 @@ export class CampaignRepository {
     return campaign;
   }
 
-  // ... add more repository methods as needed
+  async findAllActiveCampaigns(): Promise<any[]> {
+    const collection = this.connection.collection('_qrcampaigns');
+    const now = new Date();
+    return collection.find({ expirationDate: { $gt: now } }).toArray();
+  }
+
+  async findAllCampaigns(): Promise<any[]> {
+    const collection = this.connection.collection('_qrcampaigns');
+    return collection.find().toArray();
+  }
 }

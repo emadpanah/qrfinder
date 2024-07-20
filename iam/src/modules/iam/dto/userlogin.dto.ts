@@ -4,8 +4,8 @@ import { IsString, IsNotEmpty, MaxLength, MinLength, Length, IsDateString } from
 export class UserLoginDto {
   @IsString()
   @IsNotEmpty()
-  @Length(42, 100) // Exact length of an Ethereum address
-  ethAddress: string;
+  @Length(30, 200) // Exact length of an Ethereum address
+  address: string;
 
   @IsString()
   @IsNotEmpty()

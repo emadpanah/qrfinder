@@ -1,44 +1,135 @@
-/* app/qrApp/css/CampaignApp.module.css */
+/* app/qrApp/css/qrApp.module.css */
 
+/* Container styles */
 .container {
   max-width: 800px;
   margin: 0 auto;
 }
 
-.list-disc {
+/* List styles */
+.listDisc {
   list-style-type: disc;
 }
 
-.p-6 {
+/* Padding and margin */
+.p6 {
   padding: 1.5rem;
 }
 
-.mb-4 {
+.mb4 {
   margin-bottom: 1rem;
 }
 
-.bg-green-500 {
+/* Background colors */
+.bgGreen500 {
   background-color: #38a169;
 }
 
-.hover\:bg-green-600:hover {
+.hoverBgGreen600:hover {
   background-color: #2f855a;
 }
 
-.text-white {
+.textWhite {
   color: #fff;
 }
 
-.px-4 {
+/* Padding */
+.px4 {
   padding-left: 1rem;
   padding-right: 1rem;
 }
 
-.py-2 {
+.py2 {
   padding-top: 0.5rem;
   padding-bottom: 0.5rem;
 }
 
+/* Border radius */
 .rounded {
   border-radius: 0.25rem;
+}
+
+/* Dark theme background */
+.bgDark {
+  background-color: #1e1e1e;
+}
+
+/* Light text color */
+.textLight {
+  color: #ffffff;
+}
+
+/* Shadow effect */
+.shadowLg {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Flex utilities */
+.flex {
+  display: flex;
+}
+
+.justifyBetween {
+  justify-content: space-between;
+}
+
+.itemsCenter {
+  align-items: center;
+}
+
+.spaceY4 > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-y-reverse: 0;
+  margin-top: calc(1rem * calc(1 - var(--tw-space-y-reverse)));
+  margin-bottom: calc(1rem * var(--tw-space-y-reverse));
+}
+
+/* Text styles */
+.textLg {
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+}
+
+.fontSemibold {
+  font-weight: 600;
+}
+
+.textSm {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+.textGray400 {
+  color: #cbd5e0;
+}
+
+/* Icon sizes */
+.w8 {
+  width: 2rem;
+}
+
+.h8 {
+  height: 2rem;
+}
+
+/* Utilities */
+.focusOutlineNone:focus {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+}
+
+/* Additional styles */
+.bgGray800 {
+  background-color: #2d2d2d;
+}
+
+.bgGray700 {
+  background-color: #3c3c3c;
+}
+
+.roundedFull {
+  border-radius: 9999px;
+}
+
+.p2 {
+  padding: 0.5rem;
 }

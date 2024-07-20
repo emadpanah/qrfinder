@@ -10,8 +10,8 @@ export class UserLogin {
   @Prop({unique: true,  required: true })
   token: string;
   
-  @Prop({ required: true, minlength: 42, maxlength: 100 })
-  ethAddress: string; // Or any other unique identifier for the user
+  @Prop({ required: true, minlength: 30, maxlength: 200 })
+  address: string; // Or any other unique identifier for the user
 
   @Prop({ required: true, default: Date.now })
   loginDate: Date;

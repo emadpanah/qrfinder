@@ -4,14 +4,19 @@ import { IsString, IsNotEmpty, MaxLength, MinLength, Length, IsDateString } from
 export class UserDto {
   @IsString()
   @IsNotEmpty()
-  @Length(42, 100) 
-  ethAddress: string;
+  @Length(30, 200) 
+  address: string;
 
   @IsString()
   @IsNotEmpty()
   @MinLength(3)
   @MaxLength(50)
   walletType: string;
+
+  @IsString()
+  @MinLength(3)
+  @MaxLength(100)
+  telegramID: string;
 
   @IsDateString()
   @IsNotEmpty()
@@ -21,8 +26,13 @@ export class UserDto {
 export class UserInsertDto {
   @IsString()
   @IsNotEmpty()
-  @Length(42, 100) 
-  ethAddress: string;
+  @Length(30, 200) 
+  address: string;
+
+  @IsString()
+  @MinLength(3)
+  @MaxLength(100)
+  telegramID: string;
 
   @IsString()
   @IsNotEmpty()

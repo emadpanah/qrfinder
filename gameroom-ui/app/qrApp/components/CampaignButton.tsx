@@ -1,8 +1,6 @@
-// app/qrApp/components/CampaignButton.tsx
-
 import React from 'react';
 import { Campaign } from '@/app/lib/definitions';
-import Image from 'next/image';
+import styles from '../css/qrApp.module.css';
 
 interface CampaignButtonProps {
   campaign: Campaign;
@@ -10,21 +8,43 @@ interface CampaignButtonProps {
 }
 
 const CampaignButton: React.FC<CampaignButtonProps> = ({ campaign, onClick }) => {
-  const { title, description, image } = campaign;
-
   return (
-    <button
-      onClick={onClick}
-      className="relative inline-flex flex-col items-center justify-center p-4 px-6 py-3 overflow-hidden font-medium text-indigo-600 transition duration-300 ease-out border-2 border-indigo-500 rounded-lg shadow-md group"
-      style={{ width: '400px', height: '400px' }}
-    >
-      <Image src={image} alt={title} className="w-full h-full object-cover" />
-      <div className="absolute inset-0 flex flex-col items-center justify-center w-full h-full bg-black bg-opacity-75 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 ease">
-        <p className="text-lg font-bold">{title}</p>
-        <p className="text-sm">{description}</p>
+    <div className={`${styles.shadowLg} ${styles.bgDark} ${styles.textLight} ${styles.px4} ${styles.py2} ${styles.rounded} ${styles.flex} ${styles.itemsCenter} ${styles.justifyBetween}`} onClick={onClick}>
+      <div>
+        <h3 className={`${styles.textLg} ${styles.fontSemibold}`}>{campaign.name}</h3>
+        <p className={`${styles.textSm} ${styles.textGray400}`}>{campaign.description}</p>
       </div>
-    </button>
+      <div className={`${styles.bgGray700} ${styles.p2} ${styles.roundedFull}`}>
+        <img src="/path-to-your-icon.png" alt="icon" className={`${styles.w8} ${styles.h8}`} />
+      </div>
+    </div>
   );
 };
 
 export default CampaignButton;
+
+
+// // app/qrApp/components/CampaignButton.tsx
+// import React from 'react';
+// import { Campaign } from '@/app/lib/definitions';
+
+// interface CampaignButtonProps {
+//   campaign: Campaign;
+//   onClick: () => void;
+// }
+
+// const CampaignButton: React.FC<CampaignButtonProps> = ({ campaign, onClick }) => {
+//   return (
+//     <div className="bg-gray-800 text-white p-4 rounded-lg shadow-lg flex items-center justify-between" onClick={onClick}>
+//       <div>
+//         <h3 className="text-lg font-semibold">{campaign.name}</h3>
+//         <p className="text-sm text-gray-400">{campaign.description}</p>
+//       </div>
+//       <div className="bg-gray-700 p-2 rounded-full">
+//         <img src="/path-to-your-icon.png" alt="icon" className="w-8 h-8" />
+//       </div>
+//     </div>
+//   );
+// };
+
+// export default CampaignButton;

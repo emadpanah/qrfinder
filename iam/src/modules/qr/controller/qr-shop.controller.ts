@@ -3,7 +3,7 @@ import { ShopService } from '../services/qr-shop.service';
 import { ShopDto } from '../dto/shop.dto';
 import { Logger } from '@nestjs/common';
 
-@Controller('shops')
+@Controller('qr-shops')
 export class ShopController {
   private readonly logger = new Logger(ShopController.name);
 

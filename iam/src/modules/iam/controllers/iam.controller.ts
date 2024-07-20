@@ -14,6 +14,7 @@ export class IamController {
   @Post('/register') // Apply the guard
   async register(@Body(new ValidationPipe()) body: UserInsertDto): Promise<{ token: string, isNewToken: boolean }> {
     try {
+      console.log("register : ");
       const token = await this.iamService.registerOrLogin(body);
       return { token: token.token, isNewToken: token.isNewToken };
     } catch (error) {
@@ -28,10 +29,10 @@ export class IamController {
     return this.iamService.getHello();
   }
 
-  @Get('/loginHistory/:ethAddress')
+  @Get('/loginHistory/:address')
   @UseGuards(JwtAuthGuard) // Apply the guard
-  async getUserLoginHistory(@Param('ethAddress') ethAddress: string): Promise<UserLogin[]> {
-    return this.iamService.getUserLoginHistory(ethAddress);
+  async getUserLoginHistory(@Param('address') address: string): Promise<UserLogin[]> {
+    return this.iamService.getUserLoginHistory(address);
   }
   // ... other IAM-related endpoints
 }

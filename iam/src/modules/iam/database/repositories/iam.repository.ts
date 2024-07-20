@@ -14,11 +14,11 @@ export class IamRepository {
     const collection = this.connection.collection('_iamusers'
     );
     await collection.insertOne({
-      ethAddress: dto.ethAddress,
+      address: dto.address,
       walletType: dto.walletType,
       createdDate: new Date().toISOString(),
     });
-    const user = await collection.findOne({ ethAddress: dto.ethAddress });
+    const user = await collection.findOne({ address: dto.address });
     if (!user) {
       // Handle the case where the agent is not found
       throw new Error('Insert not completed.');
@@ -27,10 +27,10 @@ export class IamRepository {
     return user;
   }
 
-  async findUserByAddress(EthAddress: string): Promise<any> {
+  async findUserByAddress(address: string): Promise<any> {
     const collection = this.connection.collection('_iamusers'
   );
-    const user = await collection.findOne({ ethAddress: EthAddress });
+    const user = await collection.findOne({ address: address });
     // Return the inserted document
     return user;
   }

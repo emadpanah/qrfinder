@@ -1,9 +1,8 @@
-import { Controller, Post, Body, Get, Param, ValidationPipe } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, ValidationPipe, BadRequestException, Logger } from '@nestjs/common';
 import { CampaignService } from '../services/qr-campaign.service';
 import { CampaignDto } from '../dto/campaign.dto';
-import { Logger } from '@nestjs/common';
 
-@Controller('campaigns')
+@Controller('qr-campaigns')
 export class CampaignController {
   private readonly logger = new Logger(CampaignController.name);
 
@@ -16,12 +15,37 @@ export class CampaignController {
       return campaign;
     } catch (error) {
       this.logger.error('Error creating campaign', error);
-      throw error;
+      throw new BadRequestException('Error creating campaign');
     }
   }
 
-  @Get('/:id')
+  @Get('/GetById')
   async findCampaignById(@Param('id') id: string): Promise<CampaignDto> {
-    return this.campaignService.findCampaignById(id);
+    try {
+      return await this.campaignService.findCampaignById(id);
+    } catch (error) {
+      this.logger.error('Error finding campaign by ID', error);
+      throw new BadRequestException('Error finding campaign by ID');
+    }
+  }
+
+  @Get('/active')
+  async findAllActiveCampaigns(): Promise<CampaignDto[]> {
+    try {
+      return await this.campaignService.findAllActiveCampaigns();
+    } catch (error) {
+      this.logger.error('Error fetching active campaigns', error);
+      throw new BadRequestException('Error fetching active campaigns');
+    }
+  }
+
+  @Get('/')
+  async findAllCampaigns(): Promise<CampaignDto[]> {
+    try {
+      return await this.campaignService.findAllCampaigns();
+    } catch (error) {
+      this.logger.error('Error fetching all campaigns', error);
+      throw new BadRequestException('Error fetching all campaigns');
+    }
   }
 }

@@ -38,19 +38,19 @@ export class IamService {
       }
   
       // Check if the user already exists
-      const user = await this.iamRepository.findUserByAddress(dto.ethAddress);
+      const user = await this.iamRepository.findUserByAddress(dto.address);
       if (user) {
         // User exists, check if there is a valid token
-        const existingLoginInfo = await this.userLoginRepository.findLatestLoginByEthAddress(dto.ethAddress);
+        const existingLoginInfo = await this.userLoginRepository.findLatestLoginByAddress(dto.address);
         if (existingLoginInfo) {
           try {
-            await this.authService.verifyJwt(existingLoginInfo.token, existingLoginInfo.ethAddress);
+            await this.authService.verifyJwt(existingLoginInfo.token);
             return { token: existingLoginInfo.token, isNewToken: false }; // Return existing valid token
           } catch (error) {
             if (error instanceof TokenExpiredError) {
               // Generate a new token if the existing one is expired
-              const newToken = await this.authService.generateJwt(dto.ethAddress);
-              await this.userLoginRepository.createLogin(dto.ethAddress, newToken);            
+              const newToken = await this.authService.generateJwt(dto.address);
+              await this.userLoginRepository.createLogin(dto.address, newToken);            
               return { token: newToken, isNewToken: true };
             } else {
               throw error; // Re-throw the error if it's not a TokenExpiredError
@@ -59,8 +59,8 @@ export class IamService {
         }
   
         // Generate a new token if no valid token exists
-        const newToken = await this.authService.generateJwt(dto.ethAddress);
-        await this.userLoginRepository.createLogin(dto.ethAddress, newToken);
+        const newToken = await this.authService.generateJwt(dto.address);
+        await this.userLoginRepository.createLogin(dto.address, newToken);
         return { token: newToken, isNewToken: true };
       }
   
@@ -68,8 +68,8 @@ export class IamService {
       await this.iamRepository.createUser(dto);
   
       // Generate a new token for the new user
-      const token = await this.authService.generateJwt(dto.ethAddress);
-      await this.userLoginRepository.createLogin(dto.ethAddress, token);
+      const token = await this.authService.generateJwt(dto.address);
+      await this.userLoginRepository.createLogin(dto.address, token);
   
       return { token: token, isNewToken: true };
     } catch (error) {
@@ -82,8 +82,8 @@ export class IamService {
  
  
 
-  async getUserLoginHistory(ethAddress: string): Promise<UserLogin[]> {
-    return this.userLoginRepository.findLoginHistoryByEthAddress(ethAddress);
+  async getUserLoginHistory(address: string): Promise<UserLogin[]> {
+    return this.userLoginRepository.findLoginHistoryByAddress(address);
   }
 
   getHello(): string {

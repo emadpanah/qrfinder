@@ -10,13 +10,13 @@ export class AuthService {
     private readonly configService: ConfigService,
   ) {}
 
-  async generateJwt(ethAddress: string): Promise<string> {
+  async generateJwt(address: string): Promise<string> {
     return this.jwtService.sign({
-      sub: ethAddress,
+      sub: address,
     });
   }
 
-  async verifyJwt(token: string, ethAddress: string): Promise<any> {
+  async verifyJwt(token: string): Promise<any> {
     try {
       const secret = this.configService.get<string>('JWT_SECRET');
 

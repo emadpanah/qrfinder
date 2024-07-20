@@ -2,7 +2,7 @@ import { Controller, Get, Query } from '@nestjs/common';
 import { QRService } from '../services/qr.service';
 import { ScanDto } from '../dto/scan.dto';
 
-@Controller('scan')
+@Controller('qr-scan')
 export class QRController {
   constructor(private readonly qrService: QRService) {}
 
