@@ -1,5 +1,6 @@
-// campaign.dto.ts
-import { IsString, IsNotEmpty, IsArray, IsDateString } from 'class-validator';
+// src/modules/qr/dto/campaign.dto.ts
+
+import { IsString, IsNotEmpty, IsDateString } from 'class-validator';
 import { Types } from 'mongoose';
 
 export class CampaignDto {
@@ -19,8 +20,13 @@ export class CampaignDto {
   @IsNotEmpty()
   description: string;
 
-  @IsArray()
-  achievements: string[];
+  @IsString()
+  @IsNotEmpty()
+  videoUrl: string;
+
+  @IsString()
+  @IsNotEmpty()
+  imageUrl: string;
 
   @IsDateString()
   @IsNotEmpty()

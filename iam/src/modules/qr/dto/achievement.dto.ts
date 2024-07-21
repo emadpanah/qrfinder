@@ -1,4 +1,3 @@
-// achievement.dto.ts
 import { IsString, IsNotEmpty, IsNumber, IsDate, IsObject } from 'class-validator';
 import { Types } from 'mongoose';
 
@@ -37,12 +36,4 @@ export class AchievementDto {
   @IsDate()
   @IsNotEmpty()
   expirationDate: Date;
-
-  @IsObject()
-  @IsNotEmpty()
-  expectedLocation: {
-    lat: number;
-    lon: number;
-    allowedRange: number;
-  };
 }

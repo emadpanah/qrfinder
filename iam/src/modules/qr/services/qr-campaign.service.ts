@@ -1,40 +1,46 @@
-import { Injectable, BadRequestException, Logger } from '@nestjs/common';
-import { CampaignRepository } from '../database/repositories/qr-campaign.repository';
+// src/modules/qr/services/qr-campaign.service.ts
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model, Types } from 'mongoose';
+import { Campaign, CampaignDocument } from '../database/schemas/qr-campaign.schema';
 import { CampaignDto } from '../dto/campaign.dto';
-import { Types } from 'mongoose';
 
 @Injectable()
 export class CampaignService {
   private readonly logger = new Logger(CampaignService.name);
 
-  constructor(private readonly campaignRepository: CampaignRepository) {}
+  constructor(@InjectModel(Campaign.name) private campaignModel: Model<CampaignDocument>) {}
 
-  async createCampaign(dto: CampaignDto): Promise<CampaignDto> {
-    const campaign = await this.campaignRepository.createCampaign(dto);
-    return campaign;
+  async createCampaign(campaignDto: CampaignDto): Promise<CampaignDto> {
+    const createdCampaign = new this.campaignModel(campaignDto);
+    return createdCampaign.save();
   }
 
   async findCampaignById(id: string): Promise<CampaignDto> {
-    this.logger.log(`Received ID: ${id}`);
-    if (!Types.ObjectId.isValid(id)) {
-      this.logger.error('Invalid campaign ID format');
-      throw new BadRequestException('Invalid campaign ID format');
+    try {
+      this.logger.log(`Finding campaign with ID: ${id}`);
+      if (!Types.ObjectId.isValid(id)) {
+        this.logger.error(`Invalid ID format: ${id}`);
+        throw new NotFoundException(`Invalid ID format: ${id}`);
+      }
+      const campaign = await this.campaignModel.findById(id).exec();
+      if (!campaign) {
+        this.logger.error(`Campaign not found with ID: ${id}`);
+        throw new NotFoundException(`Campaign not found with ID: ${id}`);
+      }
+      return campaign.toObject() as CampaignDto;
+    } catch (error) {
+      this.logger.error(`Error finding campaign by ID: ${id}`, error.stack);
+      throw error;
     }
-    const objectId = new Types.ObjectId(id);
-    const campaign = await this.campaignRepository.findCampaignById(objectId);
-    if (!campaign) {
-      throw new BadRequestException('Campaign not found');
-    }
-    return campaign;
   }
 
   async findAllActiveCampaigns(): Promise<CampaignDto[]> {
-    const campaigns = await this.campaignRepository.findAllActiveCampaigns();
-    return campaigns;
+    const now = new Date();
+    return this.campaignModel.find({ expirationDate: { $gt: now } }).exec();
   }
 
   async findAllCampaigns(): Promise<CampaignDto[]> {
-    const campaigns = await this.campaignRepository.findAllCampaigns();
-    return campaigns;
+    return this.campaignModel.find().exec();
   }
 }

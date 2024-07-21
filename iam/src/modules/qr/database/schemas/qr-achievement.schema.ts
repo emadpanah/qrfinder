@@ -32,16 +32,6 @@ export class Achievement {
 
   @Prop({ required: true })
   expirationDate: Date;
-
-  @Prop({
-    type: Object,
-    required: true,
-  })
-  expectedLocation: {
-    lat: number;
-    lon: number;
-    allowedRange: number;
-  };
 }
 
 export const AchievementSchema = SchemaFactory.createForClass(Achievement);

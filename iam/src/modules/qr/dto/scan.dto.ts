@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsNumber } from 'class-validator';
+import { IsString, IsNotEmpty, IsNumberString } from 'class-validator';
 import { Types } from 'mongoose';
 
 export class ScanDto {
@@ -10,19 +10,19 @@ export class ScanDto {
   @IsNotEmpty()
   achievementId: Types.ObjectId;
 
-  @IsNumber()
+  @IsNumberString()
   @IsNotEmpty()
-  qrIndex: number;
+  qrIndex: string;
 
   @IsString()
   @IsNotEmpty()
   userId: string;
 
-  @IsNumber()
+  @IsNumberString()
   @IsNotEmpty()
-  lat: number;
+  lat: string;
 
-  @IsNumber()
+  @IsNumberString()
   @IsNotEmpty()
-  lon: number;
+  lon: string;
 }

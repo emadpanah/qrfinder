@@ -1,3 +1,5 @@
+// src/modules/qr/database/schemas/qr-campaign.schema.ts
+
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 
@@ -6,8 +8,8 @@ export type CampaignDocument = Campaign & Document;
 @Schema({ collection: '_qrcampaigns' })
 export class Campaign {
 
-    @Prop({ type: Types.ObjectId, auto: true })
-    Id: Types.ObjectId;
+  @Prop({ type: Types.ObjectId, auto: true })
+  Id: Types.ObjectId;
 
   @Prop({ type: Types.ObjectId, ref: 'Shop', required: true })
   shopId: Types.ObjectId;
@@ -18,8 +20,11 @@ export class Campaign {
   @Prop({ required: true })
   description: string;
 
-  @Prop({ type: [Types.ObjectId], ref: 'Achievement' }) // Array of achievement IDs
-  achievements: Types.ObjectId[];
+  @Prop({ required: true })
+  videoUrl: string;
+
+  @Prop({ required: true })
+  imageUrl: string;
 
   @Prop({ required: true })
   expirationDate: Date;

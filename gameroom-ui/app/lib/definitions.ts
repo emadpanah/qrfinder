@@ -1,17 +1,15 @@
-
 // app/lib/definitions.ts
 export interface Campaign {
-  id: string;
-  name: string; // Add name property
-  title: string;
+  Id: string;
+  name: string;
   description: string;
-  image: string;
+  imageUrl?: string;
+  videoUrl?: string;
   // Add other properties if needed
 }
 
-
 export interface Achievement {
-  id: string;
+  Id: string;
   name: string;
   description: string;
   reward: {
@@ -40,7 +38,7 @@ export interface TapGameModel {
   description: string;
   needToken: number;
   tapAlgorithm: string;
-  winnerLimit:string;
+  winnerLimit: string;
   winnerAddresses: string[];
   activeDate: string;
   image: string;

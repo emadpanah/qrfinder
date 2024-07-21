@@ -1,5 +1,8 @@
+// seeder.ts
+
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from '../../../app.module';
+import { ConfigService } from '@nestjs/config';
 import { ShopService } from '../services/qr-shop.service';
 import { CampaignService } from '../services/qr-campaign.service';
 import { AchievementService } from '../services/qr-achievment.service';
@@ -11,6 +14,8 @@ import { Types } from 'mongoose';
 
 async function bootstrap() {
   const app = await NestFactory.createApplicationContext(AppModule);
+  const configService = app.get(ConfigService);
+  const baseUrl = configService.get<string>('BASE_URL');
 
   const shopService = app.get(ShopService);
   const campaignService = app.get(CampaignService);
@@ -41,8 +46,9 @@ async function bootstrap() {
     name: 'Maghazi City Hunt',
     description: 'Scan 5 QR codes in the city to earn tokens.',
     shopId: createdMaghaziShop.Id,
-    achievements: [],
     expirationDate: new Date(new Date().setMonth(new Date().getMonth() + 2)),
+    videoUrl: `${baseUrl}/shared/qr/video/maghazi-campaign.mp4`, // Example video URL
+    imageUrl: `${baseUrl}/shared/qr/img/maghazi-campaign.jpg`, // Example image URL
   };
 
   const caymanCampaign: CampaignDto = {
@@ -50,8 +56,9 @@ async function bootstrap() {
     name: 'Cayman Token ICO Hunt',
     description: 'Scan 10 QR codes to earn a ride with a Porsche.',
     shopId: createdCaymanShop.Id,
-    achievements: [],
     expirationDate: new Date(new Date().setMonth(new Date().getMonth() + 2)),
+    videoUrl: `${baseUrl}/shared/qr/video/cayman-campaign.mp4`, // Example video URL
+    imageUrl: `${baseUrl}/shared/qr/img/cayman-campaign.jpg`, // Example image URL
   };
 
   const createdMaghaziCampaign = await campaignService.createCampaign(maghaziCampaign);
@@ -67,11 +74,6 @@ async function bootstrap() {
     target: 5,
     reward: { tokens: 1500, products: [] },
     expirationDate: new Date(new Date().setMonth(new Date().getMonth() + 2)),
-    expectedLocation: {
-      lat: 0, // replace with actual latitude
-      lon: 0, // replace with actual longitude
-      allowedRange: 1000,
-    },
   };
 
   const caymanAchievementUnordered: AchievementDto = {
@@ -83,11 +85,6 @@ async function bootstrap() {
     target: 10,
     reward: { tokens: 2000, products: [] },
     expirationDate: new Date(new Date().setMonth(new Date().getMonth() + 2)),
-    expectedLocation: {
-      lat: 0, // replace with actual latitude
-      lon: 0, // replace with actual longitude
-      allowedRange: 1000,
-    },
   };
 
   const caymanAchievementOrdered: AchievementDto = {
@@ -99,11 +96,6 @@ async function bootstrap() {
     target: 10,
     reward: { tokens: 2000, products: [] },
     expirationDate: new Date(new Date().setMonth(new Date().getMonth() + 2)),
-    expectedLocation: {
-      lat: 0, // replace with actual latitude
-      lon: 0, // replace with actual longitude
-      allowedRange: 1000,
-    },
   };
 
   const createdMaghaziAchievement = await achievementService.createAchievement(maghaziAchievement);

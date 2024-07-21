@@ -57,7 +57,7 @@ export const fetchCampaigns = async () => {
 
 export const fetchActiveCampaigns = async () => {
   try {
-    console.log("get campaigns active")
+    console.log("get campaigns active");
     const response = await api.get('/qr-campaigns/active');
     return response.data;
   } catch (error) {
@@ -68,10 +68,20 @@ export const fetchActiveCampaigns = async () => {
 
 export const fetchCampaignById = async (campaignId: string) => {
   try {
-    const response = await api.get(`/qr-campaigns/${campaignId}`);
+    const response = await api.get(`/qr-campaigns//${campaignId}`);
     return response.data;
   } catch (error) {
     console.error(`Error fetching campaign by ID ${campaignId}:`, error);
+    throw error;
+  }
+};
+
+export const fetchAchievementsByCampaignId = async (campaignId: string) => {
+  try {
+    const response = await api.get(`/qr-campaigns/${campaignId}/achievements`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching achievements for campaign ID ${campaignId}:`, error);
     throw error;
   }
 };

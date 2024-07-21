@@ -19,9 +19,10 @@ export class CampaignController {
     }
   }
 
-  @Get('/GetById')
+  @Get('/GetById/:id')
   async findCampaignById(@Param('id') id: string): Promise<CampaignDto> {
     try {
+      console.log("campaignService.findCampaignById", id);
       return await this.campaignService.findCampaignById(id);
     } catch (error) {
       this.logger.error('Error finding campaign by ID', error);

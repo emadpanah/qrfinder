@@ -133,3 +133,8 @@
 .p2 {
   padding: 0.5rem;
 }
+
+/* Cursor style */
+.cursorPointer {
+  cursor: pointer;
+}
