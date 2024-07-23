@@ -3,10 +3,8 @@ import { Document, Types } from 'mongoose';
 
 export type AchievementSelectedDocument = AchievementSelected & Document;
 
-@Schema({ collection: '_qrachievementselecteds' })
+@Schema({ collection: '_qrachievementselected' })
 export class AchievementSelected {
-  @Prop({ type: Types.ObjectId, auto: true })
-  Id: Types.ObjectId;
 
   @Prop({ type: Types.ObjectId, ref: 'Achievement', required: true })
   achievementId: Types.ObjectId;
@@ -19,6 +17,15 @@ export class AchievementSelected {
 
   @Prop({ type: Types.ObjectId, ref: 'User', default: null })
   parentId: Types.ObjectId;  // This field will store the parent user who referred this achievement
+
+  @Prop({ type: Date, default: Date.now })
+  addedDate: Date;  // This field will store the date when the achievement was added
+
 }
 
-export const AchievementSelectedSchema = SchemaFactory.createForClass(AchievementSelected);
+const AchievementSelectedSchema = SchemaFactory.createForClass(AchievementSelected);
+ 
+// Create a unique index on achievementId and userId
+AchievementSelectedSchema.index({ achievementId: 1, userId: 1 }, { unique: true });
+
+export { AchievementSelectedSchema };

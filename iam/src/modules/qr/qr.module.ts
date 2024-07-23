@@ -15,6 +15,7 @@ import { AchievementService } from './services/qr-achievment.service';
 import { AchievementController } from './controller/qr-achievment.controller';
 import { AchievementRepository } from './database/repositories/qr-achievement.repository';
 import { Achievement, AchievementSchema } from './database/schemas/qr-achievement.schema';
+import { AchievementSelected, AchievementSelectedSchema } from './database/schemas/qr-achievement-selected.schema';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { Achievement, AchievementSchema } from './database/schemas/qr-achievemen
       { name: Shop.name, schema: ShopSchema },
       { name: Campaign.name, schema: CampaignSchema },
       { name: Achievement.name, schema: AchievementSchema },
+      { name: AchievementSelected.name, schema: AchievementSelectedSchema },
     ], 'service'),
   ],
   controllers: [ShopController, CampaignController, AchievementController],

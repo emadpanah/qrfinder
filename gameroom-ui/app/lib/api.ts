@@ -109,3 +109,27 @@ export const selectAchievement = async (achievementId: string, userId: string) =
     throw error;
   }
 };
+
+export const fetchSelectedAchievementsByUser = async (userId: string) => {
+  try {
+    const response = await api.get(`/qr-achievements/get-selected`, { params: { userId: userId } });
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching selected achievements for user ID ${userId}:`, error);
+    throw error;
+  }
+};
+
+export const unselectAchievement = async (achievementId: string, userId: string) => {
+  try {
+    console.log("unselectAchievement", achievementId, userId);
+    const response = await api.delete('/qr-achievements/delete-selected', {
+      data: { achievementId, userId }
+    });
+    return response.data;
+  } catch (error) {
+    console.error(`Error unselecting achievement ID ${achievementId}:`, error);
+    throw error;
+  }
+};
+

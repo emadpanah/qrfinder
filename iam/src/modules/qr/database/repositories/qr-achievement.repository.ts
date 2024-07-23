@@ -79,4 +79,13 @@ export class AchievementRepository {
     const achievements = await collection.find({ campaignId }).toArray() as unknown as AchievementDto[];
     return achievements;
   }
+
+  async deleteAchievementSelected(achievementId: string, userId: string): Promise<void> {
+    const collection = this.connection.collection('_qrachievementselected');
+    await collection.deleteOne({
+      achievementId: new Types.ObjectId(achievementId),
+      userId: new Types.ObjectId(userId),
+    });
+  }
+  
 }

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable, Logger } from '@nestjs/common';
 import { AchievementRepository } from '../database/repositories/qr-achievement.repository';
 import { AchievementDto } from '../dto/achievement.dto';
 import { AchievementInsertDto, AchievementSelectedDto } from '../dto/achievement-selected.dto';
@@ -6,6 +6,7 @@ import { Types } from 'mongoose';
 
 @Injectable()
 export class AchievementService {
+  private readonly logger = new Logger(AchievementService.name);
   constructor(private readonly achievementRepository: AchievementRepository) {}
 
   async createAchievement(dto: AchievementDto): Promise<AchievementDto> {
@@ -19,9 +20,34 @@ export class AchievementService {
     return achievement;
   }
 
+  // async createAchievementSelected(dto: AchievementInsertDto): Promise<AchievementSelectedDto> {
+  //   const achievementSelected = await this.achievementRepository.createAchievementSelected(dto);
+  //   return achievementSelected;
+  // }
+
   async createAchievementSelected(dto: AchievementInsertDto): Promise<AchievementSelectedDto> {
-    const achievementSelected = await this.achievementRepository.createAchievementSelected(dto);
-    return achievementSelected;
+    try {
+      const result = await this.achievementRepository.createAchievementSelected(dto);
+      if (!result) {
+        throw new Error('Insert not completed.');
+      }
+      return result;
+    } catch (error) {
+      if (error.code === 11000) { // Duplicate key error code in MongoDB
+        throw new ConflictException('User has already selected this achievement.');
+      }
+      this.logger.error('Error creating achievement selected', error);
+      throw error;
+    }
+  }
+
+  async deleteAchievementSelected(achievementId: string, userId: string): Promise<void> {
+    try {
+      await this.achievementRepository.deleteAchievementSelected(achievementId, userId);
+    } catch (error) {
+      this.logger.error('Error deleting achievement selected', error);
+      throw error;
+    }
   }
 
   async findAchievementSelectedById(id: string): Promise<AchievementSelectedDto> {

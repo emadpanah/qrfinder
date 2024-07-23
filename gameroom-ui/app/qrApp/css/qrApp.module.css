@@ -265,3 +265,19 @@
 .joinButton:hover {
   background-color: #2f855a;
 }
+
+/* Unjoin button styles */
+.unjoinButton {
+  background-color: #e53e3e;
+  color: #fff;
+  padding: 0.5rem 1rem;
+  border-radius: 0.25rem;
+  margin-top: 0.5rem;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.unjoinButton:hover {
+  background-color: #c53030;
+}

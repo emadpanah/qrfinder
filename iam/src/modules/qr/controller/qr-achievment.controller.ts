@@ -1,5 +1,5 @@
 // src/modules/qr/controller/qr-achievement.controller.ts
-import { Controller, Post, Body, Get, Param, ValidationPipe, Query, BadRequestException } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, ValidationPipe, Query, BadRequestException, Delete } from '@nestjs/common';
 import { AchievementService } from '../services/qr-achievment.service';
 import { AchievementDto } from '../dto/achievement.dto';
 import { AchievementInsertDto, AchievementSelectedDto } from '../dto/achievement-selected.dto';
@@ -54,6 +54,7 @@ export class AchievementController {
         userId: new Types.ObjectId(body.userId),
         parentId: null,
         qrCode: "" ,
+        addedDate: new Date()  // Add the addedDate here
       };
 
       const achievementSelected = await this.achievementService.createAchievementSelected(achievementInsertDto);
@@ -64,13 +65,26 @@ export class AchievementController {
     }
   }
 
+  @Delete('/delete-selected')
+ async deleteAchievementSelected(
+  @Body() body: { achievementId: string; userId: string }
+): Promise<{ message: string }> {
+  try {
+    await this.achievementService.deleteAchievementSelected(body.achievementId, body.userId);
+    return { message: 'Achievement unselected successfully' };
+  } catch (error) {
+    this.logger.error('Error deleting achievement selected', error);
+    throw error;
+  }
+}
+
   @Get('/selected/:id')
   async findAchievementSelectedById(@Param('id') id: string): Promise<AchievementSelectedDto> {
     return this.achievementService.findAchievementSelectedById(id);
   }
 
-  @Get('/selected/user/:userId')
-  async findAchievementSelectedByUser(@Param('userId') userId: string): Promise<AchievementSelectedDto[]> {
+  @Get('/get-selected')
+  async findAchievementSelectedByUser(@Query('userId') userId: string): Promise<AchievementSelectedDto[]> {
     return this.achievementService.findAchievementSelectedByUser(userId);
   }
 
@@ -82,6 +96,7 @@ export class AchievementController {
         userId: new Types.ObjectId(userId),
         parentId: new Types.ObjectId(parentId), // Add parentId
         qrCode: '', // This will be generated later
+        addedDate: new Date()  // Add the addedDate here
       });
 
       // Generate a new QR code or link for the user-specific achievement
