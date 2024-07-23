@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, Param, ValidationPipe, BadRequestException, Logger } from '@nestjs/common';
+import { Controller, Post, Body, Get, Query, ValidationPipe, BadRequestException, Logger } from '@nestjs/common';
 import { CampaignService } from '../services/qr-campaign.service';
 import { CampaignDto } from '../dto/campaign.dto';
 
@@ -19,8 +19,8 @@ export class CampaignController {
     }
   }
 
-  @Get('/GetById/:id')
-  async findCampaignById(@Param('id') id: string): Promise<CampaignDto> {
+  @Get('/findById')
+  async findCampaignById(@Query('id') id: string): Promise<CampaignDto> {
     try {
       console.log("campaignService.findCampaignById", id);
       return await this.campaignService.findCampaignById(id);

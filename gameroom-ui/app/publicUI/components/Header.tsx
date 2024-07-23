@@ -1,10 +1,12 @@
+// app/publicUI/components/Header.tsx
 'use client';
 
 import { FaSun, FaMoon } from 'react-icons/fa';
 import { TonConnectButton, TonConnectUIProvider, THEME, useTonAddress, useTonWallet } from "@tonconnect/ui-react";
 import GameLogo from '@/app/ui/game-logo';
 import { useEffect, useState } from 'react';
-import { registerUser } from '@/app/lib/api'; // Adjust the import path as necessary
+import { registerUser } from '@/app/lib/api';
+import { useUser } from '@/app/contexts/UserContext';
 
 const manifestUrl = 'https://gist.githubusercontent.com/siandreev/75f1a2ccf2f3b4e2771f6089aeb06d7f/raw/d4986344010ec7a2d1cc8a2a9baa57de37aaccb8/gistfile1.txt';
 
@@ -17,6 +19,7 @@ const Header: React.FC<HeaderProps> = ({ toggleTheme, currentTheme }) => {
   const [theme, setTheme] = useState<string>('light');
   const tonAddress = useTonAddress();
   const wallet = useTonWallet();
+  const { setUserId } = useUser();
 
   useEffect(() => {
     setTheme(currentTheme);
@@ -39,7 +42,7 @@ const Header: React.FC<HeaderProps> = ({ toggleTheme, currentTheme }) => {
 
         console.log("Server response:", { authToken, isNewToken });
 
-        // Handle any additional logic after registration
+        setUserId(telegramID); // Set user ID in context
       } catch (error) {
         console.error('Error during registration:', error);
       }

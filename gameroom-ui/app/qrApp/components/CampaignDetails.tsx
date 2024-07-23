@@ -1,8 +1,10 @@
 // app/qrApp/components/CampaignDetails.tsx
-
 import React, { useEffect, useState } from 'react';
 import { Campaign, Achievement } from '@/app/lib/definitions';
 import { fetchCampaignById, fetchAchievementsByCampaignId } from '@/app/lib/api';
+import styles from '../css/qrApp.module.css';
+import AchievementComponent from './Achievements';
+import { useUser } from '@/app/contexts/UserContext';
 
 interface CampaignDetailsProps {
   campaignId: string;
@@ -11,6 +13,7 @@ interface CampaignDetailsProps {
 const CampaignDetails: React.FC<CampaignDetailsProps> = ({ campaignId }) => {
   const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [achievements, setAchievements] = useState<Achievement[]>([]);
+  const { userId } = useUser();
 
   useEffect(() => {
     const fetchCampaignDetails = async () => {
@@ -32,25 +35,14 @@ const CampaignDetails: React.FC<CampaignDetailsProps> = ({ campaignId }) => {
   }, [campaignId]);
 
   return (
-    <div className="container mx-auto p-6">
+    <div className={`container mx-auto p-6 ${styles.campaignDetailsContainer}`}>
       {campaign ? (
         <>
           <h1 className="text-3xl font-bold mb-4">{campaign.name}</h1>
           <p className="mb-4">{campaign.description}</p>
-          {campaign.videoUrl && <video src={campaign.videoUrl} controls className="w-full h-auto mt-2" />}
-          {campaign.imageUrl && <img src={campaign.imageUrl} alt="Campaign" className="w-full h-auto mt-2" />}
-          <h2 className="text-2xl font-semibold mb-4">Achievements</h2>
-          <ul className="list-disc pl-6">
-            {achievements.map((achievement) => (
-              <li key={achievement.Id}>
-                <h3 className="text-xl font-semibold">{achievement.name}</h3>
-                <p>{achievement.description}</p>
-                <button className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded mt-2">
-                  Join Achievement
-                </button>
-              </li>
-            ))}
-          </ul>
+          {campaign.videoUrl && <video src={campaign.videoUrl} controls className={styles.videoLarge} />}
+          <h2 className="text-2xl font-semibold mb-4 pt-3">Achievements to earn</h2>
+          {userId && <AchievementComponent achievements={achievements} userId={userId} />}
         </>
       ) : (
         <p>Loading campaign details...</p>

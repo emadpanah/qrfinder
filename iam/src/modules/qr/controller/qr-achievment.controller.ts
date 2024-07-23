@@ -1,5 +1,5 @@
 // src/modules/qr/controller/qr-achievement.controller.ts
-import { Controller, Post, Body, Get, Param, ValidationPipe, Query } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, ValidationPipe, Query, BadRequestException } from '@nestjs/common';
 import { AchievementService } from '../services/qr-achievment.service';
 import { AchievementDto } from '../dto/achievement.dto';
 import { AchievementSelectedDto } from '../dto/achievement-selected.dto';
@@ -23,14 +23,25 @@ export class AchievementController {
     }
   }
 
-  @Get('/:id')
-  async findAchievementById(@Param('id') id: string): Promise<AchievementDto> {
-    return this.achievementService.findAchievementById(id);
+  @Get('/findById')
+  async findAchievementById(@Query('id') id: string): Promise<AchievementDto> {
+    try {
+      console.log("campaignService.findCampaignById", id);
+      return await this.achievementService.findAchievementById(id);
+    } catch (error) {
+      this.logger.error('Error finding campaign by ID', error);
+      throw new BadRequestException('Error finding campaign by ID');
+    }
   }
 
-  @Get('/campaign/:campaignId')
-  async findAchievementsByCampaignId(@Param('campaignId') campaignId: string): Promise<AchievementDto[]> {
-    return this.achievementService.findAchievementsByCampaignId(campaignId);
+  @Get('/GetAll')
+  async findAchievementsByCampaignId(@Query('campaignId') campaignId: string): Promise<AchievementDto[]> {
+    try {
+      return await this.achievementService.findAchievementsByCampaignId(campaignId);
+    } catch (error) {
+      this.logger.error('Error finding find Achievements By CampaignId', error);
+      throw new BadRequestException('Error Achievements by campaignID');
+    }
   }
 
   @Post('/create-selected')

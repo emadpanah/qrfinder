@@ -1,5 +1,3 @@
-// app/lib/api.ts
-
 import axios from 'axios';
 
 const iamServiceUrl = process.env.NEXT_PUBLIC_IAM_SERVICE_URL;
@@ -68,7 +66,7 @@ export const fetchActiveCampaigns = async () => {
 
 export const fetchCampaignById = async (campaignId: string) => {
   try {
-    const response = await api.get(`/qr-campaigns//${campaignId}`);
+    const response = await api.get(`/qr-campaigns/findById`, { params: { id: campaignId } });
     return response.data;
   } catch (error) {
     console.error(`Error fetching campaign by ID ${campaignId}:`, error);
@@ -78,7 +76,7 @@ export const fetchCampaignById = async (campaignId: string) => {
 
 export const fetchAchievementsByCampaignId = async (campaignId: string) => {
   try {
-    const response = await api.get(`/qr-campaigns/${campaignId}/achievements`);
+    const response = await api.get(`/qr-achievements/getAll`, { params: { campaignId: campaignId } });
     return response.data;
   } catch (error) {
     console.error(`Error fetching achievements for campaign ID ${campaignId}:`, error);
@@ -96,4 +94,16 @@ export const fetchUserDetails = async (userId: string) => {
   }
 };
 
-// You can add more API functions as needed
+// New API call to select an achievement
+export const selectAchievement = async (achievementId: string, userId: string) => {
+  try {
+    const response = await api.post('/qr-achievements/select', {
+      achievementId,
+      userId,
+    });
+    return response.data;
+  } catch (error) {
+    console.error(`Error selecting achievement ID ${achievementId}:`, error);
+    throw error;
+  }
+};

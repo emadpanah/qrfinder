@@ -5,6 +5,7 @@ import Header from './publicUI/components/Header';
 import Footer from './publicUI/components/Footer';
 import { ReactNode, useState, useEffect } from 'react';
 import { TonConnectUIProvider, THEME } from "@tonconnect/ui-react";
+import { UserProvider } from './contexts/UserContext'; // Import the UserProvider
 
 interface LayoutProps {
   children: ReactNode;
@@ -36,11 +37,13 @@ export default function RootLayout({ children }: LayoutProps) {
     <TonConnectUIProvider manifestUrl={manifestUrl} uiPreferences={{ theme: theme === 'dark' ? THEME.DARK : THEME.LIGHT }}>
       <html lang="en" className={theme}>
         <body className={`min-h-screen flex flex-col ${theme}`}>
-          <Header toggleTheme={toggleTheme} currentTheme={theme} />
-          <main className="flex-grow">
-            {children}
-          </main>
-          <Footer />
+          <UserProvider> {/* Wrap the content in UserProvider */}
+            <Header toggleTheme={toggleTheme} currentTheme={theme} />
+            <main className="flex-grow">
+              {children}
+            </main>
+            <Footer />
+          </UserProvider>
         </body>
       </html>
     </TonConnectUIProvider>

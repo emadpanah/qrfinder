@@ -23,11 +23,7 @@ const CampaignButton: React.FC<CampaignButtonProps> = ({ campaign, onClick }) =>
       <div>
         <h3 className={`${styles.textLg} ${styles.fontSemibold}`}>{campaign.name}</h3>
         <p className={`${styles.textSm} ${styles.textGray400}`}>{campaign.description}</p>
-        {campaign.imageUrl && <img src={campaign.imageUrl} alt="Campaign" className="w-full h-auto mt-2" />}
         {campaign.videoUrl && <video src={campaign.videoUrl} controls className="w-full h-auto mt-2" />}
-      </div>
-      <div className={`${styles.bgGray700} ${styles.p2} ${styles.roundedFull}`}>
-        <img src="/path-to-your-icon.png" alt="icon" className={`${styles.w8} ${styles.h8}`} />
       </div>
     </div>
   );

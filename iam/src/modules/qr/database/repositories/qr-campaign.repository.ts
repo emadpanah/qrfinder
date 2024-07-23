@@ -21,7 +21,7 @@ export class CampaignRepository {
 
   async findCampaignById(id: Types.ObjectId): Promise<any> {
     const collection = this.connection.collection('_qrcampaigns');
-    const campaign = await collection.findOne({ _id: id });
+    const campaign = await collection.findOne({ Id: id });
     return campaign;
   }
 
