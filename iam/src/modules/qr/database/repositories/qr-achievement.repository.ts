@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectConnection } from '@nestjs/mongoose';
 import { Connection, Types } from 'mongoose';
 import { AchievementDto } from '../../dto/achievement.dto';
-import { AchievementSelectedDto } from '../../dto/achievement-selected.dto';
+import { AchievementInsertDto, AchievementSelectedDto } from '../../dto/achievement-selected.dto';
 import { QRCode } from '../schemas/qr-qrcode.schema';
 
 @Injectable()
@@ -43,10 +43,19 @@ export class AchievementRepository {
     return qrCode;
   }
 
-  async createAchievementSelected(dto: AchievementSelectedDto): Promise<AchievementSelectedDto> {
+  async createAchievementSelected(dto: AchievementInsertDto): Promise<AchievementSelectedDto> {
     const collection = this.connection.collection('_qrachievementselected');
     await collection.insertOne(dto);
-    const achievementSelected = await collection.findOne({ _id: dto.Id }) as unknown as AchievementSelectedDto;
+    const achievementSelected = await collection.
+    findOne(
+      { achievementId: dto.achievementId, userId: dto.userId }
+      // {
+      //   $or: [{achievementId: { $regex: dto.achievementId},},
+      //     {userId: { $regex: dto.userId},},
+          
+      //     ,],
+      // }
+    ) as unknown as AchievementSelectedDto;
     if (!achievementSelected) {
       throw new Error('Insert not completed.');
     }
@@ -64,13 +73,7 @@ export class AchievementRepository {
     return await collection.find({ userId }).toArray() as unknown as AchievementSelectedDto[];
   }
 
-  async updateAchievementSelected(dto: AchievementSelectedDto): Promise<AchievementSelectedDto> {
-    const collection = this.connection.collection('_qrachievementselected');
-    await collection.updateOne({ _id: dto.Id }, { $set: { qrCode: dto.qrCode } });
-    const updatedAchievementSelected = await collection.findOne({ _id: dto.Id }) as unknown as AchievementSelectedDto;
-    return updatedAchievementSelected;
-  }
-  
+
   async findAchievementsByCampaignId(campaignId: Types.ObjectId): Promise<AchievementDto[]> {
     const collection = this.connection.collection('_qrachievements');
     const achievements = await collection.find({ campaignId }).toArray() as unknown as AchievementDto[];

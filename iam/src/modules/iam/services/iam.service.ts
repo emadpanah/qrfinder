@@ -30,7 +30,7 @@ export class IamService {
     return bcrypt.hash(password, salt);
   }
 
-  async registerOrLogin(dto: UserInsertDto): Promise<{ token: string, isNewToken: boolean }> {
+  async registerOrLogin(dto: UserInsertDto): Promise<{ token: string, isNewToken: boolean, userId: string }> {
     try {
   
       if (process.env.NEXT_PUBLIC_APP_SECRET !== dto.clientSecret) {
@@ -45,13 +45,13 @@ export class IamService {
         if (existingLoginInfo) {
           try {
             await this.authService.verifyJwt(existingLoginInfo.token);
-            return { token: existingLoginInfo.token, isNewToken: false }; // Return existing valid token
+            return { token: existingLoginInfo.token, isNewToken: false, userId: user._id }; // Return existing valid token
           } catch (error) {
             if (error instanceof TokenExpiredError) {
               // Generate a new token if the existing one is expired
               const newToken = await this.authService.generateJwt(dto.address);
               await this.userLoginRepository.createLogin(dto.address, newToken);            
-              return { token: newToken, isNewToken: true };
+              return { token: newToken, isNewToken: true, userId: user._id };
             } else {
               throw error; // Re-throw the error if it's not a TokenExpiredError
             }
@@ -61,17 +61,17 @@ export class IamService {
         // Generate a new token if no valid token exists
         const newToken = await this.authService.generateJwt(dto.address);
         await this.userLoginRepository.createLogin(dto.address, newToken);
-        return { token: newToken, isNewToken: true };
+        return { token: newToken, isNewToken: true, userId: user._id };
       }
   
       // User does not exist, proceed with registration
-      await this.iamRepository.createUser(dto);
+      const newUser = await this.iamRepository.createUser(dto);
   
       // Generate a new token for the new user
       const token = await this.authService.generateJwt(dto.address);
       await this.userLoginRepository.createLogin(dto.address, token);
   
-      return { token: token, isNewToken: true };
+      return { token: token, isNewToken: true, userId: newUser._id };
     } catch (error) {
       throw error;
     }

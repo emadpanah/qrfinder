@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { AchievementRepository } from '../database/repositories/qr-achievement.repository';
 import { AchievementDto } from '../dto/achievement.dto';
-import { AchievementSelectedDto } from '../dto/achievement-selected.dto';
+import { AchievementInsertDto, AchievementSelectedDto } from '../dto/achievement-selected.dto';
 import { Types } from 'mongoose';
 
 @Injectable()
@@ -19,7 +19,7 @@ export class AchievementService {
     return achievement;
   }
 
-  async createAchievementSelected(dto: AchievementSelectedDto): Promise<AchievementSelectedDto> {
+  async createAchievementSelected(dto: AchievementInsertDto): Promise<AchievementSelectedDto> {
     const achievementSelected = await this.achievementRepository.createAchievementSelected(dto);
     return achievementSelected;
   }
@@ -39,10 +39,6 @@ export class AchievementService {
     return link;
   }
 
-  async updateAchievementSelected(achievementSelected: AchievementSelectedDto): Promise<AchievementSelectedDto> {
-    const updatedAchievementSelected = await this.achievementRepository.updateAchievementSelected(achievementSelected);
-    return updatedAchievementSelected;
-  }
 
   async findAchievementsByCampaignId(campaignId: string): Promise<AchievementDto[]> {
     const objectId = new Types.ObjectId(campaignId);

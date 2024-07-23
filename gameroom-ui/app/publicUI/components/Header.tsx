@@ -34,15 +34,15 @@ const Header: React.FC<HeaderProps> = ({ toggleTheme, currentTheme }) => {
         console.log("Address:", tonAddress);
         console.log("Telegram ID:", telegramID);
 
-        const { authToken, isNewToken } = await registerUser({
+        const { authToken, isNewToken, userId } = await registerUser({
           address: tonAddress,
           telegramID,
           walletType: wallet.device.appName,
         });
+        //alert(1);
+        console.log("Server response:", { authToken, isNewToken, userId });
 
-        console.log("Server response:", { authToken, isNewToken });
-
-        setUserId(telegramID); // Set user ID in context
+        setUserId(userId); // Set user ID in context
       } catch (error) {
         console.error('Error during registration:', error);
       }

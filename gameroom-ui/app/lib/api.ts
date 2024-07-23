@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { PiCompassToolDuotone } from 'react-icons/pi';
 
 const iamServiceUrl = process.env.NEXT_PUBLIC_IAM_SERVICE_URL;
 const APP_SECRET = process.env.NEXT_PUBLIC_APP_SECRET || 'default_app_secret';
@@ -25,10 +26,10 @@ export const registerUser = async ({ address, telegramID, walletType }: Register
       clientSecret: APP_SECRET,
     });
 
-    const { token: authToken, isNewToken } = response.data;
+    const { token: authToken, isNewToken, userId } = response.data;
     localStorage.setItem('authToken', authToken);
 
-    return { authToken, isNewToken };
+    return { authToken, isNewToken, userId };
   } catch (error) {
     if (axios.isAxiosError(error)) {
       console.error('Axios error registering user:', error.response?.data || error.message);
@@ -94,12 +95,13 @@ export const fetchUserDetails = async (userId: string) => {
   }
 };
 
-// New API call to select an achievement
+// Updated API call to select an achievement
 export const selectAchievement = async (achievementId: string, userId: string) => {
   try {
-    const response = await api.post('/qr-achievements/select', {
-      achievementId,
-      userId,
+    console.log("achievementId/userId", achievementId, userId);
+    const response = await api.post('/qr-achievements/create-selected', {
+      achievementId: achievementId,
+      userId: userId,
     });
     return response.data;
   } catch (error) {

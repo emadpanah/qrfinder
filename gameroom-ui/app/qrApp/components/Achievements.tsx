@@ -20,6 +20,7 @@ const calculateRemainingDays = (expirationDate: Date) => {
 const AchievementComponent: React.FC<AchievementProps> = ({ achievements, userId }) => {
   const handleSelectAchievement = async (achievementId: string) => {
     try {
+      alert(userId);
       await selectAchievement(achievementId, userId);
       alert('Achievement selected successfully!');
     } catch (error) {
