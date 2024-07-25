@@ -17,7 +17,7 @@ export class AchievementSelectedDto {
 
   @IsString()
   @IsNotEmpty()
-  qrCode: string;
+  inviteLink: string;
 
   @IsString()
   @IsOptional()
@@ -42,7 +42,7 @@ export class AchievementInsertDto {
 
   @IsString()
   @IsNotEmpty()
-  qrCode: string;
+  inviteLink: string;
 
   @IsString()
   @IsOptional()

@@ -31,4 +31,12 @@ export class CampaignDto {
   @IsDateString()
   @IsNotEmpty()
   expirationDate: Date;
+
+  @IsString()
+  @IsNotEmpty()
+  readonly ownerTelegramId: string;
+
+  @IsString()
+  @IsNotEmpty()
+  readonly ownerAddress: string;
 }

@@ -212,31 +212,40 @@
   justify-content: center;
 }
 
-.achievementItem {
-  position: relative;
-  width: 200px;
-  height: 200px;
-  border: 2px solid #4c51bf;
-  border-radius: 1rem;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+.achievementButton {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  background-color: #2d3748;
-  color: #e2e8f0;
-}
-
-.achievementIcon {
-  position: absolute;
-  top: 0.5rem;
-  right: 0.5rem;
-  width: 2rem;
-  height: 2rem;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background-color: #fff;
+  margin: 10px;
+  position: relative;
 }
 
 .achievementText {
   text-align: center;
+}
+
+.qrThumbnailContainer {
+  display: flex;
+  align-items: center;
+  gap: 80px; /* Adjust the gap as needed */
+}
+
+.unjoinButton {
+  background-color: #f44336;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  cursor: pointer;
+  margin-right: 10px;
+}
+
+.qrThumbnail {
+  cursor: pointer;
 }
 
 .achievementText h3 {
@@ -280,4 +289,29 @@
 
 .unjoinButton:hover {
   background-color: #c53030;
+}
+
+.qrDialog {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.qrDialogContent {
+  background-color: white;
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+}
+
+.dialogLink {
+  padding-top: 10px; /* Add padding to the top */
+  cursor: pointer;
+  text-align: center;
 }

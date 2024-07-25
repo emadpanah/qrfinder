@@ -5,7 +5,7 @@
     "dev": "next dev  --port 3030",
     "prettier": "prettier --write --ignore-unknown .",
     "prettier:check": "prettier --check --ignore-unknown .",
-    "start": "next start --port 3010"
+    "start": "next start --port 3030"
   },
   "dependencies": {
     "@heroicons/react": "^2.0.18",

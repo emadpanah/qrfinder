@@ -98,7 +98,7 @@ export const fetchUserDetails = async (userId: string) => {
 // Updated API call to select an achievement
 export const selectAchievement = async (achievementId: string, userId: string) => {
   try {
-    console.log("achievementId/userId", achievementId, userId);
+   //console.log("achievementId/userId", achievementId, userId);
     const response = await api.post('/qr-achievements/create-selected', {
       achievementId: achievementId,
       userId: userId,
@@ -133,3 +133,15 @@ export const unselectAchievement = async (achievementId: string, userId: string)
   }
 };
 
+export const generateUserSpecificQRCode = async (achievementId: string, userId: string) => {
+  try {
+    const response = await api.post('/qr-achievements/generate-qrcode', {
+      achievementId: achievementId,
+      userId: userId,
+    });
+    return response.data.qrCode;
+  } catch (error) {
+    console.error(`Error generating QR code for achievement ID ${achievementId}:`, error);
+    throw error;
+  }
+};

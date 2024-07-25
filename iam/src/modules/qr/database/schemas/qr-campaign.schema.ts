@@ -28,6 +28,13 @@ export class Campaign {
 
   @Prop({ required: true })
   expirationDate: Date;
+
+  @Prop({ required: true })
+  ownerTelegramId: string;
+
+  @Prop({ required: true })
+  ownerAddress: string;
+
 }
 
 export const CampaignSchema = SchemaFactory.createForClass(Campaign);

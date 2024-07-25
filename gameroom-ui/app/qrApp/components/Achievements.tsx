@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import AchievementButton from './AchievementButton';
 import { Achievement } from '@/app/lib/definitions';
 import { fetchSelectedAchievementsByUser, selectAchievement, unselectAchievement } from '@/app/lib/api'; // Import the API functions
@@ -19,32 +19,45 @@ const calculateRemainingDays = (expirationDate: Date) => {
 
 const AchievementComponent: React.FC<AchievementProps> = ({ achievements, userId }) => {
   const [selectedAchievements, setSelectedAchievements] = useState<Set<string>>(new Set());
+  const [qrCodes, setQRCodes] = useState<Record<string, string>>({});
+  const [links, setLinks] = useState<Record<string, string>>({});
 
-  useEffect(() => {
-    const fetchSelectedAchievements = async () => {
-      try {
-        const selected = await fetchSelectedAchievementsByUser(userId);
-        setSelectedAchievements(new Set(selected.map((ach: any) => ach.achievementId)));
-      } catch (error) {
-        console.error('Error fetching selected achievements:', error);
-      }
-    };
-
-    fetchSelectedAchievements();
+  const fetchSelectedAchievements = useCallback(async () => {
+    try {
+      const selected = await fetchSelectedAchievementsByUser(userId);
+      setSelectedAchievements(new Set(selected.map((ach: any) => ach.achievementId)));
+      const qrCodesMap: Record<string, string> = {};
+      const linksMap: Record<string, string> = {};
+      selected.forEach((ach: any) => {
+        qrCodesMap[ach.achievementId] = ach.inviteQrCode;
+        linksMap[ach.achievementId] = ach.inviteLink;
+      });
+      setQRCodes(qrCodesMap);
+      setLinks(linksMap);
+      console.log('Fetched achievements:', { qrCodesMap, linksMap });
+    } catch (error) {
+      console.error('Error fetching selected achievements:', error);
+    }
   }, [userId]);
 
-  const handleSelectAchievement = async (achievementId: string) => {
+  useEffect(() => {
+    fetchSelectedAchievements();
+  }, [fetchSelectedAchievements]);
+
+  const handleSelectAchievement = useCallback(async (achievementId: string) => {
     try {
-      await selectAchievement(achievementId, userId);
+      const selected = await selectAchievement(achievementId, userId);
       setSelectedAchievements((prev) => new Set(prev).add(achievementId));
+      setQRCodes((prev) => ({ ...prev, [achievementId]: selected.inviteQrCode }));
+      setLinks((prev) => ({ ...prev, [achievementId]: selected.inviteLink }));
       alert('Achievement selected successfully!');
     } catch (error) {
       console.error('Error selecting achievement:', error);
       alert('Failed to select achievement.');
     }
-  };
+  }, [userId]);
 
-  const handleUnselectAchievement = async (achievementId: string) => {
+  const handleUnselectAchievement = useCallback(async (achievementId: string) => {
     try {
       await unselectAchievement(achievementId, userId);
       setSelectedAchievements((prev) => {
@@ -52,26 +65,40 @@ const AchievementComponent: React.FC<AchievementProps> = ({ achievements, userId
         updated.delete(achievementId);
         return updated;
       });
+      setQRCodes((prev) => {
+        const { [achievementId]: _, ...rest } = prev;
+        return rest;
+      });
+      setLinks((prev) => {
+        const { [achievementId]: _, ...rest } = prev;
+        return rest;
+      });
       alert('Achievement unselected successfully!');
     } catch (error) {
       console.error('Error unselecting achievement:', error);
       alert('Failed to unselect achievement.');
     }
-  };
+  }, [userId]);
 
   return (
     <div className={styles.achievementList}>
-      {achievements.map((achievement) => (
-        <AchievementButton
-          key={achievement.Id}
-          name={achievement.name}
-          reward={`${achievement.reward.tokens} tokens`}
-          remainingDays={calculateRemainingDays(achievement.expirationDate)}
-          onSelect={() => handleSelectAchievement(achievement.Id)}
-          onUnselect={() => handleUnselectAchievement(achievement.Id)} // Pass the unselect handler
-          isSelected={selectedAchievements.has(achievement.Id)} // Pass the selected status
-        />
-      ))}
+      {achievements.map((achievement) => {
+        const qrCode = qrCodes[achievement.Id];
+        const link = links[achievement.Id];
+
+        return (
+          <AchievementButton
+            key={achievement.Id}
+            name={achievement.name}
+            reward={`${achievement.reward.tokens} tokens`}
+            remainingDays={calculateRemainingDays(achievement.expirationDate)}
+            onSelect={() => handleSelectAchievement(achievement.Id)}
+            onUnselect={() => handleUnselectAchievement(achievement.Id)}
+            isSelected={selectedAchievements.has(achievement.Id)}
+            link={link || ''}
+          />
+        );
+      })}
     </div>
   );
 };

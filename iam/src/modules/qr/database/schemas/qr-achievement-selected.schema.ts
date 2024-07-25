@@ -13,7 +13,7 @@ export class AchievementSelected {
   userId: Types.ObjectId;
 
   @Prop({ required: true })
-  qrCode: string;
+  inviteLink: string;
 
   @Prop({ type: Types.ObjectId, ref: 'User', default: null })
   parentId: Types.ObjectId;  // This field will store the parent user who referred this achievement

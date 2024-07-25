@@ -49,6 +49,8 @@ async function bootstrap() {
     expirationDate: new Date(new Date().setMonth(new Date().getMonth() + 2)),
     videoUrl: `${baseUrl}/shared/qr/video/maghazi-campaign.mp4`, // Example video URL
     imageUrl: `${baseUrl}/shared/qr/img/maghazi-campaign.jpg`, // Example image URL
+    ownerTelegramId: null, // Set to null
+    ownerAddress: 'UQArbjQUytXhLEtxoYfNLHv1aS8tGhmRtxWI9XKj_S764NOV', // Default address
   };
 
   const caymanCampaign: CampaignDto = {
@@ -59,6 +61,8 @@ async function bootstrap() {
     expirationDate: new Date(new Date().setMonth(new Date().getMonth() + 2)),
     videoUrl: `${baseUrl}/shared/qr/video/cayman-campaign.mp4`, // Example video URL
     imageUrl: `${baseUrl}/shared/qr/img/cayman-campaign.jpg`, // Example image URL
+    ownerTelegramId: null, // Set to null
+    ownerAddress: 'UQArbjQUytXhLEtxoYfNLHv1aS8tGhmRtxWI9XKj_S764NOV', // Default address
   };
 
   const createdMaghaziCampaign = await campaignService.createCampaign(maghaziCampaign);
