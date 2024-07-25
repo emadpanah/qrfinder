@@ -10,9 +10,9 @@ interface CampaignButtonProps {
 
 const CampaignButton: React.FC<CampaignButtonProps> = ({ campaign, onClick }) => {
   const handleClick = () => {
-    console.log(`CampaignButton clicked: ${campaign.Id}`);
+    console.log(`CampaignButton clicked: ${campaign._id}`);
     console.log(`Campaign: ${campaign.name}`);
-    onClick(campaign.Id);
+    onClick(campaign._id);
   };
 
   return (

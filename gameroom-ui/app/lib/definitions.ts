@@ -1,6 +1,6 @@
 // app/lib/definitions.ts
 export interface Campaign {
-  Id: string;
+  _id: string;
   name: string;
   description: string;
   imageUrl?: string;
@@ -9,7 +9,7 @@ export interface Campaign {
 }
 
 export interface Achievement {
-  Id: string;
+  _id: string;
   name: string;
   description: string;
   reward: {
@@ -17,12 +17,22 @@ export interface Achievement {
     products: string[];
   };
   expirationDate: Date;
-  expectedLocation: {
-    lat: number;
-    lon: number;
-    allowedRange: number;
-  };
   type: 'ordered' | 'unordered';
+}
+
+export interface AchievementSelectedFull {
+  _id: string;
+  achievementId: string;
+  name: string;
+  reward: {
+    tokens: number;
+    products: string[];
+  };
+  expirationDate: Date;
+  userId: string;
+  inviteLink: string;
+  parentId: string; 
+  addedDate: Date;  
 }
 
 export interface AccountType {

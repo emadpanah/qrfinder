@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectConnection } from '@nestjs/mongoose';
 import { Connection, Types } from 'mongoose';
-import { AchievementDto } from '../../dto/achievement.dto';
-import { AchievementInsertDto, AchievementSelectedDto } from '../../dto/achievement-selected.dto';
+import { AchievementDto, AchievementInsertDto } from '../../dto/achievement.dto';
+import { AchievementSelectedInsertDto, AchievementSelectedDto, AchievementSelectedFullDto } from '../../dto/achievement-selected.dto';
 import { QRCode } from '../schemas/qr-qrcode.schema';
 
 @Injectable()
@@ -11,7 +11,7 @@ export class AchievementRepository {
     @InjectConnection('service') private connection: Connection
   ) {}
 
-  async createAchievement(dto: AchievementDto): Promise<AchievementDto> {
+  async createAchievement(dto: AchievementInsertDto): Promise<AchievementDto> {
     const collection = this.connection.collection('_qrachievements');
     await collection.insertOne(dto);
     const achievement = await collection.findOne({ name: dto.name }) as unknown as AchievementDto;
@@ -43,7 +43,7 @@ export class AchievementRepository {
     return qrCode;
   }
 
-  async createAchievementSelected(dto: AchievementInsertDto): Promise<AchievementSelectedDto> {
+  async createAchievementSelected(dto: AchievementSelectedInsertDto): Promise<AchievementSelectedDto> {
     const collection = this.connection.collection('_qrachievementselected');
     await collection.insertOne(dto);
     const achievementSelected = await collection.
@@ -73,6 +73,46 @@ export class AchievementRepository {
     return await collection.find({ userId }).toArray() as unknown as AchievementSelectedDto[];
   }
 
+  async findAchievementSelectedFullByUser(userId: Types.ObjectId): Promise<AchievementSelectedFullDto[]> {
+    const selectedCollection = this.connection.collection('_qrachievementselected');
+  
+    console.log(`Looking for userId: ${userId}`);
+  
+    const pipeline = [
+      {
+        $match: { userId: new Types.ObjectId(userId) }
+      },
+      {
+        $lookup: {
+          from: '_qrachievements',
+          localField: 'achievementId',
+          foreignField: '_id',
+          as: 'achievementDetails'
+        }
+      },
+      {
+        $unwind: '$achievementDetails'
+      },
+      {
+        $project: {
+          _id: 1,
+          achievementId: 1,
+          userId: 1,
+          inviteLink: 1,
+          parentId: 1,
+          addedDate: 1,
+          name: '$achievementDetails.name',
+          reward: '$achievementDetails.reward',
+          expirationDate: '$achievementDetails.expirationDate'
+        }
+      }
+    ];
+  
+    const fullDtos = await selectedCollection.aggregate(pipeline).toArray();
+    console.log('Full DTOs:', JSON.stringify(fullDtos, null, 2)); // Log the result for debugging
+
+    return fullDtos as AchievementSelectedFullDto[];
+}
 
   async findAchievementsByCampaignId(campaignId: Types.ObjectId): Promise<AchievementDto[]> {
     const collection = this.connection.collection('_qrachievements');

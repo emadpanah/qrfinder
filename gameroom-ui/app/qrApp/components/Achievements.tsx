@@ -19,8 +19,7 @@ const calculateRemainingDays = (expirationDate: Date) => {
 
 const AchievementComponent: React.FC<AchievementProps> = ({ achievements, userId }) => {
   const [selectedAchievements, setSelectedAchievements] = useState<Set<string>>(new Set());
-  const [qrCodes, setQRCodes] = useState<Record<string, string>>({});
-  const [links, setLinks] = useState<Record<string, string>>({});
+const [links, setLinks] = useState<Record<string, string>>({});
 
   const fetchSelectedAchievements = useCallback(async () => {
     try {
@@ -32,7 +31,6 @@ const AchievementComponent: React.FC<AchievementProps> = ({ achievements, userId
         qrCodesMap[ach.achievementId] = ach.inviteQrCode;
         linksMap[ach.achievementId] = ach.inviteLink;
       });
-      setQRCodes(qrCodesMap);
       setLinks(linksMap);
       console.log('Fetched achievements:', { qrCodesMap, linksMap });
     } catch (error) {
@@ -48,7 +46,6 @@ const AchievementComponent: React.FC<AchievementProps> = ({ achievements, userId
     try {
       const selected = await selectAchievement(achievementId, userId);
       setSelectedAchievements((prev) => new Set(prev).add(achievementId));
-      setQRCodes((prev) => ({ ...prev, [achievementId]: selected.inviteQrCode }));
       setLinks((prev) => ({ ...prev, [achievementId]: selected.inviteLink }));
       alert('Achievement selected successfully!');
     } catch (error) {
@@ -65,10 +62,6 @@ const AchievementComponent: React.FC<AchievementProps> = ({ achievements, userId
         updated.delete(achievementId);
         return updated;
       });
-      setQRCodes((prev) => {
-        const { [achievementId]: _, ...rest } = prev;
-        return rest;
-      });
       setLinks((prev) => {
         const { [achievementId]: _, ...rest } = prev;
         return rest;
@@ -83,18 +76,17 @@ const AchievementComponent: React.FC<AchievementProps> = ({ achievements, userId
   return (
     <div className={styles.achievementList}>
       {achievements.map((achievement) => {
-        const qrCode = qrCodes[achievement.Id];
-        const link = links[achievement.Id];
+        const link = links[achievement._id];
 
         return (
           <AchievementButton
-            key={achievement.Id}
+            key={achievement._id}
             name={achievement.name}
             reward={`${achievement.reward.tokens} tokens`}
             remainingDays={calculateRemainingDays(achievement.expirationDate)}
-            onSelect={() => handleSelectAchievement(achievement.Id)}
-            onUnselect={() => handleUnselectAchievement(achievement.Id)}
-            isSelected={selectedAchievements.has(achievement.Id)}
+            onSelect={() => handleSelectAchievement(achievement._id)}
+            onUnselect={() => handleUnselectAchievement(achievement._id)}
+            isSelected={selectedAchievements.has(achievement._id)}
             link={link || ''}
           />
         );

@@ -6,8 +6,8 @@ export type AchievementDocument = Achievement & Document;
 @Schema({ collection: '_qrachievements' })
 export class Achievement {
 
-  @Prop({ type: Types.ObjectId, auto: true })
-  Id: Types.ObjectId;
+  // @Prop({ type: Types.ObjectId, auto: true })
+  // _id: Types.ObjectId;
 
   @Prop({ type: Types.ObjectId, required: true })
   campaignId: Types.ObjectId;
@@ -20,9 +20,6 @@ export class Achievement {
 
   @Prop({ required: true })
   type: 'ordered' | 'unordered';
-
-  @Prop({ required: true })
-  target: number;
 
   @Prop({ type: Object, required: true })
   reward: {

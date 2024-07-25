@@ -35,7 +35,7 @@ const QRAppPage: React.FC = () => {
         console.log("Fetched campaigns data:", campaignsData);
 
         campaignsData.forEach((campaign: Campaign) => {
-          console.log(`Campaign ID: ${campaign.Id}, Name: ${campaign.name}`);
+          console.log(`Campaign ID: ${campaign._id}, Name: ${campaign.name}`);
         });
         setCampaigns(campaignsData);
       } catch (error) {
@@ -68,11 +68,12 @@ const QRAppPage: React.FC = () => {
           <div className={`${styles.container} ${styles.spaceY4} pt-4 md:pt-8 lg:pt-12`}>
             {campaigns.map((campaign) => (
               <CampaignButton
-                key={campaign.Id}
+                key={campaign._id}
                 campaign={campaign}
                 onClick={handleCampaignClick}
               />
             ))}
+             <MyAchievements /> {/* Add this line to include MyAchievements */}
           </div>
         );
       case ActiveSection.MyAchievements:

@@ -1,7 +1,7 @@
 // src/modules/qr/services/qr-campaign.service.ts
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { CampaignRepository } from '../database/repositories/qr-campaign.repository';
-import { CampaignDto } from '../dto/campaign.dto';
+import { CampaignInsertDto, CampaignDto } from '../dto/campaign.dto';
 import { Types } from 'mongoose';
 
 @Injectable()
@@ -10,7 +10,7 @@ export class CampaignService {
 
   constructor(private readonly campaignRepository: CampaignRepository) {}
 
-  async createCampaign(campaignDto: CampaignDto): Promise<CampaignDto> {
+  async createCampaign(campaignDto: CampaignInsertDto): Promise<CampaignDto> {
     const createdCampaign = await this.campaignRepository.createCampaign(campaignDto);
     return createdCampaign;
   }
@@ -18,10 +18,6 @@ export class CampaignService {
   async findCampaignById(id: string): Promise<CampaignDto> {
     try {
       this.logger.log(`Finding campaign with ID: ${id}`);
-      if (!Types.ObjectId.isValid(id)) {
-        this.logger.error(`Invalid ID format: ${id}`);
-        throw new NotFoundException(`Invalid ID format: ${id}`);
-      }
       const campaign = await this.campaignRepository.findCampaignById(new Types.ObjectId(id));
       if (!campaign) {
         this.logger.error(`Campaign not found with ID: ${id}`);

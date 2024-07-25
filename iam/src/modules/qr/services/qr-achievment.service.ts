@@ -1,7 +1,7 @@
 import { ConflictException, Injectable, Logger } from '@nestjs/common';
 import { AchievementRepository } from '../database/repositories/qr-achievement.repository';
-import { AchievementDto } from '../dto/achievement.dto';
-import { AchievementInsertDto, AchievementSelectedDto } from '../dto/achievement-selected.dto';
+import { AchievementDto, AchievementInsertDto } from '../dto/achievement.dto';
+import { AchievementSelectedInsertDto, AchievementSelectedDto, AchievementSelectedFullDto } from '../dto/achievement-selected.dto';
 import { Types } from 'mongoose';
 
 @Injectable()
@@ -9,7 +9,7 @@ export class AchievementService {
   private readonly logger = new Logger(AchievementService.name);
   constructor(private readonly achievementRepository: AchievementRepository) {}
 
-  async createAchievement(dto: AchievementDto): Promise<AchievementDto> {
+  async createAchievement(dto: AchievementInsertDto): Promise<AchievementDto> {
     const achievement = await this.achievementRepository.createAchievement(dto);
     return achievement;
   }
@@ -25,7 +25,7 @@ export class AchievementService {
   //   return achievementSelected;
   // }
 
-  async createAchievementSelected(dto: AchievementInsertDto): Promise<AchievementSelectedDto> {
+  async createAchievementSelected(dto: AchievementSelectedInsertDto): Promise<AchievementSelectedDto> {
     try {
       const result = await this.achievementRepository.createAchievementSelected(dto);
       if (!result) {
@@ -58,6 +58,10 @@ export class AchievementService {
 
   async findAchievementSelectedByUser(userId: string): Promise<AchievementSelectedDto[]> {
     return await this.achievementRepository.findAchievementSelectedByUser(new Types.ObjectId(userId));
+  }
+
+  async findAchievementSelectedFullByUser(userId: string): Promise<AchievementSelectedFullDto[]> {
+    return await this.achievementRepository.findAchievementSelectedFullByUser(new Types.ObjectId(userId));
   }
 
   async generateUserSpecificQRCode(campaignId: string, achievementSelectedId: string, userId: string): Promise<string> {

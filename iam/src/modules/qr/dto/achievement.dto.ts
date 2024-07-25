@@ -4,7 +4,7 @@ import { Types } from 'mongoose';
 export class AchievementDto {
   @IsString()
   @IsNotEmpty()
-  Id: Types.ObjectId;
+  _id: Types.ObjectId;
 
   @IsString()
   @IsNotEmpty()
@@ -22,9 +22,36 @@ export class AchievementDto {
   @IsNotEmpty()
   type: 'ordered' | 'unordered';
 
-  @IsNumber()
+  @IsObject()
   @IsNotEmpty()
-  target: number;
+  reward: {
+    tokens: number;
+    products: string[];
+  };
+
+  @IsDate()
+  @IsNotEmpty()
+  expirationDate: Date;
+}
+
+
+export class AchievementInsertDto {
+
+  @IsString()
+  @IsNotEmpty()
+  campaignId: Types.ObjectId;
+
+  @IsString()
+  @IsNotEmpty()
+  name: string;
+
+  @IsString()
+  @IsNotEmpty()
+  description: string;
+
+  @IsString()
+  @IsNotEmpty()
+  type: 'ordered' | 'unordered';
 
   @IsObject()
   @IsNotEmpty()

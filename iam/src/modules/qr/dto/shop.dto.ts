@@ -4,7 +4,11 @@ import { Types } from 'mongoose';
 export class ShopDto {
   @IsString()
   @IsNotEmpty()
-  Id: Types.ObjectId;
+  _id: Types.ObjectId;
+
+  @IsString()
+  @IsNotEmpty()
+  shopId: Types.ObjectId;
 
   @IsString()
   @IsNotEmpty()
@@ -16,4 +20,21 @@ export class ShopDto {
 
   @IsArray()
   campaigns: string[];
+}
+
+
+export class ShopInsertDto {
+
+  @IsString()
+  @IsNotEmpty()
+  shopId: Types.ObjectId;
+
+  @IsString()
+  @IsNotEmpty()
+  name: string;
+
+  @IsString()
+  @IsNotEmpty()
+  description: string;
+
 }

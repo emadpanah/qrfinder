@@ -8,8 +8,8 @@ export type CampaignDocument = Campaign & Document;
 @Schema({ collection: '_qrcampaigns' })
 export class Campaign {
 
-  @Prop({ type: Types.ObjectId, auto: true })
-  Id: Types.ObjectId;
+  // @Prop({ type: Types.ObjectId, auto: true })
+  // _id: Types.ObjectId;
 
   @Prop({ type: Types.ObjectId, ref: 'Shop', required: true })
   shopId: Types.ObjectId;
@@ -34,6 +34,15 @@ export class Campaign {
 
   @Prop({ required: true })
   ownerAddress: string;
+
+  @Prop({ required: true })
+  target: number;
+
+  @Prop({ type: Object, required: true })
+  reward: {
+    tokens: number;
+    products: string[];
+  };
 
 }
 

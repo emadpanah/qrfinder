@@ -120,6 +120,16 @@ export const fetchSelectedAchievementsByUser = async (userId: string) => {
   }
 };
 
+export const fetchSelectedFullAchievementsByUser = async (userId: string) => {
+  try {
+    const response = await api.get(`/qr-achievements/get-selectedFull`, { params: { userId: userId } });
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching selected achievements for user ID ${userId}:`, error);
+    throw error;
+  }
+};
+
 export const unselectAchievement = async (achievementId: string, userId: string) => {
   try {
     console.log("unselectAchievement", achievementId, userId);

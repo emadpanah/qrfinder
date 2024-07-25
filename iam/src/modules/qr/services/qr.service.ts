@@ -22,7 +22,6 @@ export class QRService {
 
     // Save QR Code in the database
     await this.achievementRepository.saveQRCode({
-      Id: new Types.ObjectId(),
       achievementId: new Types.ObjectId(achievementId),
       code: qrCode,
       latitude: 0, // Replace with actual latitude
@@ -65,10 +64,10 @@ export class QRService {
     // Update user progress
     await this.updateUserProgress(userId, new Types.ObjectId(achievementId), qrIndex);
 
-    if (qrIndex === achievement.target) {
-      await this.completeAchievement(userId, new Types.ObjectId(achievementId));
-      return 'Achievement completed!';
-    }
+    // if (qrIndex === achievement.target) {
+    //   await this.completeAchievement(userId, new Types.ObjectId(achievementId));
+    //   return 'Achievement completed!';
+    // }
 
     return 'QR code scanned successfully';
   }
