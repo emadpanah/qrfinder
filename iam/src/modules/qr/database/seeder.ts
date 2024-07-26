@@ -34,6 +34,7 @@ async function bootstrap() {
     name: 'Cayman Token ICO',
     description: 'Cayman Token ICO shop offering exclusive Porsche rides.',
   };
+  
 
   const createdMaghaziShop = await shopService.createShop(maghaziShop);
   const createdCaymanShop = await shopService.createShop(caymanShop);
@@ -43,7 +44,7 @@ async function bootstrap() {
     target:3000,
     reward: { tokens: 4000, products: [] },
     name: 'Maghazi City Hunt',
-    description: 'Scan 5 QR codes in the city to earn tokens.',
+    description: 'Join our Achievements and help us to our goals and get token back',
     shopId: createdMaghaziShop._id,
     expirationDate: new Date(new Date().setMonth(new Date().getMonth() + 2)),
     videoUrl: `${baseUrl}/shared/qr/video/maghazi-campaign.mp4`, // Example video URL
@@ -56,7 +57,7 @@ async function bootstrap() {
     target:2000,
     reward: { tokens: 3000, products: [] },
     name: 'Cayman Token ICO Hunt',
-    description: 'Scan 10 QR codes to earn a ride with a Porsche.',
+    description: 'Join Cayman challenges and get tokens',
     shopId: createdCaymanShop._id,
     expirationDate: new Date(new Date().setMonth(new Date().getMonth() + 1)),
     videoUrl: `${baseUrl}/shared/qr/video/cayman-campaign.mp4`, // Example video URL
@@ -65,24 +66,65 @@ async function bootstrap() {
     ownerAddress: 'UQArbjQUytXhLEtxoYfNLHv1aS8tGhmRtxWI9XKj_S764NOV', // Default address
   };
 
+  const fourcashCampaign: CampaignInsertDto = {
+    target:2000,
+    reward: { tokens: 3000, products: [] },
+    name: '4cash Exchange Engage Hunt',
+    description: 'join us to make 4cash goals and earn tokens',
+    shopId: createdCaymanShop._id,
+    expirationDate: new Date(new Date().setMonth(new Date().getMonth() + 1)),
+    videoUrl: `${baseUrl}/shared/qr/video/fourcash-campaign.mp4`, // Example video URL
+    imageUrl: `${baseUrl}/shared/qr/img/fourcash-campaign.jpg`, // Example image URL
+    ownerTelegramId: null, // Set to null
+    ownerAddress: 'UQArbjQUytXhLEtxoYfNLHv1aS8tGhmRtxWI9XKj_S764NOV', // Default address
+  };
+
+  const createdFourcashCampaign = await campaignService.createCampaign(fourcashCampaign);
   const createdMaghaziCampaign = await campaignService.createCampaign(maghaziCampaign);
   const createdCaymanCampaign = await campaignService.createCampaign(caymanCampaign);
+
+
+  const fourcashInviteAchievement: AchievementInsertDto = {
+    name: '4cash User Hunt',
+    description: 'invite 20 friend to this achievement and get 300 token',
+    campaignId: createdFourcashCampaign._id,
+    qrOrderType: 'unordered',
+    qrProofByLocation: false,
+    achievementType: 'inviteuser',
+    reward: { tokens: 300, products: [] },
+    expirationDate: new Date(new Date().setMonth(new Date().getMonth() + 2)),
+  };
 
   // Create Achievements
   const maghaziAchievement: AchievementInsertDto = {
     name: 'Maghazi QR Code Hunt',
     description: 'Scan 5 QR codes in the city to earn 1500 tokens.',
     campaignId: createdMaghaziCampaign._id,
-    type: 'unordered',
+    qrOrderType: 'unordered',
+    achievementType: 'qrcode',
+    qrProofByLocation: false,
     reward: { tokens: 1500, products: [] },
-    expirationDate: new Date(new Date().setMonth(new Date().getMonth() + 2)),
+    expirationDate: new Date(new Date().setMonth(new Date().getMonth() + 1)),
+  };
+
+  const maghaziInviteAchievement: AchievementInsertDto = {
+    name: 'Maghazi User Hunt',
+    description: 'invite 30 friend to this achievement and get 300 token',
+    campaignId: createdMaghaziCampaign._id,
+    qrOrderType: 'unordered',
+    qrProofByLocation: false,
+    achievementType: 'inviteuser',
+    reward: { tokens: 300, products: [] },
+    expirationDate: new Date(new Date().setMonth(new Date().getMonth() + 4)),
   };
 
   const caymanAchievementUnordered: AchievementInsertDto = {
     name: 'Cayman Token QR Hunt (Unordered)',
     description: 'Scan 10 QR codes to earn 2000 tokens.',
     campaignId: createdCaymanCampaign._id,
-    type: 'unordered',
+    qrOrderType: 'unordered',
+    qrProofByLocation: false,
+    achievementType: 'qrcode',
     reward: { tokens: 2000, products: [] },
     expirationDate: new Date(new Date().setMonth(new Date().getMonth() + 2)),
   };
@@ -91,12 +133,17 @@ async function bootstrap() {
     name: 'Cayman Token QR Hunt (Ordered)',
     description: 'Scan 10 QR codes in the specified order to earn 2000 tokens.',
     campaignId: createdCaymanCampaign._id,
-    type: 'ordered',
+    qrOrderType: 'unordered',
+    qrProofByLocation: false,
+    achievementType: 'qrcode',
     reward: { tokens: 2000, products: [] },
-    expirationDate: new Date(new Date().setMonth(new Date().getMonth() + 2)),
+    expirationDate: new Date(new Date().setMonth(new Date().getMonth() + 1)),
   };
 
+  
+  const createdFourcashInviteAchievement = await achievementService.createAchievement(fourcashInviteAchievement);
   const createdMaghaziAchievement = await achievementService.createAchievement(maghaziAchievement);
+  const createdMaghaziInviteAchievement = await achievementService.createAchievement(maghaziInviteAchievement);
   const createdCaymanAchievementUnordered = await achievementService.createAchievement(caymanAchievementUnordered);
   const createdCaymanAchievementOrdered = await achievementService.createAchievement(caymanAchievementOrdered);
 

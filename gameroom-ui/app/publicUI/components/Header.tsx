@@ -1,4 +1,3 @@
-// app/publicUI/components/Header.tsx
 'use client';
 
 import { FaSun, FaMoon } from 'react-icons/fa';
@@ -19,7 +18,7 @@ const Header: React.FC<HeaderProps> = ({ toggleTheme, currentTheme }) => {
   const [theme, setTheme] = useState<string>('light');
   const tonAddress = useTonAddress();
   const wallet = useTonWallet();
-  const { setUserId } = useUser();
+  const { setUserId, setAccountData } = useUser();
 
   useEffect(() => {
     setTheme(currentTheme);
@@ -39,10 +38,15 @@ const Header: React.FC<HeaderProps> = ({ toggleTheme, currentTheme }) => {
           telegramID,
           walletType: wallet.device.appName,
         });
-        //alert(1);
         console.log("Server response:", { authToken, isNewToken, userId });
 
         setUserId(userId); // Set user ID in context
+        setAccountData({
+          address: tonAddress,
+          balance: "0",//wallet.balance,
+          chainId: "0",//wallet.chainId,
+          network: "0" //wallet.network,
+        });
       } catch (error) {
         console.error('Error during registration:', error);
       }

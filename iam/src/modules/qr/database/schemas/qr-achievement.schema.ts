@@ -6,9 +6,6 @@ export type AchievementDocument = Achievement & Document;
 @Schema({ collection: '_qrachievements' })
 export class Achievement {
 
-  // @Prop({ type: Types.ObjectId, auto: true })
-  // _id: Types.ObjectId;
-
   @Prop({ type: Types.ObjectId, required: true })
   campaignId: Types.ObjectId;
 
@@ -19,7 +16,13 @@ export class Achievement {
   description: string;
 
   @Prop({ required: true })
-  type: 'ordered' | 'unordered';
+  qrOrderType: 'ordered' | 'unordered';
+
+  @Prop({ type: Boolean, required: true })
+  qrProofByLocation: boolean;
+
+  @Prop({ required: true })
+  achievementType: 'qrcode' | 'taptoken' | 'bet' | 'dailyvisit' | 'vote' | 'inviteuser';
 
   @Prop({ type: Object, required: true })
   reward: {

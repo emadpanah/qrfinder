@@ -8,9 +8,6 @@ export type CampaignDocument = Campaign & Document;
 @Schema({ collection: '_qrcampaigns' })
 export class Campaign {
 
-  // @Prop({ type: Types.ObjectId, auto: true })
-  // _id: Types.ObjectId;
-
   @Prop({ type: Types.ObjectId, ref: 'Shop', required: true })
   shopId: Types.ObjectId;
 

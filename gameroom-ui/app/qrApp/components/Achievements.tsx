@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import AchievementButton from './AchievementButton';
 import { Achievement } from '@/app/lib/definitions';
 import { fetchSelectedAchievementsByUser, selectAchievement, unselectAchievement } from '@/app/lib/api'; // Import the API functions
+import { useSwipeable } from 'react-swipeable';
 import styles from '../css/qrApp.module.css';
 
 interface AchievementProps {
@@ -19,7 +20,8 @@ const calculateRemainingDays = (expirationDate: Date) => {
 
 const AchievementComponent: React.FC<AchievementProps> = ({ achievements, userId }) => {
   const [selectedAchievements, setSelectedAchievements] = useState<Set<string>>(new Set());
-const [links, setLinks] = useState<Record<string, string>>({});
+  const [links, setLinks] = useState<Record<string, string>>({});
+  const [currentIndex, setCurrentIndex] = useState(0);
 
   const fetchSelectedAchievements = useCallback(async () => {
     try {
@@ -73,24 +75,40 @@ const [links, setLinks] = useState<Record<string, string>>({});
     }
   }, [userId]);
 
-  return (
-    <div className={styles.achievementList}>
-      {achievements.map((achievement) => {
-        const link = links[achievement._id];
+  const handleSwipe = (direction: string) => {
+    if (direction === 'left') {
+      setCurrentIndex((prevIndex) => Math.min(prevIndex + 1, achievements.length - 1));
+    } else if (direction === 'right') {
+      setCurrentIndex((prevIndex) => Math.max(prevIndex - 1, 0));
+    }
+  };
 
-        return (
-          <AchievementButton
-            key={achievement._id}
-            name={achievement.name}
-            reward={`${achievement.reward.tokens} tokens`}
-            remainingDays={calculateRemainingDays(achievement.expirationDate)}
-            onSelect={() => handleSelectAchievement(achievement._id)}
-            onUnselect={() => handleUnselectAchievement(achievement._id)}
-            isSelected={selectedAchievements.has(achievement._id)}
-            link={link || ''}
-          />
-        );
-      })}
+  const handlers = useSwipeable({
+    onSwipedLeft: () => handleSwipe('left'),
+    onSwipedRight: () => handleSwipe('right'),
+    trackTouch: true,
+    trackMouse: true,
+  });
+
+  return (
+    <div className="container mx-auto p-6">
+      <p className="text-small text-center">My Achievements</p>
+      <div className={styles.achievementList}>
+        {achievements.length > 0 && (
+          <div {...handlers} className={styles.achievementCarousel}>
+            <AchievementButton
+              key={achievements[currentIndex]._id}
+              name={achievements[currentIndex].name}
+              reward={`${achievements[currentIndex].reward.tokens} tokens`}
+              remainingDays={calculateRemainingDays(achievements[currentIndex].expirationDate)}
+              onSelect={() => handleSelectAchievement(achievements[currentIndex]._id)}
+              onUnselect={() => handleUnselectAchievement(achievements[currentIndex]._id)}
+              isSelected={selectedAchievements.has(achievements[currentIndex]._id)}
+              link={links[achievements[currentIndex]._id] || ''}
+            />
+          </div>
+        )}
+      </div>
     </div>
   );
 };

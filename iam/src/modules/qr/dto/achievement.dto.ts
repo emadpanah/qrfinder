@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsNumber, IsDate, IsObject } from 'class-validator';
+import { IsString, IsNotEmpty, IsNumber, IsDate, IsObject, IsBoolean } from 'class-validator';
 import { Types } from 'mongoose';
 
 export class AchievementDto {
@@ -20,7 +20,15 @@ export class AchievementDto {
 
   @IsString()
   @IsNotEmpty()
-  type: 'ordered' | 'unordered';
+  qrOrderType: 'ordered' | 'unordered';
+
+  @IsString()
+  @IsNotEmpty()
+  achievementType: 'qrcode' | 'taptoken' | 'bet' | 'dailyvisit' | 'vote' | 'inviteuser';
+
+  @IsBoolean()
+  @IsNotEmpty()
+  qrProofByLocation: boolean;
 
   @IsObject()
   @IsNotEmpty()
@@ -51,7 +59,15 @@ export class AchievementInsertDto {
 
   @IsString()
   @IsNotEmpty()
-  type: 'ordered' | 'unordered';
+  qrOrderType: 'ordered' | 'unordered';
+
+  @IsString()
+  @IsNotEmpty()
+  achievementType: 'qrcode' | 'taptoken' | 'bet' | 'dailyvisit' | 'vote' | 'inviteuser';
+
+  @IsBoolean()
+  @IsNotEmpty()
+  qrProofByLocation: boolean;
 
   @IsObject()
   @IsNotEmpty()

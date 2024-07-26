@@ -17,7 +17,8 @@ export interface Achievement {
     products: string[];
   };
   expirationDate: Date;
-  type: 'ordered' | 'unordered';
+  qrOrderType: 'ordered' | 'unordered';
+  achievementType: 'qrcode' | 'taptoken' | 'bet' | 'dailyvisit' | 'vote' | 'inviteuser';
 }
 
 export interface AchievementSelectedFull {

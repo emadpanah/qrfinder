@@ -1,4 +1,5 @@
 // app/qrApp/page.tsx
+
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -12,7 +13,7 @@ import styles from './css/qrApp.module.css';
 
 enum ActiveSection {
   Campaigns,
-  MyAchievements,
+  AchievementDetails,
   CampaignDetails,
 }
 
@@ -65,18 +66,21 @@ const QRAppPage: React.FC = () => {
     switch (activeSection) {
       case ActiveSection.Campaigns:
         return (
-          <div className={`${styles.container} ${styles.spaceY4} pt-4 md:pt-8 lg:pt-12`}>
-            {campaigns.map((campaign) => (
-              <CampaignButton
-                key={campaign._id}
-                campaign={campaign}
-                onClick={handleCampaignClick}
-              />
-            ))}
-             <MyAchievements /> {/* Add this line to include MyAchievements */}
+          <div className={styles.campaignListContainer}>
+            <p className="text-small text-center pt-4 pb-2 ">New Campaigns</p>
+            <div className={`${styles.container} ${styles.spaceY4} pt-2 md:pt-4 lg:pt-8 ${styles.campaignList}`}>
+              {campaigns.map((campaign) => (
+                <CampaignButton
+                  key={campaign._id}
+                  campaign={campaign}
+                  onClick={handleCampaignClick}
+                />
+              ))}
+            </div>
+            <MyAchievements /> {/* Include MyAchievements below the campaign list */}
           </div>
         );
-      case ActiveSection.MyAchievements:
+      case ActiveSection.AchievementDetails:
         return <MyAchievements />;
       case ActiveSection.CampaignDetails:
         return selectedCampaignId ? <CampaignDetails campaignId={selectedCampaignId} /> : null;
@@ -87,7 +91,7 @@ const QRAppPage: React.FC = () => {
 
   return (
     <div className={`h-full flex flex-col before:from-white after:from-sky-200 py-2`}>
-      <CampaignHeader {...accountData} />
+      <CampaignHeader  />
       <div className="flex flex-col flex-1 justify-center items-center">
         {renderActiveSection()}
       </div>

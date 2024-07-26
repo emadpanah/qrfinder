@@ -6,9 +6,6 @@ export type QRCodeDocument = QRCode & Document;
 @Schema()
 export class QRCode {
 
-  // @Prop({ type: Types.ObjectId, auto: true })
-  // _id: Types.ObjectId;
-
   @Prop({ type: Types.ObjectId, ref: 'Achievement', required: true })
   achievementId: Types.ObjectId;
 

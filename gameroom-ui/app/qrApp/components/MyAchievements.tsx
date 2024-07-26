@@ -1,13 +1,18 @@
+// app/qrApp/components/MyAchievements.tsx
+
 import React, { useCallback, useEffect, useState } from 'react';
 import { AchievementSelectedFull } from '@/app/lib/definitions';
 import { useUser } from '@/app/contexts/UserContext';
 import { fetchSelectedFullAchievementsByUser, unselectAchievement } from '@/app/lib/api';
+import { useSwipeable } from 'react-swipeable';
 import styles from '../css/qrApp.module.css';
 import AchievementButton from './AchievementButton';
+import { text } from 'stream/consumers';
 
 const MyAchievements: React.FC = () => {
   const [achievements, setAchievements] = useState<AchievementSelectedFull[]>([]);
   const { userId } = useUser(); // Use userId from UserContext
+  const [currentIndex, setCurrentIndex] = useState(0);
 
   const calculateRemainingDays = (expirationDate: Date) => {
     const today = new Date();
@@ -44,26 +49,39 @@ const MyAchievements: React.FC = () => {
     }
   }, [userId]);
 
+  const handleSwipe = (direction: string) => {
+    if (direction === 'left') {
+      setCurrentIndex((prevIndex) => Math.min(prevIndex + 1, achievements.length - 1));
+    } else if (direction === 'right') {
+      setCurrentIndex((prevIndex) => Math.max(prevIndex - 1, 0));
+    }
+  };
+
+  const handlers = useSwipeable({
+    onSwipedLeft: () => handleSwipe('left'),
+    onSwipedRight: () => handleSwipe('right'),
+    trackTouch: true,
+    trackMouse: true,
+  });
+
   return (
     <div className="container mx-auto p-6">
+      <p className="text-small text-center ">My Achievements</p>
       <div className={styles.achievementList}>
-      <h1 className="text-2xl font-bold mb-4">My Achievements</h1>
-        {achievements.map((achievement) => {
-          const link = achievement.inviteLink;
-
-          return (
+        {achievements.length > 0 && (
+          <div {...handlers} className={styles.achievementCarousel}>
             <AchievementButton
-              key={achievement._id}
-              name={achievement.name}
-              reward={`${achievement.reward.tokens} tokens`}
-              remainingDays={calculateRemainingDays(achievement.expirationDate)}
+              key={achievements[currentIndex]._id}
+              name={achievements[currentIndex].name}
+              reward={`${achievements[currentIndex].reward.tokens} tokens`}
+              remainingDays={calculateRemainingDays(achievements[currentIndex].expirationDate)}
               onSelect={() => null}
-              onUnselect={() => handleUnselectAchievement(achievement._id)}
+              onUnselect={() => handleUnselectAchievement(achievements[currentIndex]._id)}
               isSelected={true}
-              link={link || ''}
+              link={achievements[currentIndex].inviteLink || ''}
             />
-          );
-        })}
+          </div>
+        )}
       </div>
     </div>
   );

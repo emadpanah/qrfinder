@@ -207,9 +207,9 @@
 
 .achievementList {
   display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
+  align-items: center;
   justify-content: center;
+  margin: 0 auto;
 }
 
 .achievementButton {
@@ -314,4 +314,73 @@
   padding-top: 10px; /* Add padding to the top */
   cursor: pointer;
   text-align: center;
+}
+
+/* Campaigns container with scroll */
+.campaignScrollContainer {
+  max-height: 400px; /* Adjust the height as needed */
+  overflow-y: auto;
+  padding-right: 16px;
+}
+
+/* Additional styling for swipeable achievements */
+.achievementCarousel {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.campaignListContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.campaignList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem; /* Add padding between campaigns */
+  max-height: 400px; /* Adjust height as needed */
+  overflow-y: auto;
+  scrollbar-width: none; /* For Firefox */
+  -ms-overflow-style: none; /* For Internet Explorer and Edge */
+}
+
+.campaignList::-webkit-scrollbar {
+  display: none; /* For Chrome, Safari, and Opera */
+}
+
+/* Center My Achievements */
+.myAchievementsContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+
+.textSmall {
+  font-size: 5rem; /* Adjust the size as needed */
+} 
+
+/* Existing styles... */
+
+/* Adjust the video size for smaller screens */
+.videoLarge {
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  margin-top: 1rem;
+}
+
+/* Add media queries for additional responsiveness */
+@media (max-width: 768px) {
+  .videoLarge {
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+  }
+
+  .campaignDetailsContainer {
+    padding: 1rem;
+  }
 }

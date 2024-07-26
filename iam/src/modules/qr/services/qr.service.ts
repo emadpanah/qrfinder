@@ -54,7 +54,7 @@ export class QRService {
     const achievement = await this.achievementRepository.findAchievementById(new Types.ObjectId(qrCode.achievementId));
 
     // Check if the scan order is correct
-    if (achievement.type === 'ordered') {
+    if (achievement.qrOrderType === 'ordered') {
       const userProgress = await this.getUserProgress(userId, new Types.ObjectId(achievementId));
       if (userProgress.currentStep !== qrIndex - 1) {
         throw new Error('Incorrect QR scan order');
