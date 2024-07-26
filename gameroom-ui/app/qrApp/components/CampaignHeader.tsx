@@ -10,10 +10,9 @@ const CampaignHeader: React.FC = () => {
   return (
     <div className="px-6 md:px-12 sm:px-2 bg-yellow-500 text-white p-4 text-center">
       <div className="flex justify-between items-center">
-        <div className="flex-1 flex items-center gap-2">
+        <div className="flex-1 items-center gap-2">
           {/* Display account information */}
-          <span>Balance: {accountData.balance ?? "N/A"}</span>
-          <span>Network: {accountData.network ?? "N/A"}</span>
+          <span>Ton Balance: {accountData.balance ?? "N/A"}</span>
         </div>
       </div>
     </div>

@@ -4,7 +4,7 @@ import { FaSun, FaMoon } from 'react-icons/fa';
 import { TonConnectButton, TonConnectUIProvider, THEME, useTonAddress, useTonWallet } from "@tonconnect/ui-react";
 import GameLogo from '@/app/ui/game-logo';
 import { useEffect, useState } from 'react';
-import { registerUser } from '@/app/lib/api';
+import { registerUser, fetchBalance } from '@/app/lib/api';
 import { useUser } from '@/app/contexts/UserContext';
 
 const manifestUrl = 'https://gist.githubusercontent.com/siandreev/75f1a2ccf2f3b4e2771f6089aeb06d7f/raw/d4986344010ec7a2d1cc8a2a9baa57de37aaccb8/gistfile1.txt';
@@ -19,6 +19,7 @@ const Header: React.FC<HeaderProps> = ({ toggleTheme, currentTheme }) => {
   const tonAddress = useTonAddress();
   const wallet = useTonWallet();
   const { setUserId, setAccountData } = useUser();
+  const [network, setNetwork] = useState<string>('N/A');
 
   useEffect(() => {
     setTheme(currentTheme);
@@ -38,15 +39,40 @@ const Header: React.FC<HeaderProps> = ({ toggleTheme, currentTheme }) => {
           telegramID,
           walletType: wallet.device.appName,
         });
-        console.log("Server response:", { authToken, isNewToken, userId });
+         console.log("Server response:", { authToken, isNewToken, userId });
 
         setUserId(userId); // Set user ID in context
         setAccountData({
           address: tonAddress,
-          balance: "0",//wallet.balance,
+          balance: (await fetchBalance(tonAddress, 'mainnet')).toString(),
           chainId: "0",//wallet.chainId,
-          network: "0" //wallet.network,
+          network: wallet.device.appName,
         });
+
+        
+
+        // let balance;
+        // if (wallet.network === 'mainnet') {
+        //   balance = await fetchBalance(tonAddress, 'mainnet');
+        //   setNetwork('Mainnet');
+        // } else if (wallet.network === 'testnet') {
+        //   balance = await fetchBalance(tonAddress, 'testnet');
+        //   setNetwork('Testnet');
+        // } else {
+        //   balance = '0';
+        //   setNetwork('Unknown');
+        // }
+        // console.log("Balance fetched:", balance);
+
+        // setUserId(userId); // Set user ID in context
+        // setAccountData({
+        //   address: tonAddress,
+        //   balance: balance,
+        //   chainId: null, // Remove or set null if chainId is not available
+        //   network: network,
+        // });
+
+
       } catch (error) {
         console.error('Error during registration:', error);
       }
@@ -61,16 +87,16 @@ const Header: React.FC<HeaderProps> = ({ toggleTheme, currentTheme }) => {
 
   return (
     <TonConnectUIProvider manifestUrl={manifestUrl} uiPreferences={{ theme: theme === 'dark' ? THEME.DARK : THEME.LIGHT }}>
-      <header className={`px-6 md:px-12 sm:px-2 ${theme === 'dark' ? 'bg-[#bb86fc] text-black' : 'bg-[#6200ea] text-white'}`}>
+      <header className={`pt-1 pb-1 px-2 md:px-12 sm:px-2 ${theme === 'dark' ? 'bg-[#bb86fc] text-black' : 'bg-[#6200ea] text-white'}`}>
         <div className="flex justify-between items-center">
           <div className="flex-1 flex items-center gap-2">
             <GameLogo />
           </div>
-          <div className="flex gap-8 items-center">
+          <div className="flex gap-2 items-center">
+            <TonConnectButton />
             <button onClick={toggleTheme} className="focus:outline-none">
               {theme === 'dark' ? <FaSun className="text-white" /> : <FaMoon className="text-black" />}
             </button>
-            <TonConnectButton />
           </div>
         </div>
       </header>

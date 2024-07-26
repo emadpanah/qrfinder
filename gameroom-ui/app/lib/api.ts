@@ -155,3 +155,22 @@ export const generateUserSpecificQRCode = async (achievementId: string, userId: 
     throw error;
   }
 };
+
+const TONCENTER_MAINNET_API_URL = 'https://toncenter.com/api/v2';
+const TONCENTER_TESTNET_API_URL = 'https://testnet.toncenter.com/api/v2';
+
+export const fetchBalance = async (address: string, network: 'mainnet' | 'testnet'): Promise<string> => {
+  const apiUrl = network === 'mainnet' ? TONCENTER_MAINNET_API_URL : TONCENTER_TESTNET_API_URL;
+
+  try {
+    const response = await axios.get(`${apiUrl}/getAddressBalance`, {
+      params: { address },
+    });
+    const nanoTONs = response.data.result;
+    const tonBalance = (parseInt(nanoTONs, 10) / 1e9).toFixed(2); // Convert to TON and format to 2 decimal places
+    return tonBalance;
+  } catch (error) {
+    console.error(`Error fetching ${network} balance:`, error);
+    return '0';
+  }
+};
