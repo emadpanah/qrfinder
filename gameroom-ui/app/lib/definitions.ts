@@ -34,6 +34,10 @@ export interface AchievementSelectedFull {
   inviteLink: string;
   parentId: string; 
   addedDate: Date;  
+  description: string;
+  qrOrderType: string;
+  achievementType: string;
+  qrProofByLocation: boolean;
 }
 
 export interface AccountType {

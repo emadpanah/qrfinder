@@ -1,5 +1,4 @@
 // app/qrApp/page.tsx
-
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -7,7 +6,8 @@ import CampaignHeader from './components/CampaignHeader';
 import CampaignButton from './components/CampaignButton';
 import MyAchievements from './components/MyAchievements';
 import CampaignDetails from './components/CampaignDetails';
-import { AccountType, Campaign } from '@/app/lib/definitions';
+import AchievementDetails from './components/AchievementDetails'; // Import the new component
+import { AccountType, Campaign, AchievementSelectedFull } from '@/app/lib/definitions';
 import { fetchActiveCampaigns, fetchCampaignById } from '@/app/lib/api';
 import styles from './css/qrApp.module.css';
 
@@ -28,6 +28,7 @@ const QRAppPage: React.FC = () => {
   const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
+  const [selectedAchievement, setSelectedAchievement] = useState<AchievementSelectedFull | null>(null); // New state for selected achievement
 
   useEffect(() => {
     const getCampaigns = async () => {
@@ -61,6 +62,11 @@ const QRAppPage: React.FC = () => {
     }
   };
 
+  const handleAchievementClick = (achievement: AchievementSelectedFull) => {
+    setSelectedAchievement(achievement);
+    setActiveSection(ActiveSection.AchievementDetails);
+  };
+
   const renderActiveSection = () => {
     console.log(`Rendering section: ${activeSection}`);
     switch (activeSection) {
@@ -77,11 +83,11 @@ const QRAppPage: React.FC = () => {
                 />
               ))}
             </div>
-            <MyAchievements /> {/* Include MyAchievements below the campaign list */}
+            <MyAchievements onAchievementClick={handleAchievementClick} /> {/* Include MyAchievements below the campaign list */}
           </div>
         );
       case ActiveSection.AchievementDetails:
-        return <MyAchievements />;
+        return selectedAchievement ? <AchievementDetails achievement={selectedAchievement} /> : null; // Render AchievementDetails with selected achievement
       case ActiveSection.CampaignDetails:
         return selectedCampaignId ? <CampaignDetails campaignId={selectedCampaignId} /> : null;
       default:
@@ -91,7 +97,7 @@ const QRAppPage: React.FC = () => {
 
   return (
     <div className={`h-full flex flex-col before:from-white after:from-sky-200 py-2`}>
-      <CampaignHeader  />
+      <CampaignHeader />
       <div className="flex flex-col flex-1 justify-center items-center">
         {renderActiveSection()}
       </div>

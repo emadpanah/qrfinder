@@ -1,3 +1,4 @@
+// app/qrApp/components/AchievementButton.tsx
 import React, { useState, useRef, useEffect } from 'react';
 import styles from '../css/qrApp.module.css';
 import { QRCodeSVG } from 'qrcode.react';
@@ -10,6 +11,7 @@ interface AchievementButtonProps {
   onUnselect: () => void;
   isSelected: boolean;
   link: string;
+  handleQRClick: () => void; // Add this prop
 }
 
 const AchievementButton: React.FC<AchievementButtonProps> = ({
@@ -20,11 +22,12 @@ const AchievementButton: React.FC<AchievementButtonProps> = ({
   onUnselect,
   isSelected,
   link,
+  handleQRClick, // Destructure this prop
 }) => {
   const [showQRDialog, setShowQRDialog] = useState(false);
   const dialogRef = useRef<HTMLDivElement>(null);
 
-  const handleQRClick = () => {
+  const handleQRClickDialog = () => {
     setShowQRDialog(true);
   };
 
@@ -66,7 +69,7 @@ const AchievementButton: React.FC<AchievementButtonProps> = ({
           <div className={styles.qrThumbnailContainer}>
             <button className={styles.unjoinButton} onClick={onUnselect}>-Unjoin</button>
             {link && (
-              <div className={styles.qrThumbnail} onClick={handleQRClick}>
+              <div className={styles.qrThumbnail} onClick={handleQRClickDialog}>
                 <QRCodeSVG value={link} size={64} />
               </div>
             )}

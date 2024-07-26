@@ -1,5 +1,4 @@
 // app/qrApp/components/MyAchievements.tsx
-
 import React, { useCallback, useEffect, useState } from 'react';
 import { AchievementSelectedFull } from '@/app/lib/definitions';
 import { useUser } from '@/app/contexts/UserContext';
@@ -7,9 +6,12 @@ import { fetchSelectedFullAchievementsByUser, unselectAchievement } from '@/app/
 import { useSwipeable } from 'react-swipeable';
 import styles from '../css/qrApp.module.css';
 import AchievementButton from './AchievementButton';
-import { text } from 'stream/consumers';
 
-const MyAchievements: React.FC = () => {
+interface MyAchievementsProps {
+  onAchievementClick: (achievement: AchievementSelectedFull) => void; // Add this prop
+}
+
+const MyAchievements: React.FC<MyAchievementsProps> = ({ onAchievementClick }) => {
   const [achievements, setAchievements] = useState<AchievementSelectedFull[]>([]);
   const { userId } = useUser(); // Use userId from UserContext
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -79,6 +81,7 @@ const MyAchievements: React.FC = () => {
               onUnselect={() => handleUnselectAchievement(achievements[currentIndex]._id)}
               isSelected={true}
               link={achievements[currentIndex].inviteLink || ''}
+              handleQRClick={() => onAchievementClick(achievements[currentIndex])} // Pass the click handler
             />
           </div>
         )}

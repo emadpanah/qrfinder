@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsArray, IsOptional, IsDateString, IsObject, IsDate } from 'class-validator';
+import { IsString, IsNotEmpty, IsArray, IsOptional, IsDateString, IsObject, IsDate, IsBoolean } from 'class-validator';
 import { Types } from 'mongoose';
 
 export class AchievementSelectedDto {
@@ -49,6 +49,22 @@ reward: {
   tokens: number;
   products: string[];
 };
+
+@IsString()
+@IsNotEmpty()
+description: string;
+
+@IsString()
+@IsNotEmpty()
+qrOrderType: 'ordered' | 'unordered';
+
+@IsString()
+@IsNotEmpty()
+achievementType: 'qrcode' | 'taptoken' | 'bet' | 'dailyvisit' | 'vote' | 'inviteuser';
+
+@IsBoolean()
+@IsNotEmpty()
+qrProofByLocation: boolean;
 
 @IsDateString()
 @IsNotEmpty()

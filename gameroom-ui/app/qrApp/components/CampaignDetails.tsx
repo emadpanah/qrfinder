@@ -1,16 +1,18 @@
+// app/qrApp/components/CampaignDetails.tsx
 import React, { useEffect, useState } from 'react';
 import { Campaign, Achievement } from '@/app/lib/definitions';
 import { fetchCampaignById, fetchAchievementsByCampaignId } from '@/app/lib/api';
 import styles from '../css/qrApp.module.css';
 import AchievementComponent from './Achievements';
 import { useUser } from '@/app/contexts/UserContext';
-import {splitDescription} from "../../lib/utils"
+import { splitDescription } from '../../lib/utils';
 
 interface CampaignDetailsProps {
   campaignId: string;
+  onAchievementClick?: (achievement: Achievement) => void; // Make this prop optional
 }
 
-const CampaignDetails: React.FC<CampaignDetailsProps> = ({ campaignId }) => {
+const CampaignDetails: React.FC<CampaignDetailsProps> = ({ campaignId, onAchievementClick }) => {
   const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const { userId } = useUser();
@@ -53,7 +55,7 @@ const CampaignDetails: React.FC<CampaignDetailsProps> = ({ campaignId }) => {
           </div>
         )}
         <h2 className="text-2xl font-semibold mb-4 pt-3 text-center">Achievements to earn</h2>
-        {userId && <AchievementComponent achievements={achievements} userId={userId} />}
+        {userId && <AchievementComponent achievements={achievements} userId={userId} onAchievementClick={onAchievementClick} />}
       </>
     </div>
   );

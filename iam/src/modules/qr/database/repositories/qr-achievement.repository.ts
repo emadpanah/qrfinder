@@ -103,7 +103,11 @@ export class AchievementRepository {
           addedDate: 1,
           name: '$achievementDetails.name',
           reward: '$achievementDetails.reward',
-          expirationDate: '$achievementDetails.expirationDate'
+          expirationDate: '$achievementDetails.expirationDate',
+          description: '$achievementDetails.description',
+          qrOrderType: '$achievementDetails.qrOrderType',
+          achievementType: '$achievementDetails.achievementType',
+          qrProofByLocation: '$achievementDetails.qrProofByLocation',
         }
       }
     ];

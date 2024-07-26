@@ -1,3 +1,4 @@
+// app/qrApp/components/Achievements.tsx
 import React, { useEffect, useState, useCallback } from 'react';
 import AchievementButton from './AchievementButton';
 import { Achievement } from '@/app/lib/definitions';
@@ -8,6 +9,7 @@ import styles from '../css/qrApp.module.css';
 interface AchievementProps {
   achievements: Achievement[];
   userId: string;
+  onAchievementClick?: (achievement: Achievement) => void; // Make this prop optional
 }
 
 const calculateRemainingDays = (expirationDate: Date) => {
@@ -18,7 +20,7 @@ const calculateRemainingDays = (expirationDate: Date) => {
   return diffDays;
 };
 
-const AchievementComponent: React.FC<AchievementProps> = ({ achievements, userId }) => {
+const AchievementComponent: React.FC<AchievementProps> = ({ achievements, userId, onAchievementClick }) => {
   const [selectedAchievements, setSelectedAchievements] = useState<Set<string>>(new Set());
   const [links, setLinks] = useState<Record<string, string>>({});
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -105,6 +107,7 @@ const AchievementComponent: React.FC<AchievementProps> = ({ achievements, userId
               onUnselect={() => handleUnselectAchievement(achievements[currentIndex]._id)}
               isSelected={selectedAchievements.has(achievements[currentIndex]._id)}
               link={links[achievements[currentIndex]._id] || ''}
+              handleQRClick={() => onAchievementClick?.(achievements[currentIndex])} // Use optional chaining
             />
           </div>
         )}
