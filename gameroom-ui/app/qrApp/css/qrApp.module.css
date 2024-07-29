@@ -170,8 +170,6 @@
   border: 1px solid #ddd;
   border-radius: 0.5rem;
   padding: 1rem;
-  background-image: url('/public/achievementBack.png'); /* Path to your background image */
-  background-size: cover;
 }
 
 .countContainer {
@@ -383,4 +381,14 @@
   .campaignDetailsContainer {
     padding: 1rem;
   }
+}
+
+
+/* Add styles for the QR code grid and dialog */
+.qrCodeGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  align-items: center;
 }

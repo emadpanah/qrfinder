@@ -13,7 +13,7 @@ export class QRCodeDto {
 
   @IsString()
   @IsNotEmpty()
-  code: string;
+  link: string;
 
   @IsNumber()
   @IsNotEmpty()
@@ -23,13 +23,18 @@ export class QRCodeDto {
   @IsNotEmpty()
   longitude: number;
 
-  @IsDate()
+  @IsNumber()
   @IsNotEmpty()
-  expirationDate: Date;
+  order: number;
+
 }
 
 
 export class QRCodeInertDto {
+
+  @IsString()
+  @IsNotEmpty()
+  _id: Types.ObjectId;
 
   @IsMongoId()
   @IsNotEmpty()
@@ -37,7 +42,11 @@ export class QRCodeInertDto {
 
   @IsString()
   @IsNotEmpty()
-  code: string;
+  link: string;
+
+  @IsNumber()
+  @IsNotEmpty()
+  order: number;
 
   @IsNumber()
   @IsNotEmpty()
@@ -47,7 +56,4 @@ export class QRCodeInertDto {
   @IsNotEmpty()
   longitude: number;
 
-  @IsDate()
-  @IsNotEmpty()
-  expirationDate: Date;
 }

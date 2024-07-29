@@ -8,7 +8,7 @@ import styles from '../css/qrApp.module.css';
 import AchievementButton from './AchievementButton';
 
 interface MyAchievementsProps {
-  onAchievementClick: (achievement: AchievementSelectedFull) => void; // Add this prop
+  onAchievementClick: (achievementId: string) => void; // Add this prop
 }
 
 const MyAchievements: React.FC<MyAchievementsProps> = ({ onAchievementClick }) => {
@@ -68,7 +68,7 @@ const MyAchievements: React.FC<MyAchievementsProps> = ({ onAchievementClick }) =
 
   return (
     <div className="container mx-auto p-6">
-      <p className="text-small text-center ">My Achievements</p>
+      <p className="text-small  font-semibold text-center ">My Achievements</p>
       <div className={styles.achievementList}>
         {achievements.length > 0 && (
           <div {...handlers} className={styles.achievementCarousel}>
@@ -81,7 +81,7 @@ const MyAchievements: React.FC<MyAchievementsProps> = ({ onAchievementClick }) =
               onUnselect={() => handleUnselectAchievement(achievements[currentIndex]._id)}
               isSelected={true}
               link={achievements[currentIndex].inviteLink || ''}
-              handleQRClick={() => onAchievementClick(achievements[currentIndex])} // Pass the click handler
+              handleQRClick={() => onAchievementClick(achievements[currentIndex].achievementId)} // Pass the click handler
             />
           </div>
         )}

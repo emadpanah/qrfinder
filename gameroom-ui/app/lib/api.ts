@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { PiCompassToolDuotone } from 'react-icons/pi';
+import { QRCode } from './definitions';
 
 const iamServiceUrl = process.env.NEXT_PUBLIC_IAM_SERVICE_URL;
 const APP_SECRET = process.env.NEXT_PUBLIC_APP_SECRET || 'default_app_secret';
@@ -75,6 +76,27 @@ export const fetchCampaignById = async (campaignId: string) => {
   }
 };
 
+export const fetchQrCodesByAchievementId = async (achievementId: string) => {
+  try {
+    console.log('fetchQrCodesByAchievementId');
+    const response = await api.get(`/qr-achievements/get-AllQRCodes`, { params: { achievementId: achievementId } });
+    return response.data;// as unknown as QRCode[];;
+  } catch (error) {
+    console.error(`Error fetching Qrcodes for achievements ID ${achievementId}:`, error);
+    throw error;
+  }
+};
+
+export const fetchAchievementById = async (achievementId: string) => {
+  try {
+    const response = await api.get(`/qr-achievements/findById`, { params: { id: achievementId } });
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching achievement by ID ${achievementId}:`, error);
+    throw error;
+  }
+};
+
 export const fetchAchievementsByCampaignId = async (campaignId: string) => {
   try {
     const response = await api.get(`/qr-achievements/getAll`, { params: { campaignId: campaignId } });
@@ -95,17 +117,38 @@ export const fetchUserDetails = async (userId: string) => {
   }
 };
 
-// Updated API call to select an achievement
-export const selectAchievement = async (achievementId: string, userId: string) => {
+export const selectAchievement = async (achievementId: string, userId: string, parentId?: string) => {
   try {
-   //console.log("achievementId/userId", achievementId, userId);
-    const response = await api.post('/qr-achievements/create-selected', {
+    const requestBody: { achievementId: string; userId: string; parentId?: string } = {
       achievementId: achievementId,
       userId: userId,
-    });
+    };
+    console.log('p :', parentId);
+    if (parentId!=='0') {
+      requestBody.parentId = parentId;
+    }
+
+    const response = await api.post('/qr-achievements/create-selected', requestBody);
     return response.data;
   } catch (error) {
     console.error(`Error selecting achievement ID ${achievementId}:`, error);
+    throw error;
+  }
+};
+
+export const createQrScan = async (qrId: string, userId: string, lan?: number, lat?: number) => {
+  try {
+    const requestBody: { qrId: string; userId: string; lan?:number; lat?:number } = {
+      qrId: qrId,
+      userId: userId,
+      lan: lan,
+      lat: lat
+    };
+
+    const response = await api.post('/qr-achievements/create-qrscan', requestBody);
+    return response.data;
+  } catch (error) {
+    console.error(`Error scanning qrcode ID ${qrId}:`, error);
     throw error;
   }
 };
@@ -119,6 +162,17 @@ export const fetchSelectedAchievementsByUser = async (userId: string) => {
     throw error;
   }
 };
+
+export const fetchQrScannedByUser = async (userId: string) => {
+  try {
+    const response = await api.get(`/qr-achievements/get-qrScan`, { params: { userId: userId } });
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching scanned qr for user ID ${userId}:`, error);
+    throw error;
+  }
+};
+
 
 export const fetchSelectedFullAchievementsByUser = async (userId: string) => {
   try {
@@ -143,18 +197,6 @@ export const unselectAchievement = async (achievementId: string, userId: string)
   }
 };
 
-export const generateUserSpecificQRCode = async (achievementId: string, userId: string) => {
-  try {
-    const response = await api.post('/qr-achievements/generate-qrcode', {
-      achievementId: achievementId,
-      userId: userId,
-    });
-    return response.data.qrCode;
-  } catch (error) {
-    console.error(`Error generating QR code for achievement ID ${achievementId}:`, error);
-    throw error;
-  }
-};
 
 const TONCENTER_MAINNET_API_URL = 'https://toncenter.com/api/v2';
 const TONCENTER_TESTNET_API_URL = 'https://testnet.toncenter.com/api/v2';

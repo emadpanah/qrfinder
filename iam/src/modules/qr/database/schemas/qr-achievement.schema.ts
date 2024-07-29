@@ -16,6 +16,9 @@ export class Achievement {
   description: string;
 
   @Prop({ required: true })
+  qrTarget: number;
+
+  @Prop({ required: true })
   qrOrderType: 'ordered' | 'unordered';
 
   @Prop({ type: Boolean, required: true })

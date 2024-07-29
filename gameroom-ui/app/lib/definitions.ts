@@ -9,6 +9,7 @@ export interface Campaign {
 }
 
 export interface Achievement {
+  campaignId: string;
   _id: string;
   name: string;
   description: string;
@@ -16,10 +17,31 @@ export interface Achievement {
     tokens: number;
     products: string[];
   };
+  qrTarget: number;
   expirationDate: Date;
   qrOrderType: 'ordered' | 'unordered';
   achievementType: 'qrcode' | 'taptoken' | 'bet' | 'dailyvisit' | 'vote' | 'inviteuser';
 }
+
+export interface QRCode {
+  _id: string;
+  achievementId: string;
+  link: string;
+  latitude: number;
+  longitude: number;
+  order: number;
+}
+
+export interface QRScanFull {
+  _id: string;
+  qrCodeId: string;
+  userId: string;
+  lat: number;
+  lon: number;
+  link: string;
+}
+
+
 
 export interface AchievementSelectedFull {
   _id: string;
@@ -38,6 +60,7 @@ export interface AchievementSelectedFull {
   qrOrderType: string;
   achievementType: string;
   qrProofByLocation: boolean;
+  campaignId: string;
 }
 
 export interface AccountType {

@@ -32,6 +32,10 @@ export class AchievementSelectedDto {
 export class AchievementSelectedFullDto {
 
   @IsString()
+@IsNotEmpty()
+campaignId: Types.ObjectId;
+
+  @IsString()
   @IsNotEmpty()  
 _id:Types.ObjectId;
 

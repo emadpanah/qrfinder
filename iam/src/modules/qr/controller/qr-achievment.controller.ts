@@ -5,7 +5,8 @@ import { AchievementDto, AchievementInsertDto } from '../dto/achievement.dto';
 import { AchievementSelectedInsertDto, AchievementSelectedDto, AchievementSelectedFullDto } from '../dto/achievement-selected.dto';
 import { Logger } from '@nestjs/common';
 import { Types } from 'mongoose';
-import * as QRCode from 'qrcode';
+import { QRCodeDto } from '../dto/qrcode.dto';
+import { QrScanDto, QrScanFullDto } from '../dto/qrscan.dto';
 
 @Controller('qr-achievements')
 export class AchievementController {
@@ -47,20 +48,20 @@ export class AchievementController {
 
   @Post('/create-selected')
   async createAchievementSelected(
-    @Body() body: { achievementId: string; userId: string }
+    @Body() body: { achievementId: string; userId: string; parentId?: string  }
   ): Promise<AchievementSelectedInsertDto> {
     try {
       const achievementInsertDto: AchievementSelectedInsertDto = {
         achievementId: new Types.ObjectId(body.achievementId),
         userId: new Types.ObjectId(body.userId),
-        parentId: null,
+        parentId: body.parentId ? new Types.ObjectId(body.parentId) : null,
         inviteLink:"",
         addedDate: new Date()  // Add the addedDate here
       };
 
       const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
       // Adjust the frontend URL to include 'qrApp' path
-      const qrCodeLink = `${baseUrl}/qrApp?achievementId=${body.achievementId}&parentId=${body.userId}`;
+      const qrCodeLink = `${baseUrl}/qrApp?a=${body.achievementId}&p=${body.userId}&t=a`;
       achievementInsertDto.inviteLink = qrCodeLink;
   
       const achievementSelected = await this.achievementService.createAchievementSelected(achievementInsertDto);
@@ -69,6 +70,32 @@ export class AchievementController {
       this.logger.error('Error creating achievement selected', error);
       throw error;
     }
+  }
+
+  @Post('/create-qrscan')
+  async createQrScan(
+    @Body() body: { qrId: string; userId: string; lon?: number, lat?: number  }
+  ): Promise<QrScanDto> {
+    try {
+      const qrcodescan: QrScanDto = {
+        _id: new Types.ObjectId(),
+        userId: new Types.ObjectId(body.userId).toString(),
+        qrCodeId:body.qrId,
+        lat:body.lat,
+        lon:body.lon
+      };
+
+      const qrscan = await this.achievementService.createqrScan(qrcodescan);
+      return qrscan;
+    } catch (error) {
+      this.logger.error('Error creating qrscan', error);
+      throw error;
+    }
+  }
+
+  @Get('/get-qrScan')
+  async findQrScannedByUser(@Query('userId') userId: string): Promise<QrScanFullDto[]> {
+    return this.achievementService.findQrScannedByUser(userId);
   }
 
   
@@ -89,6 +116,13 @@ export class AchievementController {
   async findAchievementSelectedById(@Param('id') id: string): Promise<AchievementSelectedDto> {
     return this.achievementService.findAchievementSelectedById(id);
   }
+
+  
+  @Get('/get-AllQRCodes')
+  async findAllQRCodeByAchievementId(@Query('achievementId') Id: string): Promise<QRCodeDto[]> {
+    return this.achievementService.findAllQRCodeByAchievementId(Id);
+  }
+
 
   @Get('/get-selected')
   async findAchievementSelectedByUser(@Query('userId') userId: string): Promise<AchievementSelectedDto[]> {
@@ -113,7 +147,7 @@ export class AchievementController {
 
       const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
       // Adjust the frontend URL to include 'qrApp' path
-      const qrCodeLink = `${baseUrl}/qrApp?achievementId=${achievementId}&parentId=${userId}`;
+      const qrCodeLink = `${baseUrl}/qrApp?a=${achievementId}&p=${userId}&t=q`;
       achievementSelected.inviteLink = qrCodeLink;
 
       const achievementSelectedd = await this.achievementService.createAchievementSelected(achievementSelected);

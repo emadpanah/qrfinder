@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ShopService } from './services/qr-shop.service';
-import { QRService } from './services/qr.service';
 import { ShopController } from './controller/qr-shop.controller';
 import { ShopRepository } from './database/repositories/qr-shop.repository';
 import { Shop, ShopSchema } from './database/schemas/qr-shop.schema';
@@ -16,6 +15,9 @@ import { AchievementController } from './controller/qr-achievment.controller';
 import { AchievementRepository } from './database/repositories/qr-achievement.repository';
 import { Achievement, AchievementSchema } from './database/schemas/qr-achievement.schema';
 import { AchievementSelected, AchievementSelectedSchema } from './database/schemas/qr-achievement-selected.schema';
+import { QRCode, QRCodeSchema } from './database/schemas/qr-qrcode.schema';
+import { QRScanQr, QRScanSchema  } from './database/schemas/qr-scanqr.schema';
+
 
 @Module({
   imports: [
@@ -24,9 +26,11 @@ import { AchievementSelected, AchievementSelectedSchema } from './database/schem
       { name: Campaign.name, schema: CampaignSchema },
       { name: Achievement.name, schema: AchievementSchema },
       { name: AchievementSelected.name, schema: AchievementSelectedSchema },
+      { name: QRCode.name, schema: QRCodeSchema },
+      { name: QRScanQr.name, schema: QRScanSchema },
     ], 'service'),
   ],
   controllers: [ShopController, CampaignController, AchievementController],
-  providers: [QRService, ShopService, ShopRepository, CampaignService, CampaignRepository, AchievementService, AchievementRepository],
+  providers: [ShopService, ShopRepository, CampaignService, CampaignRepository, AchievementService, AchievementRepository],
 })
 export class QRModule {}

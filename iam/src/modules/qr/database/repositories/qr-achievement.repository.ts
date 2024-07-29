@@ -3,8 +3,9 @@ import { InjectConnection } from '@nestjs/mongoose';
 import { Connection, Types } from 'mongoose';
 import { AchievementDto, AchievementInsertDto } from '../../dto/achievement.dto';
 import { AchievementSelectedInsertDto, AchievementSelectedDto, AchievementSelectedFullDto } from '../../dto/achievement-selected.dto';
-import { QRCode } from '../schemas/qr-qrcode.schema';
-
+import { QRCodeInertDto, QRCodeDto } from '../../dto/qrcode.dto';
+import { QrScanDto, QrScanFullDto } from '../../dto/qrscan.dto';
+import { link } from 'fs';
 @Injectable()
 export class AchievementRepository {
   constructor(
@@ -27,19 +28,25 @@ export class AchievementRepository {
     return achievement;
   }
 
-  async saveQRCode(qrCode: QRCode): Promise<QRCode> {
+  async saveQRCode(qrCode: QRCodeInertDto): Promise<QRCodeDto> {
     const collection = this.connection.collection('_qrqrcodes');
     await collection.insertOne(qrCode);
-    const savedQRCode = await collection.findOne({ code: qrCode.code }) as unknown as QRCode;
+    const savedQRCode = await collection.findOne({ achievementId: qrCode.achievementId, order: qrCode.order }) as unknown as QRCodeDto;
     if (!savedQRCode) {
       throw new Error('QR Code insert not completed.');
     }
     return savedQRCode;
   }
 
-  async findQRCodeById(id: Types.ObjectId): Promise<QRCode> {
+  async findQRCodeById(id: Types.ObjectId): Promise<QRCodeDto> {
     const collection = this.connection.collection('_qrqrcodes');
-    const qrCode = await collection.findOne({ _id: id }) as unknown as QRCode;
+    const qrCode = await collection.findOne({ _id: id }) as unknown as QRCodeDto;
+    return qrCode;
+  }
+
+  async findAllQRCodeByAchievementId(id: Types.ObjectId): Promise<QRCodeDto[]> {
+    const collection = this.connection.collection('_qrqrcodes');
+    const qrCode = await collection.find({ achievementId: id }).toArray() as unknown as QRCodeDto[];
     return qrCode;
   }
 
@@ -62,6 +69,25 @@ export class AchievementRepository {
     return achievementSelected;
   }
 
+  async createQrScan(dto: QrScanDto): Promise<QrScanDto> {
+    const collection = this.connection.collection('_qrscanqr');
+    await collection.insertOne(dto);
+    const achievementSelected = await collection.
+    findOne(
+      { _id: dto._id, userId: dto.userId }
+      // {
+      //   $or: [{achievementId: { $regex: dto.achievementId},},
+      //     {userId: { $regex: dto.userId},},
+          
+      //     ,],
+      // }
+    ) as unknown as QrScanDto;
+    if (!achievementSelected) {
+      throw new Error('Insert not completed.');
+    }
+    return achievementSelected;
+  }
+
   async findAchievementSelectedById(id: Types.ObjectId): Promise<AchievementSelectedDto> {
     const collection = this.connection.collection('_qrachievementselected');
     const achievementSelected = await collection.findOne({ _id: id }) as unknown as AchievementSelectedDto;
@@ -71,6 +97,40 @@ export class AchievementRepository {
   async findAchievementSelectedByUser(userId: Types.ObjectId): Promise<AchievementSelectedDto[]> {
     const collection = this.connection.collection('_qrachievementselected');
     return await collection.find({ userId }).toArray() as unknown as AchievementSelectedDto[];
+  }
+
+  async findQrScannedByUser(userId: Types.ObjectId): Promise<QrScanFullDto[]> {
+    const collection = this.connection.collection('_qrscanqr');
+
+    const pipeline = [
+      {
+        $match: { userId: new Types.ObjectId(userId) }
+      },
+      {
+        $lookup: {
+          from: '_qrqrcode',
+          localField: 'qrId',
+          foreignField: '_id',
+          as: 'qrDetails'
+        }
+      },
+      {
+        $unwind: '$qrDetails'
+      },
+      {
+        $project: {
+          _id: 1,
+          qrCodeId: 1,
+          userId: 1,
+          lat: 1,
+          lon: 1,
+          link: '$qrDetails.name',
+        }
+      }
+    ];
+  
+    const fullDtos = await collection.aggregate(pipeline).toArray();
+    return fullDtos as QrScanFullDto[];
   }
 
   async findAchievementSelectedFullByUser(userId: Types.ObjectId): Promise<AchievementSelectedFullDto[]> {
@@ -108,6 +168,8 @@ export class AchievementRepository {
           qrOrderType: '$achievementDetails.qrOrderType',
           achievementType: '$achievementDetails.achievementType',
           qrProofByLocation: '$achievementDetails.qrProofByLocation',
+          campaignId:'$achievementDetails.campaignId',
+          
         }
       }
     ];

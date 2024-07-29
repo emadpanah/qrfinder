@@ -3,14 +3,14 @@ import { Document, Types } from 'mongoose';
 
 export type QRCodeDocument = QRCode & Document;
 
-@Schema()
+@Schema({ collection: '_qrqrcode' })
 export class QRCode {
 
   @Prop({ type: Types.ObjectId, ref: 'Achievement', required: true })
   achievementId: Types.ObjectId;
 
   @Prop({ required: true })
-  code: string;
+  link: string;
 
   @Prop({ required: true })
   latitude: number;
@@ -20,9 +20,6 @@ export class QRCode {
 
   @Prop({ required: true })
   order: number;
-
-  @Prop({ required: true })
-  expirationDate: Date;
 
   @Prop({ required: true })
   allowedRange: number; // Added allowedRange property

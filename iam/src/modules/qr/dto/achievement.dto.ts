@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsNumber, IsDate, IsObject, IsBoolean } from 'class-validator';
+import { IsString, IsNotEmpty, IsNumber, IsDate, IsObject, IsBoolean, isNumber } from 'class-validator';
 import { Types } from 'mongoose';
 
 export class AchievementDto {
@@ -13,6 +13,10 @@ export class AchievementDto {
   @IsString()
   @IsNotEmpty()
   name: string;
+
+  @IsNumber()
+  @IsNotEmpty()
+  qrTarget: number;
 
   @IsString()
   @IsNotEmpty()
@@ -53,6 +57,10 @@ export class AchievementInsertDto {
   @IsNotEmpty()
   name: string;
 
+  @IsNumber()
+  @IsNotEmpty()
+  qrTarget: number;
+  
   @IsString()
   @IsNotEmpty()
   description: string;

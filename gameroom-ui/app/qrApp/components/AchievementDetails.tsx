@@ -1,11 +1,11 @@
 // app/qrApp/components/AchievementDetails.tsx
 import React from 'react';
-import { AchievementSelectedFull } from '@/app/lib/definitions';
+import { AchievementSelectedFull, Achievement } from '@/app/lib/definitions';
 import QRAchievement from '../components/QRAchievement';
 import InviteAchievement from '../components/InviteAchievement';
 
 interface AchievementDetailsProps {
-  achievement: AchievementSelectedFull;
+  achievement: Achievement;
 }
 
 const AchievementDetails: React.FC<AchievementDetailsProps> = ({ achievement }) => {

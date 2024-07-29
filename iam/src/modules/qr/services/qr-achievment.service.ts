@@ -3,6 +3,8 @@ import { AchievementRepository } from '../database/repositories/qr-achievement.r
 import { AchievementDto, AchievementInsertDto } from '../dto/achievement.dto';
 import { AchievementSelectedInsertDto, AchievementSelectedDto, AchievementSelectedFullDto } from '../dto/achievement-selected.dto';
 import { Types } from 'mongoose';
+import { QRCodeInertDto, QRCodeDto } from '../dto/qrcode.dto';
+import { QrScanDto, QrScanFullDto } from '../dto/qrscan.dto';
 
 @Injectable()
 export class AchievementService {
@@ -20,10 +22,11 @@ export class AchievementService {
     return achievement;
   }
 
-  // async createAchievementSelected(dto: AchievementInsertDto): Promise<AchievementSelectedDto> {
-  //   const achievementSelected = await this.achievementRepository.createAchievementSelected(dto);
-  //   return achievementSelected;
-  // }
+  async createAchievementQrCode(dto: QRCodeInertDto): Promise<QRCodeDto> {
+    const achievementSelected = await this.achievementRepository.saveQRCode(dto);
+    return achievementSelected;
+  }
+  //saveQRCode
 
   async createAchievementSelected(dto: AchievementSelectedInsertDto): Promise<AchievementSelectedDto> {
     try {
@@ -41,6 +44,22 @@ export class AchievementService {
     }
   }
 
+  async createqrScan(dto: QrScanDto): Promise<QrScanDto> {
+    try {
+      const result = await this.achievementRepository.createQrScan(dto);
+      if (!result) {
+        throw new Error('Insert not completed.');
+      }
+      return result;
+    } catch (error) {
+      if (error.code === 11000) { // Duplicate key error code in MongoDB
+        throw new ConflictException('User has already scan selected qrcode');
+      }
+      this.logger.error('Error creating qrcodescan', error);
+      throw error;
+    }
+  }
+
   async deleteAchievementSelected(achievementId: string, userId: string): Promise<void> {
     try {
       await this.achievementRepository.deleteAchievementSelected(achievementId, userId);
@@ -48,6 +67,12 @@ export class AchievementService {
       this.logger.error('Error deleting achievement selected', error);
       throw error;
     }
+  }
+
+  async findAllQRCodeByAchievementId(id: string): Promise<QRCodeDto[]> {
+    const objectId = new Types.ObjectId(id);
+    const achievementSelected = await this.achievementRepository.findAllQRCodeByAchievementId(objectId);
+    return achievementSelected;
   }
 
   async findAchievementSelectedById(id: string): Promise<AchievementSelectedDto> {
@@ -58,6 +83,10 @@ export class AchievementService {
 
   async findAchievementSelectedByUser(userId: string): Promise<AchievementSelectedDto[]> {
     return await this.achievementRepository.findAchievementSelectedByUser(new Types.ObjectId(userId));
+  }
+
+  async findQrScannedByUser(userId: string): Promise<QrScanFullDto[]> {
+    return await this.achievementRepository.findQrScannedByUser(new Types.ObjectId(userId));
   }
 
   async findAchievementSelectedFullByUser(userId: string): Promise<AchievementSelectedFullDto[]> {

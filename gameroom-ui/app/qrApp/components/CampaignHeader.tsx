@@ -2,8 +2,6 @@ import React from 'react';
 import { AccountType } from '@/app/lib/definitions';
 import { useUser } from '@/app/contexts/UserContext';
 
-interface CampaignHeaderProps extends AccountType {}
-
 const CampaignHeader: React.FC = () => {
   const { accountData } = useUser();
 
@@ -12,7 +10,7 @@ const CampaignHeader: React.FC = () => {
       <div className="flex justify-between items-center">
         <div className="flex-1 items-center gap-2">
           {/* Display account information */}
-          <span>Ton Balance: {accountData.balance ?? "N/A"}</span>
+          <span>Ton Balance : {accountData.balance ?? "N/A"}</span>
         </div>
       </div>
     </div>

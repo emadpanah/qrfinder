@@ -6,11 +6,11 @@ import { ConfigService } from '@nestjs/config';
 import { ShopService } from '../services/qr-shop.service';
 import { CampaignService } from '../services/qr-campaign.service';
 import { AchievementService } from '../services/qr-achievment.service';
-import { QRService } from '../services/qr.service';
 import { ShopInsertDto } from '../dto/shop.dto';
 import { CampaignInsertDto } from '../dto/campaign.dto';
 import { AchievementInsertDto } from '../dto/achievement.dto';
 import { Types } from 'mongoose';
+import { QRCodeInertDto } from '../dto/qrcode.dto';
 
 async function bootstrap() {
   const app = await NestFactory.createApplicationContext(AppModule);
@@ -20,7 +20,6 @@ async function bootstrap() {
   const shopService = app.get(ShopService);
   const campaignService = app.get(CampaignService);
   const achievementService = app.get(AchievementService);
-  const qrService = app.get(QRService);
 
   // Create Shops
   const maghaziShop: ShopInsertDto = {
@@ -88,6 +87,7 @@ async function bootstrap() {
     name: '4cash User Hunt',
     description: 'invite 20 friend to this achievement and get 300 token',
     campaignId: createdFourcashCampaign._id,
+    qrTarget:0,
     qrOrderType: 'unordered',
     qrProofByLocation: false,
     achievementType: 'inviteuser',
@@ -100,6 +100,7 @@ async function bootstrap() {
     name: 'Maghazi QR Code Hunt',
     description: 'Scan 5 QR codes in the city to earn 1500 tokens.',
     campaignId: createdMaghaziCampaign._id,
+    qrTarget:4,
     qrOrderType: 'unordered',
     achievementType: 'qrcode',
     qrProofByLocation: false,
@@ -112,6 +113,7 @@ async function bootstrap() {
     description: 'invite 30 friend to this achievement and get 300 token',
     campaignId: createdMaghaziCampaign._id,
     qrOrderType: 'unordered',
+    qrTarget:0,
     qrProofByLocation: false,
     achievementType: 'inviteuser',
     reward: { tokens: 300, products: [] },
@@ -119,10 +121,11 @@ async function bootstrap() {
   };
 
   const caymanAchievementUnordered: AchievementInsertDto = {
-    name: 'Cayman Token QR Hunt (Unordered)',
-    description: 'Scan 10 QR codes to earn 2000 tokens.',
+    name: 'Cayman Token QR Hunt',
+    description: 'Scan 7 from 8 QR codes to earn 2000 tokens.',
     campaignId: createdCaymanCampaign._id,
     qrOrderType: 'unordered',
+    qrTarget:7,
     qrProofByLocation: false,
     achievementType: 'qrcode',
     reward: { tokens: 2000, products: [] },
@@ -130,10 +133,11 @@ async function bootstrap() {
   };
 
   const caymanAchievementOrdered: AchievementInsertDto = {
-    name: 'Cayman Token QR Hunt (Ordered)',
-    description: 'Scan 10 QR codes in the specified order to earn 2000 tokens.',
+    name: 'Cayman Token QR Hunt',
+    description: 'Scan 5 from 8 QR codes to earn 2000 tokens.',
     campaignId: createdCaymanCampaign._id,
     qrOrderType: 'unordered',
+    qrTarget:5,
     qrProofByLocation: false,
     achievementType: 'qrcode',
     reward: { tokens: 2000, products: [] },
@@ -149,33 +153,59 @@ async function bootstrap() {
 
   // Generate QR codes for Maghazi Achievement
   for (let i = 1; i <= 5; i++) {
-    const qrCode = await qrService.generateQRCode(
-      createdMaghaziCampaign._id.toString(),
-      createdMaghaziAchievement._id.toString(),
-      i
+    const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
+    const qrId = new Types.ObjectId()
+    const qrCodeLink = `${baseUrl}/qrApp?a=${createdMaghaziAchievement._id}&p=${qrId}&t=q`;
+    const magaziQr: QRCodeInertDto = {
+      link: qrCodeLink,
+      achievementId :createdMaghaziAchievement._id,
+      latitude:0,
+      longitude:0,
+      order:i,
+      _id: qrId
+    };
+    const qrCode = await achievementService.createAchievementQrCode(
+      magaziQr
     );
-    console.log(`Maghazi QR Code ${i}: ${qrCode}`);
+    console.log(`Maghazi QR Code ${i}: ${qrCode.link}`);
   }
 
-  // Generate QR codes for Cayman Achievement (Unordered)
   for (let i = 1; i <= 8; i++) {
-    const qrCode = await qrService.generateQRCode(
-      createdCaymanCampaign._id.toString(),
-      createdCaymanAchievementUnordered._id.toString(),
-      i
+    const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
+    const qrId = new Types.ObjectId()
+    const qrCodeLink = `${baseUrl}/qrApp?a=${createdCaymanAchievementUnordered._id}&p=${qrId}&t=q`;
+    const tempQr: QRCodeInertDto = {
+      link: qrCodeLink,
+      achievementId :createdCaymanAchievementUnordered._id,
+      latitude:0,
+      longitude:0,
+      order:i,
+      _id: qrId
+    };
+    const qrCode = await achievementService.createAchievementQrCode(
+      tempQr
     );
-    console.log(`Cayman (Unordered) QR Code ${i}: ${qrCode}`);
+    console.log(`Cayman QR Code ${i}: ${qrCode.link}`);
   }
 
-  // Generate QR codes for Cayman Achievement (Ordered)
   for (let i = 1; i <= 8; i++) {
-    const qrCode = await qrService.generateQRCode(
-      createdCaymanCampaign._id.toString(),
-      createdCaymanAchievementOrdered._id.toString(),
-      i
+    const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
+    const qrId = new Types.ObjectId()
+    const qrCodeLink = `${baseUrl}/qrApp?a=${createdCaymanAchievementOrdered._id}&p=${qrId}&t=q`;
+    const tempQr: QRCodeInertDto = {
+      link: qrCodeLink,
+      achievementId :createdCaymanAchievementOrdered._id,
+      latitude:0,
+      longitude:0,
+      order:i,
+      _id: qrId
+    };
+    const qrCode = await achievementService.createAchievementQrCode(
+      tempQr
     );
-    console.log(`Cayman (Ordered) QR Code ${i}: ${qrCode}`);
+    console.log(`Cayman QR Code ${i}: ${qrCode.link}`);
   }
+
 
   console.log('Fake data added successfully');
   await app.close();
