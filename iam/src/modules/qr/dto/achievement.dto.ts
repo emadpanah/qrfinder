@@ -44,6 +44,19 @@ export class AchievementDto {
   @IsDate()
   @IsNotEmpty()
   expirationDate: Date;
+
+  @IsDate()
+  @IsNotEmpty()
+  startDate: Date;
+
+  @IsBoolean()
+  @IsNotEmpty()
+  enable: boolean;
+
+  @IsDate()
+  @IsNotEmpty()
+  addedDate: Date;
+
 }
 
 
@@ -87,4 +100,16 @@ export class AchievementInsertDto {
   @IsDate()
   @IsNotEmpty()
   expirationDate: Date;
+  
+  @IsDate()
+  @IsNotEmpty()
+  startDate: Date;
+
+  @IsBoolean()
+  @IsNotEmpty()
+  enable: boolean;
+
+  @IsDate()
+  @IsNotEmpty()
+  addedDate: Date;
 }

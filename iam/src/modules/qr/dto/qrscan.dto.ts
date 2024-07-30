@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsNumberString, IsNumber } from 'class-validator';
+import { IsString, IsNotEmpty, IsNumberString, IsNumber, IsDateString } from 'class-validator';
 import { Types } from 'mongoose';
 
 export class QrScanDto {
@@ -21,6 +21,10 @@ export class QrScanDto {
   @IsNumber()
   @IsNotEmpty()
   lon: number;
+  
+  @IsDateString()
+  @IsNotEmpty()
+  addedDate: Date;  
 }
 
 
@@ -48,5 +52,9 @@ export class QrScanFullDto {
   @IsString()
   @IsNotEmpty()
   link: string;
+  
+  @IsDateString()
+  @IsNotEmpty()
+  addedDate: Date;  
 
 }

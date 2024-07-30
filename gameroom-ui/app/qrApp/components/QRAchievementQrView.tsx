@@ -25,9 +25,6 @@ const QRAchievementQrView: React.FC<QRAchievementQrViewProps> = ({ qrCodes }) =>
   };
 
   useEffect(() => {
-    alert("QRCode");
-    console.log('qr');
-    //console.log(qrCodes[0].link);
     document.addEventListener('mousedown', handleOutsideClick);
     return () => {
       document.removeEventListener('mousedown', handleOutsideClick);
@@ -38,7 +35,7 @@ const QRAchievementQrView: React.FC<QRAchievementQrViewProps> = ({ qrCodes }) =>
     <div className={styles.qrCodeGrid}>
       {qrCodes.map((qrCode, index) => (
         <div key={index} className={styles.qrThumbnail} onClick={() => handleQRClick(qrCode)}>
-          <QRCodeSVG value={qrCode.link} size={64} />
+          <QRCodeSVG value={qrCode.link} size={96} />
         </div>
       ))}
       {showQRDialog && selectedQR && (

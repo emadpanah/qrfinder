@@ -21,11 +21,11 @@ export class AchievementSelectedDto {
 
   @IsString()
   @IsOptional()
-  parentId: Types.ObjectId;  // This field will store the parent user who referred this achievement
+  parentId: Types.ObjectId; 
 
   @IsDateString()
   @IsNotEmpty()
-  addedDate: Date;  // This field will store the date when the achievement was added
+  addedDate: Date;  
 
 }
 

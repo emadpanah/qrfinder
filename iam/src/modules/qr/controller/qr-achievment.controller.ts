@@ -82,7 +82,8 @@ export class AchievementController {
         userId: new Types.ObjectId(body.userId).toString(),
         qrCodeId:body.qrId,
         lat:body.lat,
-        lon:body.lon
+        lon:body.lon,
+        addedDate: new Date()
       };
 
       const qrscan = await this.achievementService.createqrScan(qrcodescan);

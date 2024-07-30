@@ -35,6 +35,16 @@ export class Achievement {
 
   @Prop({ required: true })
   expirationDate: Date;
+
+  @Prop({ required: true })
+  startDate: Date;
+
+  @Prop({ type: Boolean, required: true })
+  enable: boolean;
+
+  @Prop({ required: true })
+  addedDate: Date;
+
 }
 
 export const AchievementSchema = SchemaFactory.createForClass(Achievement);

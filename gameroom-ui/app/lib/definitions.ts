@@ -19,6 +19,9 @@ export interface Achievement {
   };
   qrTarget: number;
   expirationDate: Date;
+  startDate: Date;
+  enable: boolean;
+  addedDate: Date;
   qrOrderType: 'ordered' | 'unordered';
   achievementType: 'qrcode' | 'taptoken' | 'bet' | 'dailyvisit' | 'vote' | 'inviteuser';
 }
