@@ -146,7 +146,7 @@ const QRAppPageContent: React.FC = () => {
   };
 
   return (
-    <div className={`h-full flex flex-col before:from-white after:from-sky-200 py-2`}>
+    <div className={`h-full flex flex-col before:from-white after:from-sky-200 `}>
       <CampaignHeader />
       <div className="flex flex-col flex-1 justify-center items-center">
         {renderActiveSection()}

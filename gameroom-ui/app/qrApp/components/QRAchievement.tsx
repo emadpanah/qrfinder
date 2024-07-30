@@ -136,7 +136,7 @@ const QRAchievement: React.FC<QRAchievementProps> = ({ achievement }) => {
         <div className="relative border text-center border-gray-300 p-4 ml-6 mt-4 mr-6 mb-4">
             <h2 className="text-l text-center pt-2 font-semibold mb-2 relative inline-block " style={{ top: '-1rem' }}>
                 QR Codes
-              <p className='text-xs text-red-500'>just campaign owner can see</p>
+              <p className='text-xs text-red-500'>just campaign owner can see, print qr in different places</p>
             </h2>
           <QRAchievementQrView qrCodes={qrCodes} />
         </div>
