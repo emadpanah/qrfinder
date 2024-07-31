@@ -6,6 +6,7 @@ import { fetchSelectedFullAchievementsByUser, unselectAchievement } from '@/app/
 import { useSwipeable } from 'react-swipeable';
 import styles from '../css/qrApp.module.css';
 import AchievementButton from './AchievementButton';
+import { toast } from 'react-toastify';
 
 interface MyAchievementsProps {
   onAchievementClick: (achievementId: string) => void; // Add this prop
@@ -24,32 +25,37 @@ const MyAchievements: React.FC<MyAchievementsProps> = ({ onAchievementClick }) =
     return diffDays;
   };
 
-  useEffect(() => {
-    const fetchAchievements = async () => {
-      if (userId) {
-        try {
-          const fetchedAchievements = await fetchSelectedFullAchievementsByUser(userId);
-          setAchievements(fetchedAchievements);
-        } catch (error) {
-          console.error('Error fetching achievements:', error);
-        }
+  const fetchAchievements = useCallback(async () => {
+          try {
+        const fetchedAchievements = await fetchSelectedFullAchievementsByUser(userId!);
+        setAchievements(fetchedAchievements);
+      } catch (error) {
+        console.error('Error fetching achievements:', error);
       }
-    };
-
-    fetchAchievements();
+    
   }, [userId]);
+
+  useEffect(() => {
+    fetchAchievements();
+  }, [fetchAchievements]);
 
   const handleUnselectAchievement = useCallback(async (achievementId: string) => {
     if (userId) {
       try {
-        await unselectAchievement(achievementId, userId);
-        alert('Achievement unselected successfully!');
+        const response = await unselectAchievement(achievementId, userId);
+        if (response.success) {
+          toast.success(response.message);
+          fetchAchievements(); 
+        } else {
+          toast.error('Failed to unselect achievement.');
+        }
       } catch (error) {
         console.error('Error unselecting achievement:', error);
-        alert('Failed to unselect achievement.');
+        toast.error('Failed to unselect achievement.');
       }
     }
-  }, [userId]);
+  }, [userId, fetchAchievements]);
+  
 
   const handleSwipe = (direction: string) => {
     if (direction === 'left') {
@@ -67,8 +73,8 @@ const MyAchievements: React.FC<MyAchievementsProps> = ({ onAchievementClick }) =
   });
 
   return (
-    <div className="container mx-auto p-6">
-      <p className="text-small  font-semibold text-center ">My Achievements</p>
+    <div className="container mx-auto ">
+      <p className="text-small  font-semibold text-center pt-3 ">My Achievements</p>
       <div className={styles.achievementList}>
         {achievements.length > 0 && (
           <div {...handlers} className={styles.achievementCarousel}>
@@ -78,7 +84,7 @@ const MyAchievements: React.FC<MyAchievementsProps> = ({ onAchievementClick }) =
               reward={`${achievements[currentIndex].reward.tokens} tokens`}
               remainingDays={calculateRemainingDays(achievements[currentIndex].expirationDate)}
               onSelect={() => null}
-              onUnselect={() => handleUnselectAchievement(achievements[currentIndex]._id)}
+              onUnselect={() => handleUnselectAchievement(achievements[currentIndex].achievementId)}
               isSelected={true}
               link={achievements[currentIndex].inviteLink || ''}
               handleQRClick={() => onAchievementClick(achievements[currentIndex].achievementId)} // Pass the click handler

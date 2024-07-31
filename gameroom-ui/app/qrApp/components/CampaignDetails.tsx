@@ -1,12 +1,13 @@
 // app/qrApp/components/CampaignDetails.tsx
 import React, { useEffect, useState, useCallback } from 'react';
 import { Campaign, AchievementSelectedFull, Achievement } from '@/app/lib/definitions';
-import { fetchCampaignById, fetchAchievementsByCampaignId, selectAchievement, unselectAchievement } from '@/app/lib/api';
+import { fetchCampaignById, fetchSelectedAchievementsByUser, fetchAchievementsByCampaignId, selectAchievement, unselectAchievement } from '@/app/lib/api';
 import styles from '../css/qrApp.module.css';
 import AchievementButton from './AchievementButton';
 import { useUser } from '@/app/contexts/UserContext';
 import { splitDescription } from '../../lib/utils';
 import { useSwipeable } from 'react-swipeable';
+import { toast } from 'react-toastify';
 
 interface CampaignDetailsProps {
   campaignId: string;
@@ -28,6 +29,27 @@ const CampaignDetails: React.FC<CampaignDetailsProps> = ({ campaignId, onAchieve
   const [selectedAchievements, setSelectedAchievements] = useState<Set<string>>(new Set());
   const [links, setLinks] = useState<Record<string, string>>({});
   const [currentIndex, setCurrentIndex] = useState(0);
+
+  const fetchSelectedAchievements = useCallback(async () => {
+              try {
+                const selected = await fetchSelectedAchievementsByUser(userId!);
+                setSelectedAchievements(new Set(selected.map((ach: any) => ach.achievementId)));
+                const qrCodesMap: Record<string, string> = {};
+                const linksMap: Record<string, string> = {};
+                selected.forEach((ach: any) => {
+                  qrCodesMap[ach.achievementId] = ach.inviteQrCode;
+                  linksMap[ach.achievementId] = ach.inviteLink;
+                });
+                setLinks(linksMap);
+                console.log('Fetched achievements:', { qrCodesMap, linksMap });
+              } catch (error) {
+                console.error('Error fetching selected achievements:', error);
+              }
+        }, [userId]);
+
+  useEffect(() => {
+    fetchSelectedAchievements();
+  }, [fetchSelectedAchievements]);
 
   useEffect(() => {
     const fetchCampaignDetails = async () => {
@@ -51,10 +73,10 @@ const CampaignDetails: React.FC<CampaignDetailsProps> = ({ campaignId, onAchieve
       const selected = await selectAchievement(achievementId, userId!);
       setSelectedAchievements((prev) => new Set(prev).add(achievementId));
       setLinks((prev) => ({ ...prev, [achievementId]: selected.inviteLink }));
-      alert('Achievement selected successfully!');
+      toast.success('Achievement selected successfully!');
     } catch (error) {
       console.error('Error selecting achievement:', error);
-      alert('Failed to select achievement.');
+      toast.error('Failed to select achievement.');
     }
   }, [userId]);
 
@@ -70,10 +92,10 @@ const CampaignDetails: React.FC<CampaignDetailsProps> = ({ campaignId, onAchieve
         const { [achievementId]: _, ...rest } = prev;
         return rest;
       });
-      alert('Achievement unselected successfully!');
+      toast.success('Achievement unselected successfully!');
     } catch (error) {
       console.error('Error unselecting achievement:', error);
-      alert('Failed to unselect achievement.');
+      toast.error('Failed to unselect achievement.');
     }
   }, [userId]);
 

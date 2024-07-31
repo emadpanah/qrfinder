@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import styles from '../css/qrApp.module.css';
 import { QRCodeSVG } from 'qrcode.react';
-
+import { toast } from 'react-toastify';
 interface AchievementButtonProps {
   name: string;
   reward: string;
@@ -33,7 +33,7 @@ const AchievementButton: React.FC<AchievementButtonProps> = ({
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(link);
-    alert('Link copied to clipboard!');
+    toast.success('Link copied to clipboard!');
   };
 
   const handleOutsideClick = (event: MouseEvent) => {

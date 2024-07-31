@@ -103,10 +103,10 @@ export class AchievementController {
   @Delete('/delete-selected')
  async deleteAchievementSelected(
   @Body() body: { achievementId: string; userId: string }
-): Promise<{ message: string }> {
+): Promise<{success: boolean;  message: string }> {
   try {
     await this.achievementService.deleteAchievementSelected(body.achievementId, body.userId);
-    return { message: 'Achievement unselected successfully' };
+    return { success: true, message: 'Achievement unselected successfully' };
   } catch (error) {
     this.logger.error('Error deleting achievement selected', error);
     throw error;
