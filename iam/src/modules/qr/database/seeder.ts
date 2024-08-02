@@ -30,13 +30,20 @@ async function bootstrap() {
 
   const caymanShop: ShopInsertDto = {
     shopId: new Types.ObjectId(),
-    name: 'Cayman Token ICO',
+    name: 'Cayman Token Shop',
     description: 'Cayman Token ICO shop offering exclusive Porsche rides.',
+  };
+
+  const fourcashShop: ShopInsertDto = {
+    shopId: new Types.ObjectId(),
+    name: '4cash Exchange Shop',
+    description: '4cash exchange offer crypto exchanges',
   };
   
 
   const createdMaghaziShop = await shopService.createShop(maghaziShop);
   const createdCaymanShop = await shopService.createShop(caymanShop);
+  const createdFourcashShop = await shopService.createShop(fourcashShop);
 
   // Create Campaigns
   const maghaziCampaign: CampaignInsertDto = {
@@ -70,7 +77,7 @@ async function bootstrap() {
     reward: { tokens: 3000, products: [] },
     name: '4cash Exchange Engage Hunt',
     description: 'join us to make 4cash goals and earn tokens',
-    shopId: createdCaymanShop._id,
+    shopId: createdFourcashShop._id,
     expirationDate: new Date(new Date().setMonth(new Date().getMonth() + 1)),
     videoUrl: `${baseUrl}/shared/qr/video/fourcash-campaign.mp4`, // Example video URL
     imageUrl: `${baseUrl}/shared/qr/img/fourcash-campaign.jpg`, // Example image URL

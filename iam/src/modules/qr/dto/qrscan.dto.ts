@@ -8,11 +8,11 @@ export class QrScanDto {
 
   @IsNumberString()
   @IsNotEmpty()
-  qrCodeId: string;
+  qrCodeId: Types.ObjectId;
 
   @IsString()
   @IsNotEmpty()
-  userId: string;
+  userId: Types.ObjectId;
 
   @IsNumber()
   @IsNotEmpty()
@@ -35,11 +35,11 @@ export class QrScanFullDto {
 
   @IsNumberString()
   @IsNotEmpty()
-  qrCodeId: string;
+  qrCodeId: Types.ObjectId;
 
   @IsString()
   @IsNotEmpty()
-  userId: string;
+  userId: Types.ObjectId;
 
   @IsNumber()
   @IsNotEmpty()
@@ -52,6 +52,10 @@ export class QrScanFullDto {
   @IsString()
   @IsNotEmpty()
   link: string;
+
+  @IsNumber()
+  @IsNotEmpty()
+  order: number;
   
   @IsDateString()
   @IsNotEmpty()

@@ -42,6 +42,7 @@ export interface QRScanFull {
   lat: number;
   lon: number;
   link: string;
+  order:number;
 }
 
 
@@ -64,6 +65,8 @@ export interface AchievementSelectedFull {
   achievementType: string;
   qrProofByLocation: boolean;
   campaignId: string;
+  qrTarget: number;
+  startDate:Date;
 }
 
 export interface AccountType {

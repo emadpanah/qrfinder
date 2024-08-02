@@ -3,6 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import styles from '../css/qrApp.module.css';
 import { QRCodeSVG } from 'qrcode.react';
 import { toast } from 'react-toastify';
+import { shortenUrl } from '@/app/lib/utils';
 interface AchievementButtonProps {
   name: string;
   reward: string;
@@ -49,13 +50,7 @@ const AchievementButton: React.FC<AchievementButtonProps> = ({
     };
   }, []);
 
-  const shortenUrl = (url: string) => {
-    const length = url.length;
-    if (length <= 30) {
-      return url;
-    }
-    return `${url.slice(0, 15)}...${url.slice(length - 10, length)}`;
-  };
+
 
   return (
     <div className={styles.achievementButton}>

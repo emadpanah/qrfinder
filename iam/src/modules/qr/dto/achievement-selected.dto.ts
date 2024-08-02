@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsArray, IsOptional, IsDateString, IsObject, IsDate, IsBoolean } from 'class-validator';
+import { IsString, IsNotEmpty, IsArray, IsOptional, IsDateString, IsObject, IsDate, IsBoolean, IsNumber } from 'class-validator';
 import { Types } from 'mongoose';
 
 export class AchievementSelectedDto {
@@ -25,23 +25,35 @@ export class AchievementSelectedDto {
 
   @IsDateString()
   @IsNotEmpty()
-  addedDate: Date;  
+  addedDate: Date;
+  
+  @IsDateString()
+  @IsNotEmpty()
+  doneDate: Date;
 
 }
 
 export class AchievementSelectedFullDto {
 
-  @IsString()
+@IsString()
 @IsNotEmpty()
 campaignId: Types.ObjectId;
 
-  @IsString()
-  @IsNotEmpty()  
+@IsDateString()
+@IsNotEmpty()
+doneDate: Date;
+
+@IsString()
+@IsNotEmpty()  
 _id:Types.ObjectId;
 
 @IsString()
 @IsNotEmpty()
 achievementId: Types.ObjectId;
+
+@IsNumber()
+@IsNotEmpty()
+qrTarget: number;
 
 @IsString()
 @IsNotEmpty()
@@ -89,6 +101,10 @@ parentId: Types.ObjectId;  // This field will store the parent user who referred
 @IsDateString()
 @IsNotEmpty()
 addedDate: Date;  // This field will store the date when the achievement was added
+
+@IsDateString()
+@IsNotEmpty()
+startDate: Date;
 
 }
 

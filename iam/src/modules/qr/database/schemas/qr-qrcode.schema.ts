@@ -3,7 +3,7 @@ import { Document, Types } from 'mongoose';
 
 export type QRCodeDocument = QRCode & Document;
 
-@Schema({ collection: '_qrqrcode' })
+@Schema({ collection: '_qrqrcodes' })
 export class QRCode {
 
   @Prop({ type: Types.ObjectId, ref: 'Achievement', required: true })

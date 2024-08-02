@@ -24,7 +24,8 @@ const QRAppPageContent: React.FC = () => {
   const [activeSection, setActiveSection] = useState<ActiveSection>(ActiveSection.Campaigns);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
-  const [selectedAchievement, setSelectedAchievement] = useState<Achievement | null>(null); // New state for selected achievement
+  const [selectedAchievement, setSelectedAchievement] = useState<Achievement | null>(null); 
+  const [selectedAchievementFull, setSelectedAchievementFull] = useState<AchievementSelectedFull | null>(null); 
 
   
 
@@ -49,18 +50,19 @@ const QRAppPageContent: React.FC = () => {
     const type = searchParams.get('t');
     const parentId = searchParams.get('p');
     const isQrCodeType = type === 'q';
-    const achievementIdExists = !!achievementId;
-    const parentIdExists = !!parentId; 
-    const hasValidParams = achievementIdExists && isQrCodeType;
+    const hasValidParamsQr = !!achievementId && isQrCodeType;
     const isAchieventInviteType = type === 'a';
-    const hasValidParams2 = achievementIdExists && isAchieventInviteType;
-    if (hasValidParams) {
-      console.log("qrId", parentId);
+    const hasValidparaInvi = !!achievementId && isAchieventInviteType;
+    if (hasValidParamsQr) {
+      //console.log("qrId", parentId);
       if (accountData.address && userId && parentId) {
         console.log("User connected with address:", accountData.address);
-        selectAchievement(achievementId!, userId).then(() => {
-          fetchAchievementById(achievementId!).then((achievement) => {
-            setSelectedAchievement(achievement);
+        selectAchievement(achievementId!, userId).then((achievement) => {
+          setSelectedAchievementFull(achievement);
+          alert(achievement.achievementType);
+          fetchAchievementById(achievement.achievementId).then((ach) => {
+            alert(ach);
+            setSelectedAchievement(ach);
             createQrScan(parentId.toString(), userId, 0, 0);
             setActiveSection(ActiveSection.AchievementDetails);
           }).catch((error) => {
@@ -71,11 +73,11 @@ const QRAppPageContent: React.FC = () => {
         });
       } 
     }
-    if (hasValidParams2) {
-      console.log("parentId", parentId);
+    if (hasValidparaInvi) {
+      //console.log("parentId", parentId);
       if (accountData.address && userId) {
         console.log("User connected with address:", accountData.address);
-        selectAchievement(achievementId!, userId, parentIdExists?parentId:'0').then(() => {
+        selectAchievement(achievementId!, userId, !!parentId?parentId:'0').then(() => {
           fetchAchievementById(achievementId!).then((achievement) => {
             setSelectedAchievement(achievement);
             setActiveSection(ActiveSection.AchievementDetails);
@@ -137,7 +139,7 @@ const QRAppPageContent: React.FC = () => {
           </div>
         );
       case ActiveSection.AchievementDetails:
-        return selectedAchievement ? <AchievementDetails achievement={selectedAchievement} /> : null; // Render AchievementDetails with selected achievement
+        return selectedAchievement?._id ? <AchievementDetails achievement={selectedAchievementFull!} /> : null; 
       case ActiveSection.CampaignDetails:
         return selectedCampaign?._id ? <CampaignDetails campaignId={selectedCampaign._id} onAchievementClick={handleAchievementClick} /> : null;
       default:

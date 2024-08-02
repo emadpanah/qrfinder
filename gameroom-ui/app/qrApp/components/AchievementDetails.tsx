@@ -5,10 +5,11 @@ import QRAchievement from '../components/QRAchievement';
 import InviteAchievement from '../components/InviteAchievement';
 
 interface AchievementDetailsProps {
-  achievement: Achievement;
+  achievement: AchievementSelectedFull;
 }
 
 const AchievementDetails: React.FC<AchievementDetailsProps> = ({ achievement }) => {
+  alert(achievement.description);
   switch (achievement.achievementType) {
     case 'qrcode':
       return <QRAchievement achievement={achievement} />;

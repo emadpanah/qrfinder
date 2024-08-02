@@ -19,7 +19,7 @@ export class CampaignController {
     }
   }
 
-  @Get('/findById')
+  @Get('/findbyid')
   async findCampaignById(@Query('id') id: string): Promise<CampaignDto> {
     try {
       console.log("campaignService.findCampaignById", id);

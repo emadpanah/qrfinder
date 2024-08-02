@@ -18,8 +18,6 @@ export class ShopDto {
   @IsNotEmpty()
   description: string;
 
-  @IsArray()
-  campaigns: string[];
 }
 
 

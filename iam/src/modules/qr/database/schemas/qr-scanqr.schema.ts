@@ -6,19 +6,23 @@ export type QRScanQrDocument = QRScanQr & Document;
 @Schema({ collection: '_qrscanqr' })
 export class QRScanQr {
 
-  @Prop({ type: Types.ObjectId, ref: 'QrCode', required: true })
+  @Prop({ type: Types.ObjectId, ref: 'QRCode', required: true })
   qrCodeId: Types.ObjectId;
 
   @Prop({ required: true })
-  latitude: number;
+  lat: number;
 
   @Prop({ required: true })
-  longitude: number;
+  lon: number;
 
-  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  @Prop({ type: Types.ObjectId, ref: 'IAMUser', required: true })
   userId: Types.ObjectId;
 
+  @Prop({ type: Date, default: Date.now })
+  addedDate: Date;
+
 }
+
 
 const QRScanSchema = SchemaFactory.createForClass(QRScanQr);
 

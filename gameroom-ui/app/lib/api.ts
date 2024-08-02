@@ -68,7 +68,7 @@ export const fetchActiveCampaigns = async () => {
 
 export const fetchCampaignById = async (campaignId: string) => {
   try {
-    const response = await api.get(`/qr-campaigns/findById`, { params: { id: campaignId } });
+    const response = await api.get(`/qr-campaigns/findbyid`, { params: { id: campaignId } });
     return response.data;
   } catch (error) {
     console.error(`Error fetching campaign by ID ${campaignId}:`, error);
@@ -79,7 +79,7 @@ export const fetchCampaignById = async (campaignId: string) => {
 export const fetchQrCodesByAchievementId = async (achievementId: string) => {
   try {
     console.log('fetchQrCodesByAchievementId');
-    const response = await api.get(`/qr-achievements/get-AllQRCodes`, { params: { achievementId: achievementId } });
+    const response = await api.get(`/qr-achievements/get-allqrcodes`, { params: { achievementId: achievementId } });
     return response.data;// as unknown as QRCode[];;
   } catch (error) {
     console.error(`Error fetching Qrcodes for achievements ID ${achievementId}:`, error);
@@ -89,7 +89,7 @@ export const fetchQrCodesByAchievementId = async (achievementId: string) => {
 
 export const fetchAchievementById = async (achievementId: string) => {
   try {
-    const response = await api.get(`/qr-achievements/findById`, { params: { id: achievementId } });
+    const response = await api.get(`/qr-achievements/findbyid`, { params: { id: achievementId } });
     return response.data;
   } catch (error) {
     console.error(`Error fetching achievement by ID ${achievementId}:`, error);
@@ -99,7 +99,7 @@ export const fetchAchievementById = async (achievementId: string) => {
 
 export const fetchAchievementsByCampaignId = async (campaignId: string) => {
   try {
-    const response = await api.get(`/qr-achievements/getAll`, { params: { campaignId: campaignId } });
+    const response = await api.get(`/qr-achievements/getall`, { params: { campaignId: campaignId } });
     return response.data;
   } catch (error) {
     console.error(`Error fetching achievements for campaign ID ${campaignId}:`, error);
@@ -129,6 +129,7 @@ export const selectAchievement = async (achievementId: string, userId: string, p
     }
 
     const response = await api.post('/qr-achievements/create-selected', requestBody);
+    console.log('create-selected', response);
     return response.data;
   } catch (error) {
     console.error(`Error selecting achievement ID ${achievementId}:`, error);
@@ -136,12 +137,26 @@ export const selectAchievement = async (achievementId: string, userId: string, p
   }
 };
 
-export const createQrScan = async (qrId: string, userId: string, lan?: number, lat?: number) => {
+export const doneSelectAchievement = async (selectedAchievementId: string) => {
   try {
-    const requestBody: { qrId: string; userId: string; lan?:number; lat?:number } = {
+    const requestBody: { selectedAchievementId: string } = {
+      selectedAchievementId: selectedAchievementId,
+    };
+
+    const response = await api.post('/qr-achievements/done-selected', requestBody);
+    return response.data;
+  } catch (error) {
+    console.error(`Error in setting done to selected achievement by ID ${selectedAchievementId}:`, error);
+    throw error;
+  }
+};
+
+export const createQrScan = async (qrId: string, userId: string, lon?: number, lat?: number) => {
+  try {
+    const requestBody: { qrId: string; userId: string; lon?:number; lat?:number } = {
       qrId: qrId,
       userId: userId,
-      lan: lan,
+      lon: lon,
       lat: lat
     };
 
@@ -165,7 +180,7 @@ export const fetchSelectedAchievementsByUser = async (userId: string) => {
 
 export const fetchQrScannedByUser = async (userId: string) => {
   try {
-    const response = await api.get(`/qr-achievements/get-qrScan`, { params: { userId: userId } });
+    const response = await api.get(`/qr-achievements/get-qrscan`, { params: { userId: userId } });
     return response.data;
   } catch (error) {
     console.error(`Error fetching scanned qr for user ID ${userId}:`, error);
@@ -176,7 +191,7 @@ export const fetchQrScannedByUser = async (userId: string) => {
 
 export const fetchSelectedFullAchievementsByUser = async (userId: string) => {
   try {
-    const response = await api.get(`/qr-achievements/get-selectedFull`, { params: { userId: userId } });
+    const response = await api.get(`/qr-achievements/get-selectedfull`, { params: { userId: userId } });
     return response.data;
   } catch (error) {
     console.error(`Error fetching selected achievements for user ID ${userId}:`, error);

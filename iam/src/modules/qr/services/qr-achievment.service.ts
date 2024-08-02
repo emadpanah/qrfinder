@@ -28,7 +28,7 @@ export class AchievementService {
   }
   //saveQRCode
 
-  async createAchievementSelected(dto: AchievementSelectedInsertDto): Promise<AchievementSelectedDto> {
+  async createAchievementSelected(dto: AchievementSelectedInsertDto): Promise<AchievementSelectedFullDto> {
     try {
       const result = await this.achievementRepository.createAchievementSelected(dto);
       if (!result) {
@@ -37,6 +37,10 @@ export class AchievementService {
       return result;
     } catch (error) {
       if (error.code === 11000) { // Duplicate key error code in MongoDB
+        const added = await this.achievementRepository
+        .findAchievementSelectedByUserandachiId(dto.userId, dto.achievementId);
+        if(!!added)
+          return added;
         throw new ConflictException('User has already selected this achievement.');
       }
       this.logger.error('Error creating achievement selected', error);
@@ -53,6 +57,10 @@ export class AchievementService {
       return result;
     } catch (error) {
       if (error.code === 11000) { // Duplicate key error code in MongoDB
+        const scanned = await this.achievementRepository.
+        findQRScanbyUserIdAndqrId(new Types.ObjectId(dto.userId), dto.qrCodeId);
+        if(!!scanned)
+          return scanned;
         throw new ConflictException('User has already scan selected qrcode');
       }
       this.logger.error('Error creating qrcodescan', error);
@@ -74,6 +82,13 @@ export class AchievementService {
     const achievementSelected = await this.achievementRepository.findAllQRCodeByAchievementId(objectId);
     return achievementSelected;
   }
+
+  async doneAchievementSelected(id: string): Promise<boolean> {
+    const objectId = new Types.ObjectId(id);
+    const done = await this.achievementRepository.doneAchievementSelected(objectId);
+    return done;
+  }
+
 
   async findAchievementSelectedById(id: string): Promise<AchievementSelectedDto> {
     const objectId = new Types.ObjectId(id);

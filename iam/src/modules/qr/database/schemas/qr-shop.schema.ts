@@ -12,8 +12,9 @@ export class Shop {
   @Prop({ required: true })
   description: string;
 
-  @Prop({ type: [Types.ObjectId], ref: 'Campaign' }) // Array of campaign IDs
-  campaigns: Types.ObjectId[];
+  @Prop({ required: true })
+  shopId : string;
+
 }
 
 export const ShopSchema = SchemaFactory.createForClass(Shop);

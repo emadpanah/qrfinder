@@ -25,7 +25,7 @@ export class AchievementController {
     }
   }
 
-  @Get('/findById')
+  @Get('/findbyid')
   async findAchievementById(@Query('id') id: string): Promise<AchievementDto> {
     try {
       console.log("campaignService.findCampaignById", id);
@@ -36,7 +36,7 @@ export class AchievementController {
     }
   }
 
-  @Get('/GetAll')
+  @Get('/Getall')
   async findAchievementsByCampaignId(@Query('campaignId') campaignId: string): Promise<AchievementDto[]> {
     try {
       return await this.achievementService.findAchievementsByCampaignId(campaignId);
@@ -79,8 +79,8 @@ export class AchievementController {
     try {
       const qrcodescan: QrScanDto = {
         _id: new Types.ObjectId(),
-        userId: new Types.ObjectId(body.userId).toString(),
-        qrCodeId:body.qrId,
+        userId: new Types.ObjectId(body.userId),
+        qrCodeId: new Types.ObjectId(body.qrId),
         lat:body.lat,
         lon:body.lon,
         addedDate: new Date()
@@ -94,7 +94,21 @@ export class AchievementController {
     }
   }
 
-  @Get('/get-qrScan')
+  //
+  @Post('/done-selected')
+  async doneAchievementSelected(
+    @Body() body: { selectedAchievementId: string;}
+  ): Promise<boolean> {
+    try {
+      const done = await this.achievementService.doneAchievementSelected(body.selectedAchievementId);
+      return done;
+    } catch (error) {
+      this.logger.error('Error creating achievement selected', error);
+      throw error;
+    }
+  }
+
+  @Get('/get-qrscan')
   async findQrScannedByUser(@Query('userId') userId: string): Promise<QrScanFullDto[]> {
     return this.achievementService.findQrScannedByUser(userId);
   }
@@ -119,7 +133,7 @@ export class AchievementController {
   }
 
   
-  @Get('/get-AllQRCodes')
+  @Get('/get-allqrcodes')
   async findAllQRCodeByAchievementId(@Query('achievementId') Id: string): Promise<QRCodeDto[]> {
     return this.achievementService.findAllQRCodeByAchievementId(Id);
   }
@@ -130,7 +144,7 @@ export class AchievementController {
     return this.achievementService.findAchievementSelectedByUser(userId);
   }
 
-  @Get('/get-selectedFull')
+  @Get('/get-selectedfull')
   async findAchievementSelectedFullByUser(@Query('userId') userId: string): Promise<AchievementSelectedFullDto[]> {
     return this.achievementService.findAchievementSelectedFullByUser(userId);
   }

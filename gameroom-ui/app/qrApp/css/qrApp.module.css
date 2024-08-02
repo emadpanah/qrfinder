@@ -299,6 +299,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  z-index: 1000;
 }
 
 .qrDialogContent {
@@ -391,6 +392,13 @@
   gap: 10px;
   justify-content: center;
   align-items: center;
+}
+
+.qrOrder {
+  text-align: center;
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+  color: #666;
 }
 
 .text-red{

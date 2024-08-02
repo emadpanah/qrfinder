@@ -37,3 +37,10 @@ export const calculateTotalDays = (startDate: Date, expirationDate: Date) => {
   return totalDays;
 };
 
+export const shortenUrl = (url: string) => {
+  const length = url.length;
+  if (length <= 30) {
+    return url;
+  }
+  return `${url.slice(0, 15)}...${url.slice(length - 10, length)}`;
+};
