@@ -11,6 +11,12 @@ import { CampaignInsertDto } from '../dto/campaign.dto';
 import { AchievementInsertDto } from '../dto/achievement.dto';
 import { Types } from 'mongoose';
 import { QRCodeInertDto } from '../dto/qrcode.dto';
+import { BalanceService } from '../../iam/services/iam-balance.service'; 
+import { CurrencyDto } from '../../iam/dto/currency.dto'; 
+
+
+
+
 
 async function bootstrap() {
   const app = await NestFactory.createApplicationContext(AppModule);
@@ -20,6 +26,18 @@ async function bootstrap() {
   const shopService = app.get(ShopService);
   const campaignService = app.get(CampaignService);
   const achievementService = app.get(AchievementService);
+  const currencyService = app.get(BalanceService);
+
+// Create default currency
+const defaultCurrency: CurrencyDto = {
+  name: 'GainToken',
+  symbol: 'g',
+  type: 'crypto',
+  isDefault: true,
+  _id: new Types.ObjectId(),
+};
+
+await currencyService.createCurrency(defaultCurrency);
 
   // Create Shops
   const maghaziShop: ShopInsertDto = {
