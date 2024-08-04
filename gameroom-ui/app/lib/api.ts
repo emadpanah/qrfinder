@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { PiCompassToolDuotone } from 'react-icons/pi';
-import { QRCode } from './definitions';
+import { QRCode, AchievementSelectedFull } from './definitions';
 
 const iamServiceUrl = process.env.NEXT_PUBLIC_IAM_SERVICE_URL;
 const APP_SECRET = process.env.NEXT_PUBLIC_APP_SECRET || 'default_app_secret';
@@ -117,7 +117,7 @@ export const fetchUserDetails = async (userId: string) => {
   }
 };
 
-export const selectAchievement = async (achievementId: string, userId: string, parentId?: string) => {
+export const selectAchievement = async (achievementId: string, userId: string, parentId?: string): Promise<AchievementSelectedFull>  => {
   try {
     const requestBody: { achievementId: string; userId: string; parentId?: string } = {
       achievementId: achievementId,
@@ -133,6 +133,17 @@ export const selectAchievement = async (achievementId: string, userId: string, p
     return response.data;
   } catch (error) {
     console.error(`Error selecting achievement ID ${achievementId}:`, error);
+    throw error;
+  }
+};
+
+
+export const fetchAchievementSelectFullByUA = async (achievementId: string, userId: string): Promise<AchievementSelectedFull>  => {
+  try {
+    const response = await api.get(`/qr-achievements/get-selectedfullUA`, { params: { userId: userId, achievementId: achievementId } });
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching selected achievements for user ID ${userId} and achievement ID ${achievementId}`, error);
     throw error;
   }
 };
@@ -178,12 +189,13 @@ export const fetchSelectedAchievementsByUser = async (userId: string) => {
   }
 };
 
-export const fetchQrScannedByUser = async (userId: string) => {
+export const fetchQrScannedByUser = async (userId: string, achievementId: string) => {
   try {
-    const response = await api.get(`/qr-achievements/get-qrscan`, { params: { userId: userId } });
+    const response = await api.get(`/qr-achievements/get-qrscan`, { params: { userId: userId, achievementId: achievementId } });
     return response.data;
   } catch (error) {
-    console.error(`Error fetching scanned qr for user ID ${userId}:`, error);
+    console.error(`Error fetching scanned qr for user ID 
+      ${userId} and  achievement Id ${achievementId}:`, error);
     throw error;
   }
 };

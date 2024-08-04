@@ -28,11 +28,11 @@ export class AchievementController {
   @Get('/findbyid')
   async findAchievementById(@Query('id') id: string): Promise<AchievementDto> {
     try {
-      console.log("campaignService.findCampaignById", id);
+      console.log("campaignService.findAchievementById", id);
       return await this.achievementService.findAchievementById(id);
     } catch (error) {
-      this.logger.error('Error finding campaign by ID', error);
-      throw new BadRequestException('Error finding campaign by ID');
+      this.logger.error('Error finding findAchievement by ID', error);
+      throw new BadRequestException('Error finding findAchievement by ID');
     }
   }
 
@@ -44,6 +44,11 @@ export class AchievementController {
       this.logger.error('Error finding find Achievements By CampaignId', error);
       throw new BadRequestException('Error Achievements by campaignID');
     }
+  }
+
+  @Get('/get-selectedfullUA')
+  async findAchievementSelectedByUserAndAchiId(@Query('userId') userId: string, @Query('achievementId') achievementId: string): Promise<AchievementSelectedFullDto> {
+    return this.achievementService.findAchievementSelectedFullByUserAndAchiId(userId, achievementId);
   }
 
   @Post('/create-selected')
@@ -109,8 +114,8 @@ export class AchievementController {
   }
 
   @Get('/get-qrscan')
-  async findQrScannedByUser(@Query('userId') userId: string): Promise<QrScanFullDto[]> {
-    return this.achievementService.findQrScannedByUser(userId);
+  async findQrScannedByUser(@Query('userId') userId: string, @Query('achievementId') achievementId: string): Promise<QrScanFullDto[]> {
+    return this.achievementService.findQrScannedByUser(userId, achievementId);
   }
 
   

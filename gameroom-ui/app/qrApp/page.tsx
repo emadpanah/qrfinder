@@ -10,7 +10,7 @@ import CampaignDetails from './components/CampaignDetails';
 import AchievementDetails from './components/AchievementDetails'; // Import the new component
 import QRAchievement from './components/QRAchievement'; // Import the new component
 import { AccountType, Campaign, AchievementSelectedFull, Achievement } from '@/app/lib/definitions';
-import { fetchActiveCampaigns, fetchCampaignById, fetchAchievementById, selectAchievement, createQrScan } from '@/app/lib/api';
+import { fetchActiveCampaigns, fetchAchievementSelectFullByUA, fetchCampaignById, fetchAchievementById, selectAchievement, createQrScan } from '@/app/lib/api';
 import { useUser } from '@/app/contexts/UserContext';
 import styles from './css/qrApp.module.css';
 
@@ -59,9 +59,7 @@ const QRAppPageContent: React.FC = () => {
         console.log("User connected with address:", accountData.address);
         selectAchievement(achievementId!, userId).then((achievement) => {
           setSelectedAchievementFull(achievement);
-          alert(achievement.achievementType);
           fetchAchievementById(achievement.achievementId).then((ach) => {
-            alert(ach);
             setSelectedAchievement(ach);
             createQrScan(parentId.toString(), userId, 0, 0);
             setActiveSection(ActiveSection.AchievementDetails);
@@ -113,7 +111,10 @@ const QRAppPageContent: React.FC = () => {
   const handleMyAchievementClick = (achievementId: string) => {
     fetchAchievementById(achievementId).then((achievement) => {
       setSelectedAchievement(achievement);
-      setActiveSection(ActiveSection.AchievementDetails);
+      fetchAchievementSelectFullByUA(achievement._id, userId!).then((select) => {
+        setSelectedAchievementFull(select);
+        setActiveSection(ActiveSection.AchievementDetails);
+      });
     }).catch((error) => {
       console.error('Error fetching achievement:', error);
     });

@@ -38,7 +38,7 @@ export class AchievementService {
     } catch (error) {
       if (error.code === 11000) { // Duplicate key error code in MongoDB
         const added = await this.achievementRepository
-        .findAchievementSelectedByUserandachiId(dto.userId, dto.achievementId);
+        .findAchievementSelectedByUserAndAchiId(dto.userId, dto.achievementId);
         if(!!added)
           return added;
         throw new ConflictException('User has already selected this achievement.');
@@ -100,12 +100,16 @@ export class AchievementService {
     return await this.achievementRepository.findAchievementSelectedByUser(new Types.ObjectId(userId));
   }
 
-  async findQrScannedByUser(userId: string): Promise<QrScanFullDto[]> {
-    return await this.achievementRepository.findQrScannedByUser(new Types.ObjectId(userId));
+  async findQrScannedByUser(userId: string, achievementId: string): Promise<QrScanFullDto[]> {
+    return await this.achievementRepository.findQrScannedByUser(new Types.ObjectId(userId), new Types.ObjectId(achievementId));
   }
 
   async findAchievementSelectedFullByUser(userId: string): Promise<AchievementSelectedFullDto[]> {
     return await this.achievementRepository.findAchievementSelectedFullByUser(new Types.ObjectId(userId));
+  }
+
+  async findAchievementSelectedFullByUserAndAchiId(userId: string, achievementId: string): Promise<AchievementSelectedFullDto> {
+    return await this.achievementRepository.findAchievementSelectedByUserAndAchiId(new Types.ObjectId(userId), new Types.ObjectId(achievementId));
   }
 
   async generateUserSpecificQRCode(campaignId: string, achievementSelectedId: string, userId: string): Promise<string> {

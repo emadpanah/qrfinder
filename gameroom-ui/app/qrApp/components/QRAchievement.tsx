@@ -32,10 +32,10 @@ const QRAchievement: React.FC<QRAchievementProps> = ({ achievement }) => {
         if (campaign.ownerAddress === accountData.address) {
           setIsOwner(true);
         }
-        const qrCodes = await fetchQrCodesByAchievementId(achievement._id);
+        const qrCodes = await fetchQrCodesByAchievementId(achievement.achievementId);
         setQrCodes(qrCodes);
         if (userId) {
-          const scanned = await fetchQrScannedByUser(userId);
+          const scanned = await fetchQrScannedByUser(userId, achievement.achievementId);
           setqrCodesScanned(scanned);
           if(scanned.length === achievement.qrTarget)
           {

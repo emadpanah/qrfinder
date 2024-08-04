@@ -9,7 +9,6 @@ interface AchievementDetailsProps {
 }
 
 const AchievementDetails: React.FC<AchievementDetailsProps> = ({ achievement }) => {
-  alert(achievement.description);
   switch (achievement.achievementType) {
     case 'qrcode':
       return <QRAchievement achievement={achievement} />;

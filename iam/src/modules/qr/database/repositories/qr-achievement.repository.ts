@@ -52,7 +52,7 @@ export class AchievementRepository {
   async createAchievementSelected(dto: AchievementSelectedInsertDto): Promise<AchievementSelectedFullDto> {
     const collection = this.connection.collection('_qrachievementselected');
     await collection.insertOne(dto);
-    const achievementSelected = this.findAchievementSelectedByUserandachiId(dto.userId, dto.achievementId);
+    const achievementSelected = this.findAchievementSelectedByUserAndAchiId(dto.userId, dto.achievementId);
 
     if (!achievementSelected) {
       throw new Error('Insert not completed.');
@@ -99,8 +99,6 @@ export class AchievementRepository {
 
   async findQRScanbyUserIdAndqrId(userId: Types.ObjectId, qrCodeId: Types.ObjectId): Promise<QrScanDto> {
     const collection = this.connection.collection('_qrscanqr');
-    console.log("-userId", userId);
-    console.log("-qrCodeId", qrCodeId);
     const qrCode = await collection.findOne({ userId: userId, qrCodeId: qrCodeId })as unknown as QrScanDto;
     return qrCode;
   }
@@ -115,7 +113,9 @@ export class AchievementRepository {
     const collection = this.connection.collection('_qrachievementselected');
     return await collection.find({ userId }).toArray() as unknown as AchievementSelectedDto[];
   }
-  async findAchievementSelectedByUserandachiId(userId: Types.ObjectId, achievementId: Types.ObjectId): Promise<AchievementSelectedFullDto> {
+
+
+  async findAchievementSelectedByUserAndAchiId(userId: Types.ObjectId, achievementId: Types.ObjectId): Promise<AchievementSelectedFullDto> {
 
     const selectedCollection = this.connection.collection('_qrachievementselected');
   
@@ -156,19 +156,26 @@ export class AchievementRepository {
       }
     ];
   
-    const fullDtos = await selectedCollection.aggregate(pipeline);
+    const fullDtos = await selectedCollection.aggregate(pipeline).toArray();
     console.log('Full DTOs:', JSON.stringify(fullDtos, null, 2)); // Log the result for debugging
 
-    return fullDtos as unknown as AchievementSelectedFullDto;
+    // Since aggregation returns an array, ensure to return the first element if it exists
+    if (fullDtos.length > 0) {
+      return fullDtos[0] as AchievementSelectedFullDto;
+    } else {
+      throw new Error('Achievement selected not found');
+    }
 
   }  
 
-  async findQrScannedByUser(userId: Types.ObjectId): Promise<QrScanFullDto[]> {
+  async findQrScannedByUser(userId: Types.ObjectId, achievementId: Types.ObjectId): Promise<QrScanFullDto[]> {
     const collection = this.connection.collection('_qrscanqr');
 
     const pipeline = [
       {
-        $match: { userId: new Types.ObjectId(userId) }
+        $match: {
+          userId: new Types.ObjectId(userId)
+        }
       },
       {
         $lookup: {
@@ -182,22 +189,28 @@ export class AchievementRepository {
         $unwind: '$qrDetails'
       },
       {
+        $match: {
+          'qrDetails.achievementId': new Types.ObjectId(achievementId)
+        }
+      },
+      {
         $project: {
           _id: 1,
           qrCodeId: 1,
           userId: 1,
-          addedDate:1,
+          addedDate: 1,
           lat: 1,
           lon: 1,
           link: '$qrDetails.link',
-          order: '$qrDetails.order',
+          order: '$qrDetails.order'
         }
       }
     ];
-  
+
     const fullDtos = await collection.aggregate(pipeline).toArray();
     return fullDtos as QrScanFullDto[];
   }
+
 
   async findAchievementSelectedFullByUser(userId: Types.ObjectId): Promise<AchievementSelectedFullDto[]> {
     const selectedCollection = this.connection.collection('_qrachievementselected');
