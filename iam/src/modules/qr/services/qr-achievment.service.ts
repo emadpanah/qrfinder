@@ -5,11 +5,19 @@ import { AchievementSelectedInsertDto, AchievementSelectedDto, AchievementSelect
 import { Types } from 'mongoose';
 import { QRCodeInertDto, QRCodeDto } from '../dto/qrcode.dto';
 import { QrScanDto, QrScanFullDto } from '../dto/qrscan.dto';
+import { CurrencyRepository } from 'src/modules/iam/database/repositories/currency.repository';
+import { BalanceRepository } from 'src/modules/iam/database/repositories/balance.repository';
+//import { BalanceService } from 'src/modules/iam/services/iam-balance.service';
+import { BalanceDto } from 'src/modules/iam/dto/balance.dto';
 
 @Injectable()
 export class AchievementService {
   private readonly logger = new Logger(AchievementService.name);
-  constructor(private readonly achievementRepository: AchievementRepository) {}
+  constructor(private readonly achievementRepository: AchievementRepository,
+     private readonly currencyRepository: CurrencyRepository,
+    private readonly balanceRepository: BalanceRepository,
+    //private readonly balanceService: BalanceService
+  ) {}
 
   async createAchievement(dto: AchievementInsertDto): Promise<AchievementDto> {
     const achievement = await this.achievementRepository.createAchievement(dto);
@@ -32,7 +40,7 @@ export class AchievementService {
     try {
       const result = await this.achievementRepository.createAchievementSelected(dto);
       if (!result) {
-        throw new Error('Insert not completed.');
+        throw new Error('Achievement selected insert not completed.');
       }
       return result;
     } catch (error) {
@@ -52,7 +60,7 @@ export class AchievementService {
     try {
       const result = await this.achievementRepository.createQrScan(dto);
       if (!result) {
-        throw new Error('Insert not completed.');
+        throw new Error('Qrscan insert not completed.');
       }
       return result;
     } catch (error) {
@@ -84,10 +92,60 @@ export class AchievementService {
   }
 
   async doneAchievementSelected(id: string): Promise<boolean> {
-    const objectId = new Types.ObjectId(id);
-    const done = await this.achievementRepository.doneAchievementSelected(objectId);
-    return done;
+    try {
+      const objectId = new Types.ObjectId(id);
+      const curr = await this.currencyRepository.findDefaultCurrency();
+      const achisel = await this.achievementRepository.findAchievementSelectedFullById(objectId);
+  
+      if (!curr || !achisel) {
+        throw new Error('Currency or Achievement not found.');
+      }
+  
+      const currentBalance = await this.balanceRepository.findUserBalance(new Types.ObjectId(achisel.userId),new Types.ObjectId(curr._id));
+      const newBalance = currentBalance + achisel.reward.tokens;
+  
+      const create: BalanceDto = {
+        userId: achisel.userId, 
+        transactionType: "achievementsreward",
+        amount: achisel.reward.tokens,
+        currency: curr._id,
+        transactionEntityId: id,
+        balanceAfterTransaction: newBalance,
+        _id: new Types.ObjectId(),
+        timestamp: new Date(),
+      };
+  
+      const done = await this.achievementRepository.doneAchievementSelected(objectId);
+      if (done) {
+        try {
+          const balance = await this.balanceRepository.addTransaction(create); 
+          if (balance) {
+            return true;
+          } else {
+            throw new Error('Balance transaction failed.');
+          }
+        } catch (balanceError) {
+          if (balanceError.code === 11000) {
+            console.error('Duplicate transaction error');
+            return true;
+          }
+          else{
+            //await this.achievementRepository.removeDoneAchievementSelected(objectId);
+            console.error('Balance transaction error');
+            return false;
+          }
+          
+        }
+      } else {
+        console.error('Setting done achievement failed.');
+        return false;
+      }
+    } catch (error) {
+      console.error('Error completing achievement:');
+      return false;
+    }
   }
+  
 
 
   async findAchievementSelectedById(id: string): Promise<AchievementSelectedDto> {

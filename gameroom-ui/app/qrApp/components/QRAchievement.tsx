@@ -1,7 +1,7 @@
 // app/qrApp/components/QRAchievement.tsx
 import React, { useEffect, useRef, useState } from 'react';
 import { Achievement, AchievementSelectedFull } from '@/app/lib/definitions';
-import { fetchQrCodesByAchievementId, fetchCampaignById, fetchQrScannedByUser, doneSelectAchievement } from '@/app/lib/api'; // Assume these API calls exist
+import { fetchQrCodesByAchievementId, fetchCampaignById, fetchQrScannedByUser, doneSelectAchievement, fetchDefaultCurrency, fetchgBalance } from '@/app/lib/api'; // Assume these API calls exist
 import QRAchievementQrView from './QRAchievementQrView';
 import { useUser } from '@/app/contexts/UserContext';
 import styles from '../css/qrApp.module.css';
@@ -39,7 +39,12 @@ const QRAchievement: React.FC<QRAchievementProps> = ({ achievement }) => {
           setqrCodesScanned(scanned);
           if(scanned.length === achievement.qrTarget)
           {
-            //const done = await doneSelectAchievement()
+            const done = await doneSelectAchievement(achievement._id); 
+            if (done) {
+              const defaultCurr = await fetchDefaultCurrency();
+              const newBalance = await fetchgBalance(userId, defaultCurr._id);
+              //updateBalance(newBalance); // Update the balance in the context
+            }
           }
         }
       } catch (error) {
@@ -48,7 +53,7 @@ const QRAchievement: React.FC<QRAchievementProps> = ({ achievement }) => {
     };
 
     checkOwnership();
-  }, [achievement.campaignId, achievement._id, accountData.address, userId]);
+  }, [achievement.campaignId, achievement._id, achievement.achievementId, achievement.qrTarget, accountData.address, userId]);
 
   const handleQRClick = (qrCode: QRScanFull) => {
     setSelectedQR(qrCode);
@@ -109,7 +114,7 @@ const QRAchievement: React.FC<QRAchievementProps> = ({ achievement }) => {
         <div className="overflow-hidden h-2 mb-1 text-xs flex rounded bg-red-200" title={`${remainingDays} days remaining`}>
           <div style={{ width: `${(passedDays / totalDays) * 100}%` }} className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-red-500"></div>
         </div>
-        <p className="text-center text-xs text-red-600">${remainingDays} days remaining</p>
+        <p className="text-center text-xs text-red-600">{remainingDays} days remaining</p>
       </div>
       </div>
       <div className="relative border border-gray-300 p-1 pl-6 pr-6 ml-6 mt-4 mr-6 mb-4">

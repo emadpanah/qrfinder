@@ -14,7 +14,7 @@ export class CampaignRepository {
     await collection.insertOne(dto);
     const campaign = await collection.findOne({ name: dto.name });
     if (!campaign) {
-      throw new Error('Insert not completed.');
+      throw new Error('Campaign insert not completed.');
     }
     return campaign;
   }

@@ -21,7 +21,7 @@ export class IamRepository {
     const user = await collection.findOne({ address: dto.address });
     if (!user) {
       // Handle the case where the agent is not found
-      throw new Error('Insert not completed.');
+      throw new Error('User insert not completed.');
     }
     // Return the inserted document
     return user;

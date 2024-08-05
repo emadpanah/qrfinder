@@ -14,8 +14,8 @@ export class Balance {
   @Prop({ required: true })
   amount: number;
 
-  @Prop({ required: true })
-  currency: string;
+  @Prop({ type: Types.ObjectId, ref: 'Currency', required: true })
+  currency: Types.ObjectId;
 
   @Prop({ required: true })
   transactionEntityId: Types.ObjectId;
@@ -28,4 +28,11 @@ export class Balance {
   
 }
 
-export const BalanceSchema = SchemaFactory.createForClass(Balance);
+ const BalanceSchema = SchemaFactory.createForClass(Balance);
+
+//const AchievementSelectedSchema = SchemaFactory.createForClass(AchievementSelected);
+ 
+// Create a unique index on achievementId and userId
+BalanceSchema.index({ transactionEntityId: 1}, { unique: true });
+
+export { BalanceSchema };

@@ -23,18 +23,22 @@ export class BalanceService {
     return this.currencyRepository.findAllCurrencies();
   }
 
+  async getDefaultCurrency(): Promise<Currency> {
+    return this.currencyRepository.findDefaultCurrency();
+  }
+
   async addTransaction(createBalanceDto: BalanceDto): Promise<any> {
-    const { userId, amount, currency } = createBalanceDto;
 
-    const currentBalance = await this.balanceRepository.findUserBalance(new Types.ObjectId(userId), currency);
-    const newBalance = currentBalance + amount;
-
-    const transaction = await this.balanceRepository.addTransaction(createBalanceDto, newBalance);
+    const transaction = await this.balanceRepository.addTransaction(createBalanceDto);
 
     return transaction;
   }
 
-  async getUserBalance(userId: Types.ObjectId, currency: string): Promise<number> {
+  async getUserBalance(userId: Types.ObjectId, currency: Types.ObjectId): Promise<number> {
+    if(!currency)
+    {
+        currency = await this.currencyRepository.findDefaultCurrency();
+    }
     return this.balanceRepository.findUserBalance(userId, currency);
   }
 }

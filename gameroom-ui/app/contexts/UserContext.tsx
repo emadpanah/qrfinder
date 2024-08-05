@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { AccountType } from '@/app/lib/definitions';
+import { fetchDefaultCurrency, fetchgBalance } from '../lib/api';
 
 interface UserContextProps {
   userId: string | null;
@@ -21,7 +22,20 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
     balance: null,
     chainId: null,
     network: null,
+    gbalance: null,
   });
+
+
+  const updateBalance = async () => {
+    if (userId) {
+      const defaultCurr = await fetchDefaultCurrency();
+      const gbalance = await fetchgBalance(userId, defaultCurr._id);
+      setAccountData(prevState => ({
+        ...prevState,
+        gbalance: gbalance,
+      }));
+    }
+  };
 
   return (
     <UserContext.Provider value={{ userId, setUserId, accountData, setAccountData }}>

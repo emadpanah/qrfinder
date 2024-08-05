@@ -108,7 +108,7 @@ export class AchievementController {
       const done = await this.achievementService.doneAchievementSelected(body.selectedAchievementId);
       return done;
     } catch (error) {
-      this.logger.error('Error creating achievement selected', error);
+      this.logger.error('Error done-selected achievement', error);
       throw error;
     }
   }

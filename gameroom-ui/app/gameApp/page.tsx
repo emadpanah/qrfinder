@@ -35,6 +35,7 @@ const GameAppPage: React.FC = () => {
     balance: null,
     chainId: null,
     network: null,
+    gbalance: null
   });
   const [activeSection, setActiveSection] = useState<ActiveSection>(ActiveSection.MetaMaskLogin);
   const [selectedGameId, setSelectedGameId] = useState<number | null>(null);
@@ -55,6 +56,7 @@ const GameAppPage: React.FC = () => {
           balance: ethers.formatEther(balance),
           chainId: network.chainId.toString(),
           network: network.name,
+          gbalance: '0'
         });
 
         const response = await axios.post(`${IAM_SERVICE_URL}/iam/register`, {

@@ -11,7 +11,7 @@ const CampaignHeader: React.FC = () => {
         <div className="flex-1 items-center gap-2">
           {/* Display account information */}
           <span className='pr-8'>Ton Balance : {accountData.balance ?? "N/A"}<span className='text-xs'> t</span></span>
-          <span>Gain Balance : {0 ?? "N/A"}<span className='text-xs'> g</span></span>
+          <span>Gain Balance : {accountData.gbalance ?? "N/A"}<span className='text-xs'> g</span></span>
         </div>
       </div>
     </div>

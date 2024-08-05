@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsNumber, IsMongoId, IsIn } from 'class-validator';
+import { IsString, IsNotEmpty, IsNumber, IsMongoId, IsIn, IsDateString } from 'class-validator';
 import { Types } from 'mongoose';
 
 export class BalanceDto {
@@ -7,9 +7,9 @@ export class BalanceDto {
   @IsNotEmpty()  
   _id:Types.ObjectId;
   
-  @IsMongoId()
+  @IsString()
   @IsNotEmpty()
-  userId: string;
+  userId: Types.ObjectId;
 
   @IsString()
   @IsIn(['deposit', 'withdraw', 'achievementsreward', 'payment'])
@@ -21,10 +21,18 @@ export class BalanceDto {
 
   @IsString()
   @IsNotEmpty()
-  currency: string;
+  currency: Types.ObjectId;
 
   @IsMongoId()
   @IsNotEmpty()
   transactionEntityId: string;
+
+  @IsDateString()
+  @IsNotEmpty()
+  timestamp: Date;
+
+  @IsNumber()
+  @IsNotEmpty()
+  balanceAfterTransaction: number;
   
 }

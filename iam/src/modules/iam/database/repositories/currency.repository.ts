@@ -19,7 +19,7 @@ export class CurrencyRepository {
     });
     const currency = await collection.findOne({ _id: dto._id });
     if (!currency) {
-      throw new Error('Insert not completed.');
+      throw new Error('Currency insert not completed.');
     }
     return currency;
   }
@@ -29,5 +29,9 @@ export class CurrencyRepository {
     return collection.find().toArray();
   }
 
+  async findDefaultCurrency(): Promise<any> {
+    const collection = this.connection.collection('_iamcurrencies');
+    return collection.findOne({ isDefault: true });
+  }
   
 }

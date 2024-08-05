@@ -9,7 +9,7 @@ export default function gameLogo() {
     <div className={`flex flex-row items-center leading-none text-white`}>
       <PiRobotBold className="h-6 w-6 rotate-[10deg]" />
       <Link href={`${NEXT_PUBLIC_APP_BASE_URL}/qrApp`}>
-        <p className="text-[18px]">Gain.cyou</p>
+        <p className="text-[18px] p-1">Game to Gain</p>
       </Link>
     </div>
   );

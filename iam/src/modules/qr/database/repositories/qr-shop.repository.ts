@@ -14,7 +14,7 @@ export class ShopRepository {
     await collection.insertOne(dto);
     const shop = await collection.findOne({ name: dto.name });
     if (!shop) {
-      throw new Error('Insert not completed.');
+      throw new Error('Shop insert not completed.');
     }
     return shop;
   }

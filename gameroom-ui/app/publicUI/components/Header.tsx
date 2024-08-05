@@ -4,7 +4,7 @@ import { FaSun, FaMoon } from 'react-icons/fa';
 import { TonConnectButton, TonConnectUIProvider, THEME, useTonAddress, useTonWallet } from "@tonconnect/ui-react";
 import GameLogo from '@/app/ui/game-logo';
 import { useEffect, useState } from 'react';
-import { registerUser, fetchBalance } from '@/app/lib/api';
+import { registerUser, fetchBalance, fetchgBalance, fetchDefaultCurrency } from '@/app/lib/api';
 import { useUser } from '@/app/contexts/UserContext';
 
 const manifestUrl = 'https://gist.githubusercontent.com/siandreev/75f1a2ccf2f3b4e2771f6089aeb06d7f/raw/d4986344010ec7a2d1cc8a2a9baa57de37aaccb8/gistfile1.txt';
@@ -41,12 +41,18 @@ const Header: React.FC<HeaderProps> = ({ toggleTheme, currentTheme }) => {
         });
          console.log("Server response:", { authToken, isNewToken, userId });
 
+         const defaultCurr = await fetchDefaultCurrency();
+         console.log("defaultCurr :", defaultCurr._id);
+         const gbalance =  await fetchgBalance(userId, defaultCurr._id);
+         console.log("gbalance :", gbalance);
+
         setUserId(userId); // Set user ID in context
         setAccountData({
           address: tonAddress,
           balance: (await fetchBalance(tonAddress, 'mainnet')).toString(),
           chainId: "0",//wallet.chainId,
           network: wallet.device.appName,
+          gbalance: gbalance
         });
 
         

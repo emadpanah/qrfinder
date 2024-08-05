@@ -45,6 +45,26 @@ export const registerUser = async ({ address, telegramID, walletType }: Register
   }
 };
 
+export const fetchgBalance = async (userId : string, currencyId?: string) => {
+  try {
+    const response = await api.get('/balance/', { params: { userId: userId, currency: currencyId } });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching campaigns:', error);
+    throw error;
+  }
+};
+
+export const fetchDefaultCurrency = async () => {
+  try {
+    const response = await api.get('/balance/currencydefault');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching campaigns:', error);
+    throw error;
+  }
+};
+
 export const fetchCampaigns = async () => {
   try {
     const response = await api.get('/qr-campaigns');

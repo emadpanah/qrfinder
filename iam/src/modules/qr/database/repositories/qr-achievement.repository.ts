@@ -5,6 +5,7 @@ import { AchievementDto, AchievementInsertDto } from '../../dto/achievement.dto'
 import { AchievementSelectedInsertDto, AchievementSelectedDto, AchievementSelectedFullDto } from '../../dto/achievement-selected.dto';
 import { QRCodeInertDto, QRCodeDto } from '../../dto/qrcode.dto';
 import { QrScanDto, QrScanFullDto } from '../../dto/qrscan.dto';
+import { child } from 'winston';
 @Injectable()
 export class AchievementRepository {
   constructor(
@@ -16,7 +17,7 @@ export class AchievementRepository {
     await collection.insertOne(dto);
     const achievement = await collection.findOne({ name: dto.name }) as unknown as AchievementDto;
     if (!achievement) {
-      throw new Error('Insert not completed.');
+      throw new Error('Achievement insert not completed.');
     }
     return achievement;
   }
@@ -55,7 +56,7 @@ export class AchievementRepository {
     const achievementSelected = this.findAchievementSelectedByUserAndAchiId(dto.userId, dto.achievementId);
 
     if (!achievementSelected) {
-      throw new Error('Insert not completed.');
+      throw new Error('Achievement Selected Insert not completed.');
     }
     return achievementSelected;
   }
@@ -84,6 +85,30 @@ export class AchievementRepository {
     return true;
   }
 
+
+  async removeDoneAchievementSelected(id: Types.ObjectId): Promise<boolean> {
+    const collection = this.connection.collection('_qrachievementselected');
+    const updateResult = await collection.updateOne(
+      { _id: id },
+      { $set: { doneDate: null } }
+    );
+    // Check if the update was successful
+    if (updateResult.matchedCount === 0) {
+      throw new Error('No document found with the provided ID.');
+    }
+  
+    if (updateResult.modifiedCount === 0) {
+      throw new Error('Update not complete.');
+    }
+    const achievementSelected = await collection.findOne(
+      { _id: id }
+    ) as unknown as AchievementSelectedDto;
+    if (!achievementSelected) {
+      throw new Error('Failed to retrieve the updated document.');
+    }
+    return true;
+  }
+
   async createQrScan(dto: QrScanDto): Promise<QrScanDto> {
     const collection = this.connection.collection('_qrscanqr');
     await collection.insertOne(dto);
@@ -92,7 +117,7 @@ export class AchievementRepository {
       { _id: dto._id}
     ) as unknown as QrScanDto;
     if (!achievementSelected) {
-      throw new Error('Insert not completed.');
+      throw new Error('QrScan insert not completed.');
     }
     return achievementSelected;
   }
@@ -157,7 +182,7 @@ export class AchievementRepository {
     ];
   
     const fullDtos = await selectedCollection.aggregate(pipeline).toArray();
-    console.log('Full DTOs:', JSON.stringify(fullDtos, null, 2)); // Log the result for debugging
+    //console.log('Full DTOs:', JSON.stringify(fullDtos, null, 2)); // Log the result for debugging
 
     // Since aggregation returns an array, ensure to return the first element if it exists
     if (fullDtos.length > 0) {
@@ -211,6 +236,59 @@ export class AchievementRepository {
     return fullDtos as QrScanFullDto[];
   }
 
+  async findAchievementSelectedFullById(achiId: Types.ObjectId): Promise<AchievementSelectedFullDto> {
+    const selectedCollection = this.connection.collection('_qrachievementselected');
+  
+    console.log(`Looking for userId: ${achiId}`);
+  
+    const pipeline = [
+      {
+        $match: { _id: new Types.ObjectId(achiId) }
+      },
+      {
+        $lookup: {
+          from: '_qrachievements',
+          localField: 'achievementId',
+          foreignField: '_id',
+          as: 'achievementDetails'
+        }
+      },
+      {
+        $unwind: '$achievementDetails'
+      },
+      {
+        $project: {
+          _id: 1,
+          achievementId: 1,
+          userId: 1,
+          inviteLink: 1,
+          parentId: 1,
+          addedDate: 1,
+          name: '$achievementDetails.name',
+          reward: '$achievementDetails.reward',
+          expirationDate: '$achievementDetails.expirationDate',
+          description: '$achievementDetails.description',
+          qrOrderType: '$achievementDetails.qrOrderType',
+          achievementType: '$achievementDetails.achievementType',
+          qrProofByLocation: '$achievementDetails.qrProofByLocation',
+          campaignId:'$achievementDetails.campaignId',
+          qrTarget: '$achievementDetails.qrTarget',
+          startDate: '$achievementDetails.startDate',
+        }
+      }
+    ];
+  
+    const fullDtos = await selectedCollection.aggregate(pipeline).toArray();
+    //console.log('Full DTOs:', JSON.stringify(fullDtos, null, 2)); // Log the result for debugging
+
+    // Since aggregation returns an array, ensure to return the first element if it exists
+    if (fullDtos.length > 0) {
+      return fullDtos[0] as AchievementSelectedFullDto;
+    } else {
+      throw new Error('Achievement selected not found');
+    }
+}
+
 
   async findAchievementSelectedFullByUser(userId: Types.ObjectId): Promise<AchievementSelectedFullDto[]> {
     const selectedCollection = this.connection.collection('_qrachievementselected');
@@ -255,7 +333,7 @@ export class AchievementRepository {
     ];
   
     const fullDtos = await selectedCollection.aggregate(pipeline).toArray();
-    console.log('Full DTOs:', JSON.stringify(fullDtos, null, 2)); // Log the result for debugging
+    //console.log('Full DTOs:', JSON.stringify(fullDtos, null, 2)); // Log the result for debugging
 
     return fullDtos as AchievementSelectedFullDto[];
 }

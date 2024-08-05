@@ -69,11 +69,34 @@ export interface AchievementSelectedFull {
   startDate:Date;
 }
 
+export interface Balance {
+  _id:string;
+  userId: string;
+  transactionType: string;
+  amount: number;
+  currency: string;
+  transactionEntityId: string;
+  timestamp: Date;
+  balanceAfterTransaction: number;
+  
+}
+
+
+export interface Currency {
+  _id: string;
+  name: string;
+  symbol: string;
+  type: string;
+  isDefault: boolean;
+}
+
+
 export interface AccountType {
   address: string | null;
   balance: string | null;
   chainId: string | null;
   network: string | null;
+  gbalance:string | null;
 }
 
 export interface TapGameModel {
