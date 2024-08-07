@@ -60,6 +60,8 @@ const CampaignDetails: React.FC<CampaignDetailsProps> = ({ campaignId, onAchieve
       setSelectedAchievements((prev) => new Set(prev).add(achievementId));
       setLinks((prev) => ({ ...prev, [achievementId]: selected.inviteLink }));
       toast.success('Achievement selected successfully!');
+      const selecteds = await fetchAchievementsSelectedByCampaignId(campaignId, userId!);
+      setAchievementsSelectedFull(selecteds);
     } catch (error) {
       console.error('Error selecting achievement:', error);
       toast.error('Failed to select achievement.');
@@ -79,6 +81,8 @@ const CampaignDetails: React.FC<CampaignDetailsProps> = ({ campaignId, onAchieve
         return rest;
       });
       toast.success('Achievement unselected successfully!');
+      const selecteds = await fetchAchievementsSelectedByCampaignId(campaignId, userId!);
+      setAchievementsSelectedFull(selecteds);
     } catch (error) {
       console.error('Error unselecting achievement:', error);
       toast.error('Failed to unselect achievement.');

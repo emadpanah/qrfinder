@@ -116,10 +116,10 @@ const QRAppPageContent: React.FC = () => {
   };
 
   const handleBackButtonClick = () => {
-    if (activeSection === ActiveSection.CampaignDetails) {
+    if (activeSection === ActiveSection.CampaignDetails || activeSection === ActiveSection.AchievementDetails) {
       setActiveSection(ActiveSection.Campaigns);
-    } else if (activeSection === ActiveSection.AchievementDetails) {
-      setActiveSection(ActiveSection.CampaignDetails);
+    } else {
+      setActiveSection(ActiveSection.Campaigns);
     }
   };
 
