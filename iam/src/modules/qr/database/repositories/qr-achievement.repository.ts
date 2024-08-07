@@ -349,7 +349,7 @@ export class AchievementRepository {
   
     const pipeline = [
       {
-        $match: { userId: userId, campaignId : campaignId }
+        $match: { userId:  new Types.ObjectId(userId) }
       },
       {
         $lookup: {
@@ -361,6 +361,9 @@ export class AchievementRepository {
       },
       {
         $unwind: '$achievementDetails'
+      },
+      {
+        $match: { 'achievementDetails.campaignId':  new Types.ObjectId(campaignId) }
       },
       {
         $project: {

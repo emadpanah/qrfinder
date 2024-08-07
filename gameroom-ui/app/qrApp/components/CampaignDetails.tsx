@@ -42,13 +42,8 @@ const CampaignDetails: React.FC<CampaignDetailsProps> = ({ campaignId, onAchieve
         setAchievements(achievementsResponse);
 
         const selected = await fetchAchievementsSelectedByCampaignId(campaignId, userId!);
-        setAchievementsSelectedFull(selected!);
-        setSelectedAchievements(new Set(selected.map((ach: AchievementSelectedFull) => ach.achievementId)));
-        const linksMap: Record<string, string> = {};
-        selected.forEach((ach: AchievementSelectedFull) => {
-          linksMap[ach.achievementId] = ach.inviteLink;
-        });
-        setLinks(linksMap);
+        setAchievementsSelectedFull(selected);
+        //alert(selected[0]._id);
 
       } catch (error) {
         console.error('Error fetching campaign details:', error);
@@ -57,7 +52,8 @@ const CampaignDetails: React.FC<CampaignDetailsProps> = ({ campaignId, onAchieve
 
     fetchCampaignDetails();
   }, [campaignId, userId]);
-
+      
+      
   const handleSelectAchievement = useCallback(async (achievementId: string) => {
     try {
       const selected = await selectAchievement(achievementId, userId!);
@@ -136,8 +132,10 @@ const CampaignDetails: React.FC<CampaignDetailsProps> = ({ campaignId, onAchieve
                   reward={`${achievements[currentIndex].reward.tokens} tokens`}
                   remainingDays={calculateRemainingDays(achievements[currentIndex].expirationDate)}
                   onSelect={() => handleSelectAchievement(achievements[currentIndex]._id)}
+                  //onSelect={achievementsSelectedFull.find(a=>a.achievementId==achievements[currentIndex]._id) ? () => null : () => handleSelectAchievement(achievements[currentIndex]._id)}
+                  //onUnselect={achievementsSelectedFull.find(a=>a.achievementId==achievements[currentIndex]._id) ?  () => handleUnselectAchievement(achievements[currentIndex]._id): () => null}
                   onUnselect={() => handleUnselectAchievement(achievements[currentIndex]._id)}
-                  isSelected={selectedAchievements.has(achievements[currentIndex]._id)}
+                  isSelected={achievementsSelectedFull.find(a=>a.achievementId==achievements[currentIndex]._id)?true:false}
                   link={links[achievements[currentIndex]._id] || ''}
                   handleQRClick={() => onAchievementClick(achievements[currentIndex]._id)}
                 />
