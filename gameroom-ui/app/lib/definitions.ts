@@ -70,7 +70,6 @@ export interface AchievementSelectedFull {
 }
 
 export interface Balance {
-  _id:string;
   userId: string;
   transactionType: string;
   amount: number;
@@ -78,7 +77,7 @@ export interface Balance {
   transactionEntityId: string;
   timestamp: Date;
   balanceAfterTransaction: number;
-  
+  _id: string;
 }
 
 

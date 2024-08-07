@@ -1,17 +1,18 @@
-// app/qrApp/components/CampaignDetails.tsx
 import React, { useEffect, useState, useCallback } from 'react';
-import { Campaign, AchievementSelectedFull, Achievement } from '@/app/lib/definitions';
-import { fetchCampaignById, fetchSelectedAchievementsByUser, fetchAchievementsByCampaignId, selectAchievement, unselectAchievement } from '@/app/lib/api';
+import { Campaign, Achievement, AchievementSelectedFull } from '@/app/lib/definitions';
+import { fetchCampaignById, fetchAchievementsSelectedByCampaignId, fetchAchievementsByCampaignId, selectAchievement, unselectAchievement } from '@/app/lib/api';
 import styles from '../css/qrApp.module.css';
 import AchievementButton from './AchievementButton';
 import { useUser } from '@/app/contexts/UserContext';
 import { splitDescription } from '../../lib/utils';
 import { useSwipeable } from 'react-swipeable';
 import { toast } from 'react-toastify';
+import { FaArrowLeft } from 'react-icons/fa';
 
 interface CampaignDetailsProps {
   campaignId: string;
-  onAchievementClick: (achievement: Achievement) => void; // Make this prop optional
+  onAchievementClick: (achievementId: string) => void;
+  onBack: () => void;
 }
 
 const calculateRemainingDays = (expirationDate: Date) => {
@@ -22,34 +23,14 @@ const calculateRemainingDays = (expirationDate: Date) => {
   return diffDays;
 };
 
-const CampaignDetails: React.FC<CampaignDetailsProps> = ({ campaignId, onAchievementClick }) => {
+const CampaignDetails: React.FC<CampaignDetailsProps> = ({ campaignId, onAchievementClick, onBack }) => {
   const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const { userId } = useUser();
   const [selectedAchievements, setSelectedAchievements] = useState<Set<string>>(new Set());
   const [links, setLinks] = useState<Record<string, string>>({});
   const [currentIndex, setCurrentIndex] = useState(0);
-
-  const fetchSelectedAchievements = useCallback(async () => {
-              try {
-                const selected = await fetchSelectedAchievementsByUser(userId!);
-                setSelectedAchievements(new Set(selected.map((ach: any) => ach.achievementId)));
-                const qrCodesMap: Record<string, string> = {};
-                const linksMap: Record<string, string> = {};
-                selected.forEach((ach: any) => {
-                  qrCodesMap[ach.achievementId] = ach.inviteQrCode;
-                  linksMap[ach.achievementId] = ach.inviteLink;
-                });
-                setLinks(linksMap);
-                console.log('Fetched achievements:', { qrCodesMap, linksMap });
-              } catch (error) {
-                console.error('Error fetching selected achievements:', error);
-              }
-        }, [userId]);
-
-  useEffect(() => {
-    fetchSelectedAchievements();
-  }, [fetchSelectedAchievements]);
+  const [achievementsSelectedFull, setAchievementsSelectedFull] = useState<AchievementSelectedFull[]>([]);
 
   useEffect(() => {
     const fetchCampaignDetails = async () => {
@@ -59,14 +40,23 @@ const CampaignDetails: React.FC<CampaignDetailsProps> = ({ campaignId, onAchieve
 
         const achievementsResponse = await fetchAchievementsByCampaignId(campaignId);
         setAchievements(achievementsResponse);
+
+        const selected = await fetchAchievementsSelectedByCampaignId(campaignId, userId!);
+        setAchievementsSelectedFull(selected!);
+        setSelectedAchievements(new Set(selected.map((ach: AchievementSelectedFull) => ach.achievementId)));
+        const linksMap: Record<string, string> = {};
+        selected.forEach((ach: AchievementSelectedFull) => {
+          linksMap[ach.achievementId] = ach.inviteLink;
+        });
+        setLinks(linksMap);
+
       } catch (error) {
         console.error('Error fetching campaign details:', error);
       }
     };
 
     fetchCampaignDetails();
-  }, [campaignId]);
-
+  }, [campaignId, userId]);
 
   const handleSelectAchievement = useCallback(async (achievementId: string) => {
     try {
@@ -123,6 +113,9 @@ const CampaignDetails: React.FC<CampaignDetailsProps> = ({ campaignId, onAchieve
   return (
     <div className={`container mx-auto p-6 ${styles.campaignDetailsContainer}`}>
       <>
+        <button onClick={onBack} className="text-white focus:outline-none">
+          <FaArrowLeft />
+        </button>
         <h1 className="text-3xl font-bold mb-4 text-center">{campaign.name}</h1>
         <p className="mb-4 text-center">
           {line1}<br />{line2}
@@ -146,7 +139,7 @@ const CampaignDetails: React.FC<CampaignDetailsProps> = ({ campaignId, onAchieve
                   onUnselect={() => handleUnselectAchievement(achievements[currentIndex]._id)}
                   isSelected={selectedAchievements.has(achievements[currentIndex]._id)}
                   link={links[achievements[currentIndex]._id] || ''}
-                  handleQRClick={() => onAchievementClick(achievements[currentIndex])} 
+                  handleQRClick={() => onAchievementClick(achievements[currentIndex]._id)}
                 />
               </div>
             )}

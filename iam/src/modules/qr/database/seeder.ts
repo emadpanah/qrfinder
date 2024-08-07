@@ -37,7 +37,25 @@ const defaultCurrency: CurrencyDto = {
   _id: new Types.ObjectId(),
 };
 
+const tonCurrency: CurrencyDto = {
+  name: 'TON',
+  symbol: 'TON',
+  type: 'crypto',
+  isDefault: false,
+  _id: new Types.ObjectId(),
+};
+
+const ethereumCurrency: CurrencyDto = {
+  name: 'Ethereum',
+  symbol: 'ETH',
+  type: 'crypto',
+  isDefault: false,
+  _id: new Types.ObjectId(),
+};
+
 await currencyService.createCurrency(defaultCurrency);
+await currencyService.createCurrency(tonCurrency);
+await currencyService.createCurrency(ethereumCurrency);
 
   // Create Shops
   const maghaziShop: ShopInsertDto = {

@@ -1,12 +1,13 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { AccountType } from '@/app/lib/definitions';
-import { fetchDefaultCurrency, fetchgBalance } from '../lib/api';
+import { fetchDefaultCurrency, fetchBalance } from '../lib/api';
 
 interface UserContextProps {
   userId: string | null;
   setUserId: (id: string | null) => void;
   accountData: AccountType;
   setAccountData: (data: AccountType) => void;
+  updateBalance: () => Promise<void>;
 }
 
 const UserContext = createContext<UserContextProps | undefined>(undefined);
@@ -29,7 +30,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
   const updateBalance = async () => {
     if (userId) {
       const defaultCurr = await fetchDefaultCurrency();
-      const gbalance = await fetchgBalance(userId, defaultCurr._id);
+      const gbalance = await fetchBalance(userId, defaultCurr._id);
       setAccountData(prevState => ({
         ...prevState,
         gbalance: gbalance,
@@ -38,7 +39,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
   };
 
   return (
-    <UserContext.Provider value={{ userId, setUserId, accountData, setAccountData }}>
+    <UserContext.Provider value={{ userId, setUserId, accountData, setAccountData, updateBalance }}>
       {children}
     </UserContext.Provider>
   );

@@ -5,8 +5,8 @@ import { AchievementSelectedInsertDto, AchievementSelectedDto, AchievementSelect
 import { Types } from 'mongoose';
 import { QRCodeInertDto, QRCodeDto } from '../dto/qrcode.dto';
 import { QrScanDto, QrScanFullDto } from '../dto/qrscan.dto';
-import { CurrencyRepository } from 'src/modules/iam/database/repositories/currency.repository';
-import { BalanceRepository } from 'src/modules/iam/database/repositories/balance.repository';
+import { CurrencyRepository } from '../../iam/database/repositories/currency.repository';
+import { BalanceRepository } from '../../iam/database/repositories/balance.repository';
 //import { BalanceService } from 'src/modules/iam/services/iam-balance.service';
 import { BalanceDto } from 'src/modules/iam/dto/balance.dto';
 
@@ -175,10 +175,19 @@ export class AchievementService {
     return link;
   }
 
-
   async findAchievementsByCampaignId(campaignId: string): Promise<AchievementDto[]> {
     const objectId = new Types.ObjectId(campaignId);
     const achievements = await this.achievementRepository.findAchievementsByCampaignId(objectId);
     return achievements;
   }
+
+  
+  async findAchievementsSelectedByCampaignId(campaignId: string, userId: string): Promise<AchievementSelectedFullDto[]> {
+    const camId = new Types.ObjectId(campaignId);
+    const useId = new Types.ObjectId(userId);
+    const achievements = await this.achievementRepository.findAchievementsSelectedByCampaignId(camId, useId);
+    return achievements;
+  }
+
+
 }

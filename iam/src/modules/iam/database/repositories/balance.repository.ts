@@ -10,7 +10,7 @@ export class BalanceRepository {
   async addTransaction(dto: BalanceDto): Promise<any> {
     const collection = this.connection.collection('_iambalances');
     await collection.insertOne(dto);
-    const transaction = await collection.findOne({ userId: new Types.ObjectId(dto.userId), transactionType: dto.transactionType, currency: dto.currency, transactionEntityId: new Types.ObjectId(dto.transactionEntityId) });
+    const transaction = await collection.findOne({ _id: dto._id });
     if (!transaction) {
       throw new Error('Balance insert not completed.');
     }

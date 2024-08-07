@@ -239,7 +239,7 @@ export class AchievementRepository {
   async findAchievementSelectedFullById(achiId: Types.ObjectId): Promise<AchievementSelectedFullDto> {
     const selectedCollection = this.connection.collection('_qrachievementselected');
   
-    console.log(`Looking for userId: ${achiId}`);
+   
   
     const pipeline = [
       {
@@ -293,7 +293,7 @@ export class AchievementRepository {
   async findAchievementSelectedFullByUser(userId: Types.ObjectId): Promise<AchievementSelectedFullDto[]> {
     const selectedCollection = this.connection.collection('_qrachievementselected');
   
-    console.log(`Looking for userId: ${userId}`);
+    
   
     const pipeline = [
       {
@@ -343,6 +343,53 @@ export class AchievementRepository {
     const achievements = await collection.find({ campaignId }).toArray() as unknown as AchievementDto[];
     return achievements;
   }
+  
+  async findAchievementsSelectedByCampaignId(campaignId: Types.ObjectId, userId: Types.ObjectId): Promise<AchievementSelectedFullDto[]> {
+    const selectedCollection = this.connection.collection('_qrachievementselected');
+  
+    const pipeline = [
+      {
+        $match: { userId: userId, campaignId : campaignId }
+      },
+      {
+        $lookup: {
+          from: '_qrachievements',
+          localField: 'achievementId',
+          foreignField: '_id',
+          as: 'achievementDetails'
+        }
+      },
+      {
+        $unwind: '$achievementDetails'
+      },
+      {
+        $project: {
+          _id: 1,
+          achievementId: 1,
+          userId: 1,
+          inviteLink: 1,
+          parentId: 1,
+          addedDate: 1,
+          name: '$achievementDetails.name',
+          reward: '$achievementDetails.reward',
+          expirationDate: '$achievementDetails.expirationDate',
+          description: '$achievementDetails.description',
+          qrOrderType: '$achievementDetails.qrOrderType',
+          achievementType: '$achievementDetails.achievementType',
+          qrProofByLocation: '$achievementDetails.qrProofByLocation',
+          campaignId:'$achievementDetails.campaignId',
+          qrTarget: '$achievementDetails.qrTarget',
+          startDate: '$achievementDetails.startDate',
+        }
+      }
+    ];
+  
+    const fullDtos = await selectedCollection.aggregate(pipeline).toArray();
+    //console.log('Full DTOs:', JSON.stringify(fullDtos, null, 2)); // Log the result for debugging
+
+    return fullDtos as AchievementSelectedFullDto[];
+  }
+
 
   async deleteAchievementSelected(achievementId: string, userId: string): Promise<void> {
     const collection = this.connection.collection('_qrachievementselected');

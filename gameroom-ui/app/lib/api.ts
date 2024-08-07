@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { PiCompassToolDuotone } from 'react-icons/pi';
-import { QRCode, AchievementSelectedFull } from './definitions';
+import { QRCode, AchievementSelectedFull, Balance } from './definitions';
 
 const iamServiceUrl = process.env.NEXT_PUBLIC_IAM_SERVICE_URL;
 const APP_SECRET = process.env.NEXT_PUBLIC_APP_SECRET || 'default_app_secret';
@@ -45,7 +45,30 @@ export const registerUser = async ({ address, telegramID, walletType }: Register
   }
 };
 
-export const fetchgBalance = async (userId : string, currencyId?: string) => {
+
+export const createBalance = async (userId: string, transactionType: string,
+  amount: number, currency: string, transactionEntityId: string, 
+  balanceAfterTransaction: number) => {
+  try {
+
+    const response = await api.post('/balance/addtransaction', {
+      userId: userId,
+      transactionType: transactionType,
+      amount: amount,
+      currency: currency,
+      transactionEntityId: transactionEntityId,
+      balanceAfterTransaction: balanceAfterTransaction
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching campaigns:', error);
+    throw error;
+  }
+  
+};
+
+
+export const fetchBalance = async (userId : string, currencyId?: string) => {
   try {
     const response = await api.get('/balance/', { params: { userId: userId, currency: currencyId } });
     return response.data;
@@ -58,6 +81,16 @@ export const fetchgBalance = async (userId : string, currencyId?: string) => {
 export const fetchDefaultCurrency = async () => {
   try {
     const response = await api.get('/balance/currencydefault');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching campaigns:', error);
+    throw error;
+  }
+};
+
+export const fetchCurrency = async (name : string) => {
+  try {
+    const response = await api.get('/balance/currencybyname', { params: { name: name } });
     return response.data;
   } catch (error) {
     console.error('Error fetching campaigns:', error);
@@ -123,6 +156,16 @@ export const fetchAchievementsByCampaignId = async (campaignId: string) => {
     return response.data;
   } catch (error) {
     console.error(`Error fetching achievements for campaign ID ${campaignId}:`, error);
+    throw error;
+  }
+};
+
+export const fetchAchievementsSelectedByCampaignId = async (campaignId: string, userId: string) => {
+  try {
+    const response = await api.get(`/qr-achievements/getallbyuser`, { params: { campaignId: campaignId, userId: userId } });
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching achievements selected for campaign ID ${campaignId}: and userId ${userId}`, error);
     throw error;
   }
 };
@@ -248,7 +291,7 @@ export const unselectAchievement = async (achievementId: string, userId: string)
 const TONCENTER_MAINNET_API_URL = 'https://toncenter.com/api/v2';
 const TONCENTER_TESTNET_API_URL = 'https://testnet.toncenter.com/api/v2';
 
-export const fetchBalance = async (address: string, network: 'mainnet' | 'testnet'): Promise<string> => {
+export const fetchTonBalance = async (address: string, network: 'mainnet' | 'testnet'): Promise<string> => {
   const apiUrl = network === 'mainnet' ? TONCENTER_MAINNET_API_URL : TONCENTER_TESTNET_API_URL;
 
   try {

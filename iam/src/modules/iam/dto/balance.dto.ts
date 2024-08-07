@@ -12,8 +12,8 @@ export class BalanceDto {
   userId: Types.ObjectId;
 
   @IsString()
-  @IsIn(['deposit', 'withdraw', 'achievementsreward', 'payment'])
-  transactionType: 'deposit' | 'withdraw' | 'achievementsreward' | 'payment';
+  @IsIn(['deposit', 'withdraw', 'achievementsreward', 'payment', 'walletsync'])
+  transactionType: 'deposit' | 'withdraw' | 'achievementsreward' | 'payment' | 'walletsync';
 
   @IsNumber()
   @IsNotEmpty()

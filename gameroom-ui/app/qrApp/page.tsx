@@ -1,14 +1,13 @@
 // app/qrApp/page.tsx
 'use client';
-
 import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import CampaignHeader from './components/CampaignHeader';
 import CampaignButton from './components/CampaignButton';
 import MyAchievements from './components/MyAchievements';
 import CampaignDetails from './components/CampaignDetails';
-import AchievementDetails from './components/AchievementDetails'; // Import the new component
-import QRAchievement from './components/QRAchievement'; // Import the new component
+import AchievementDetails from './components/AchievementDetails';
+import QRAchievement from './components/QRAchievement';
 import { AccountType, Campaign, AchievementSelectedFull, Achievement } from '@/app/lib/definitions';
 import { fetchActiveCampaigns, fetchAchievementSelectFullByUA, fetchCampaignById, fetchAchievementById, selectAchievement, createQrScan } from '@/app/lib/api';
 import { useUser } from '@/app/contexts/UserContext';
@@ -24,14 +23,11 @@ const QRAppPageContent: React.FC = () => {
   const [activeSection, setActiveSection] = useState<ActiveSection>(ActiveSection.Campaigns);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
-  const [selectedAchievement, setSelectedAchievement] = useState<Achievement | null>(null); 
-  const [selectedAchievementFull, setSelectedAchievementFull] = useState<AchievementSelectedFull | null>(null); 
-
-  
+  const [selectedAchievement, setSelectedAchievement] = useState<Achievement | null>(null);
+  const [selectedAchievementFull, setSelectedAchievementFull] = useState<AchievementSelectedFull | null>(null);
 
   const searchParams = useSearchParams();
   const { accountData, userId } = useUser();
-
 
   useEffect(() => {
     const getCampaigns = async () => {
@@ -54,7 +50,6 @@ const QRAppPageContent: React.FC = () => {
     const isAchieventInviteType = type === 'a';
     const hasValidparaInvi = !!achievementId && isAchieventInviteType;
     if (hasValidParamsQr) {
-      //console.log("qrId", parentId);
       if (accountData.address && userId && parentId) {
         console.log("User connected with address:", accountData.address);
         selectAchievement(achievementId!, userId).then((achievement) => {
@@ -69,13 +64,12 @@ const QRAppPageContent: React.FC = () => {
         }).catch((error) => {
           console.error('Error selecting achievement:', error);
         });
-      } 
+      }
     }
     if (hasValidparaInvi) {
-      //console.log("parentId", parentId);
       if (accountData.address && userId) {
         console.log("User connected with address:", accountData.address);
-        selectAchievement(achievementId!, userId, !!parentId?parentId:'0').then(() => {
+        selectAchievement(achievementId!, userId, !!parentId ? parentId : '0').then(() => {
           fetchAchievementById(achievementId!).then((achievement) => {
             setSelectedAchievement(achievement);
             setActiveSection(ActiveSection.AchievementDetails);
@@ -85,9 +79,8 @@ const QRAppPageContent: React.FC = () => {
         }).catch((error) => {
           console.error('Error selecting achievement:', error);
         });
-      } 
+      }
     }
-    // Add other conditions for t='a' if necessary
   }, [searchParams, accountData.address, userId]);
 
   const handleCampaignClick = async (campaignId: string) => {
@@ -103,9 +96,11 @@ const QRAppPageContent: React.FC = () => {
     }
   };
 
-  const handleAchievementClick = (achievement: Achievement) => {
-    setSelectedAchievement(achievement);
-    setActiveSection(ActiveSection.AchievementDetails);
+  const handleAchievementClick = (achievementId: string) => {
+    fetchAchievementById(achievementId).then((achievement) => {
+      setSelectedAchievement(achievement);
+      setActiveSection(ActiveSection.AchievementDetails);
+    });
   };
 
   const handleMyAchievementClick = (achievementId: string) => {
@@ -118,6 +113,14 @@ const QRAppPageContent: React.FC = () => {
     }).catch((error) => {
       console.error('Error fetching achievement:', error);
     });
+  };
+
+  const handleBackButtonClick = () => {
+    if (activeSection === ActiveSection.CampaignDetails) {
+      setActiveSection(ActiveSection.Campaigns);
+    } else if (activeSection === ActiveSection.AchievementDetails) {
+      setActiveSection(ActiveSection.CampaignDetails);
+    }
   };
 
   const renderActiveSection = () => {
@@ -136,13 +139,13 @@ const QRAppPageContent: React.FC = () => {
                 />
               ))}
             </div>
-            <MyAchievements onAchievementClick={handleMyAchievementClick} /> {/* Include MyAchievements below the campaign list */}
+            <MyAchievements onAchievementClick={handleMyAchievementClick} />
           </div>
         );
       case ActiveSection.AchievementDetails:
-        return selectedAchievement?._id ? <AchievementDetails achievement={selectedAchievementFull!} /> : null; 
+        return selectedAchievement?._id ? <AchievementDetails achievement={selectedAchievement!} onBack={handleBackButtonClick} /> : null;
       case ActiveSection.CampaignDetails:
-        return selectedCampaign?._id ? <CampaignDetails campaignId={selectedCampaign._id} onAchievementClick={handleAchievementClick} /> : null;
+        return selectedCampaign?._id ? <CampaignDetails campaignId={selectedCampaign._id} onAchievementClick={handleAchievementClick} onBack={handleBackButtonClick} /> : null;
       default:
         return null;
     }
@@ -150,7 +153,7 @@ const QRAppPageContent: React.FC = () => {
 
   return (
     <div className={`h-full flex flex-col before:from-white after:from-sky-200 `}>
-      <CampaignHeader />
+      <CampaignHeader onBack={handleBackButtonClick} />
       <div className="flex flex-col flex-1 justify-center items-center">
         {renderActiveSection()}
       </div>

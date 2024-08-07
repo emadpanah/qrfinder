@@ -29,6 +29,11 @@ export class CurrencyRepository {
     return collection.find().toArray();
   }
 
+  async findCurrencyByName(name : string): Promise<any> {
+    const collection = this.connection.collection('_iamcurrencies');
+    return collection.findOne({ name : name });
+  }
+
   async findDefaultCurrency(): Promise<any> {
     const collection = this.connection.collection('_iamcurrencies');
     return collection.findOne({ isDefault: true });

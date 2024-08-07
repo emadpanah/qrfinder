@@ -9,7 +9,7 @@ export class Balance {
   userId: Types.ObjectId;
 
   @Prop({ required: true })
-  transactionType: 'deposit' | 'withdraw' | 'achievementsreward' | 'payment';
+  transactionType: 'deposit' | 'withdraw' | 'achievementsreward' | 'payment' | 'walletsync';
 
   @Prop({ required: true })
   amount: number;

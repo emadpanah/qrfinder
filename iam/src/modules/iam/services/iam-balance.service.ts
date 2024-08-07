@@ -23,6 +23,10 @@ export class BalanceService {
     return this.currencyRepository.findAllCurrencies();
   }
 
+  async getCurrencyByName(name : string): Promise<Currency> {
+    return this.currencyRepository.findCurrencyByName(name);
+  }
+
   async getDefaultCurrency(): Promise<Currency> {
     return this.currencyRepository.findDefaultCurrency();
   }

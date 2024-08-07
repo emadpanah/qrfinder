@@ -19,6 +19,7 @@ import { QRCode, QRCodeSchema } from './database/schemas/qr-qrcode.schema';
 import { QRScanQr, QRScanSchema  } from './database/schemas/qr-scanqr.schema';
 import { CurrencyRepository } from '../iam/database/repositories/currency.repository';
 import { BalanceRepository } from '../iam/database/repositories/balance.repository';
+import { BalanceService } from '../iam/services/iam-balance.service';
 
 @Module({
   imports: [
@@ -32,6 +33,6 @@ import { BalanceRepository } from '../iam/database/repositories/balance.reposito
     ], 'service'),
   ],
   controllers: [ShopController, CampaignController, AchievementController],
-  providers: [BalanceRepository, CurrencyRepository, ShopService, ShopRepository, CampaignService, CampaignRepository, AchievementService, AchievementRepository],
+  providers: [BalanceRepository, CurrencyRepository, BalanceService, ShopService, ShopRepository, CampaignService, CampaignRepository, AchievementService, AchievementRepository],
 })
 export class QRModule {}

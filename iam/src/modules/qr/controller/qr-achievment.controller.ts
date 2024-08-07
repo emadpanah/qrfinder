@@ -36,7 +36,7 @@ export class AchievementController {
     }
   }
 
-  @Get('/Getall')
+  @Get('/getall')
   async findAchievementsByCampaignId(@Query('campaignId') campaignId: string): Promise<AchievementDto[]> {
     try {
       return await this.achievementService.findAchievementsByCampaignId(campaignId);
@@ -45,6 +45,17 @@ export class AchievementController {
       throw new BadRequestException('Error Achievements by campaignID');
     }
   }
+
+  @Get('/getallbyuser')
+  async findAchievementsSelectedByCampaignId(@Query('campaignId') campaignId: string, @Query('userId') userId: string): Promise<AchievementSelectedFullDto[]> {
+    try {
+      return await this.achievementService.findAchievementsSelectedByCampaignId(campaignId, userId);
+    } catch (error) {
+      this.logger.error('Error finding find Achievements Selected By CampaignId', error);
+      throw new BadRequestException('Error Achievements selcted by campaignID');
+    }
+  }
+
 
   @Get('/get-selectedfullUA')
   async findAchievementSelectedByUserAndAchiId(@Query('userId') userId: string, @Query('achievementId') achievementId: string): Promise<AchievementSelectedFullDto> {
