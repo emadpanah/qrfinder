@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectConnection } from '@nestjs/mongoose';
 import { Connection, Types } from 'mongoose';
 import { AchievementDto, AchievementInsertDto } from '../../dto/achievement.dto';
-import { AchievementSelectedInsertDto, AchievementSelectedDto, AchievementSelectedFullDto } from '../../dto/achievement-selected.dto';
+import { AchievementSelectedInsertDto, AchievementSelectedRefDto, AchievementSelectedDto, AchievementSelectedFullDto } from '../../dto/achievement-selected.dto';
 import { QRCodeInertDto, QRCodeDto } from '../../dto/qrcode.dto';
 import { QrScanDto, QrScanFullDto } from '../../dto/qrscan.dto';
 import { child } from 'winston';
@@ -336,6 +336,46 @@ export class AchievementRepository {
     //console.log('Full DTOs:', JSON.stringify(fullDtos, null, 2)); // Log the result for debugging
 
     return fullDtos as AchievementSelectedFullDto[];
+}
+
+
+async findAchievementSelectedFullByUserAndCampId(userId: Types.ObjectId, campaignId: Types.ObjectId): Promise<AchievementSelectedRefDto[]> {
+  const selectedCollection = this.connection.collection('_qrachievementselected');
+
+  const pipeline = [
+    {
+      $match: { parentId: userId }
+    },
+    {
+      $lookup: {
+        from: '_qrachievements',
+        localField: 'achievementId',
+        foreignField: '_id',
+        as: 'achievementDetails'
+      }
+    },
+    {
+      $unwind: '$achievementDetails'
+    },
+    {
+      $match: { 'achievementDetails.campaignId': campaignId }
+    },
+    {
+      $project: {
+        _id: 1,
+        achievementId: 1,
+        userId: 1,
+        inviteLink: 1,
+        parentId: 1,
+        addedDate: 1,
+        name: '$achievementDetails.name'
+      }
+    }
+  ];
+
+  const fullDtos = await selectedCollection.aggregate(pipeline).toArray();
+  
+  return fullDtos as AchievementSelectedFullDto[];
 }
 
   async findAchievementsByCampaignId(campaignId: Types.ObjectId): Promise<AchievementDto[]> {

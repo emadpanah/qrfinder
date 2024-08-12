@@ -2,7 +2,7 @@
 import { Controller, Post, Body, Get, Param, ValidationPipe, Query, BadRequestException, Delete } from '@nestjs/common';
 import { AchievementService } from '../services/qr-achievment.service';
 import { AchievementDto, AchievementInsertDto } from '../dto/achievement.dto';
-import { AchievementSelectedInsertDto, AchievementSelectedDto, AchievementSelectedFullDto } from '../dto/achievement-selected.dto';
+import { AchievementSelectedInsertDto, AchievementSelectedDto, AchievementSelectedFullDto, AchievementSelectedRefDto } from '../dto/achievement-selected.dto';
 import { Logger } from '@nestjs/common';
 import { Types } from 'mongoose';
 import { QRCodeDto } from '../dto/qrcode.dto';
@@ -70,7 +70,7 @@ export class AchievementController {
       const achievementInsertDto: AchievementSelectedInsertDto = {
         achievementId: new Types.ObjectId(body.achievementId),
         userId: new Types.ObjectId(body.userId),
-        parentId: body.parentId ? new Types.ObjectId(body.parentId) : null,
+        parentId: new Types.ObjectId(body.parentId),
         inviteLink:"",
         addedDate: new Date()  // Add the addedDate here
       };
@@ -84,7 +84,7 @@ export class AchievementController {
       return achievementSelected;
     } catch (error) {
       this.logger.error('Error creating achievement selected', error);
-      throw error;
+      throw error;   
     }
   }
 
@@ -163,6 +163,11 @@ export class AchievementController {
   @Get('/get-selectedfull')
   async findAchievementSelectedFullByUser(@Query('userId') userId: string): Promise<AchievementSelectedFullDto[]> {
     return this.achievementService.findAchievementSelectedFullByUser(userId);
+  }
+ 
+  @Get('/get-selectedfullref')
+  async findAchievementSelRefFullByUserCam(@Query('userId') userId: string, @Query('campaignId') campaignId: string): Promise<AchievementSelectedRefDto[]> {
+    return this.achievementService.findAchievementSelectedFullByUserCamId(userId, campaignId);
   }
 
   @Post('/scan')

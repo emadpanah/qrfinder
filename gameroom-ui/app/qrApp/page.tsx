@@ -52,7 +52,7 @@ const QRAppPageContent: React.FC = () => {
     if (hasValidParamsQr) {
       if (accountData.address && userId && parentId) {
         console.log("User connected with address:", accountData.address);
-        selectAchievement(achievementId!, userId).then((achievement) => {
+        selectAchievement(achievementId!, userId, "0").then((achievement) => {
           setSelectedAchievementFull(achievement);
           fetchAchievementById(achievement.achievementId).then((ach) => {
             setSelectedAchievement(ach);
@@ -67,9 +67,11 @@ const QRAppPageContent: React.FC = () => {
       }
     }
     if (hasValidparaInvi) {
+      alert("hasValidparaInvi address :"+ accountData.address+" userId : "+ userId);
       if (accountData.address && userId) {
         console.log("User connected with address:", accountData.address);
-        selectAchievement(achievementId!, userId, !!parentId ? parentId : '0').then(() => {
+        selectAchievement(achievementId!, userId, parentId ? parentId : '0').then((select) => {
+          setSelectedAchievementFull(select);
           fetchAchievementById(achievementId!).then((achievement) => {
             setSelectedAchievement(achievement);
             setActiveSection(ActiveSection.AchievementDetails);

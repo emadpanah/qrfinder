@@ -33,6 +33,42 @@ export class AchievementSelectedDto {
 
 }
 
+export class AchievementSelectedRefDto {
+
+  @IsString()
+  @IsNotEmpty()
+  campaignId: Types.ObjectId;
+  
+  @IsString()
+  @IsNotEmpty()  
+  _id:Types.ObjectId;
+  
+  @IsString()
+  @IsNotEmpty()
+  achievementId: Types.ObjectId;
+  
+  @IsString()
+  @IsNotEmpty()
+  name: string;
+  
+  @IsString()
+  @IsNotEmpty()
+  userId: Types.ObjectId;
+  
+  @IsString()
+  @IsNotEmpty()
+  inviteLink: string;
+  
+  @IsString()
+  @IsOptional()
+  parentId: Types.ObjectId; 
+  
+  @IsDateString()
+  @IsNotEmpty()
+  addedDate: Date;  
+  
+  }
+
 export class AchievementSelectedFullDto {
 
 @IsString()

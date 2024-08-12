@@ -1,3 +1,5 @@
+import { Types } from "mongoose";
+
 // app/lib/definitions.ts
 export interface Campaign {
   _id: string;
@@ -109,3 +111,17 @@ export interface TapGameModel {
   activeDate: string;
   image: string;
 }
+
+
+export interface AchievementSelectedRef {
+
+  campaignId: Types.ObjectId;
+  _id:Types.ObjectId;
+  achievementId: Types.ObjectId;
+  name: string;
+  userId: Types.ObjectId;
+  inviteLink: string;
+  parentId: Types.ObjectId; 
+  addedDate: Date;  
+  
+  }

@@ -180,7 +180,7 @@ export const fetchUserDetails = async (userId: string) => {
   }
 };
 
-export const selectAchievement = async (achievementId: string, userId: string, parentId?: string): Promise<AchievementSelectedFull>  => {
+export const selectAchievement = async (achievementId: string, userId: string, parentId: string): Promise<AchievementSelectedFull>  => {
   try {
     const requestBody: { achievementId: string; userId: string; parentId?: string } = {
       achievementId: achievementId,
@@ -259,6 +259,17 @@ export const fetchQrScannedByUser = async (userId: string, achievementId: string
   } catch (error) {
     console.error(`Error fetching scanned qr for user ID 
       ${userId} and  achievement Id ${achievementId}:`, error);
+    throw error;
+  }
+};
+
+
+export const fetchSelFullAchisRefByUserIdCamId = async (userId: string, campaignId: string) => {
+  try {
+    const response = await api.get(`/qr-achievements/get-selectedfullref`, { params: { userId: userId, campaignId: campaignId } });
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching selected achievements referrer by user ${userId}:`, error);
     throw error;
   }
 };

@@ -1,7 +1,7 @@
 import { ConflictException, Injectable, Logger } from '@nestjs/common';
 import { AchievementRepository } from '../database/repositories/qr-achievement.repository';
 import { AchievementDto, AchievementInsertDto } from '../dto/achievement.dto';
-import { AchievementSelectedInsertDto, AchievementSelectedDto, AchievementSelectedFullDto } from '../dto/achievement-selected.dto';
+import { AchievementSelectedInsertDto, AchievementSelectedDto, AchievementSelectedFullDto, AchievementSelectedRefDto } from '../dto/achievement-selected.dto';
 import { Types } from 'mongoose';
 import { QRCodeInertDto, QRCodeDto } from '../dto/qrcode.dto';
 import { QrScanDto, QrScanFullDto } from '../dto/qrscan.dto';
@@ -164,6 +164,10 @@ export class AchievementService {
 
   async findAchievementSelectedFullByUser(userId: string): Promise<AchievementSelectedFullDto[]> {
     return await this.achievementRepository.findAchievementSelectedFullByUser(new Types.ObjectId(userId));
+  }
+
+  async findAchievementSelectedFullByUserCamId(userId: string, campaignId: string): Promise<AchievementSelectedRefDto[]> {
+    return await this.achievementRepository.findAchievementSelectedFullByUserAndCampId(new Types.ObjectId(userId), new Types.ObjectId(campaignId));
   }
 
   async findAchievementSelectedFullByUserAndAchiId(userId: string, achievementId: string): Promise<AchievementSelectedFullDto> {
