@@ -299,6 +299,18 @@ export const unselectAchievement = async (achievementId: string, userId: string)
 };
 
 
+export const createCampaign = async (campaignData: any) => {
+  try {
+    const response = await api.post('/qr-campaigns/create', campaignData);
+    return response.data;
+  } catch (error) {
+    console.error('Error creating campaign:', error);
+    throw error;
+  }
+};
+
+
+
 const TONCENTER_MAINNET_API_URL = 'https://toncenter.com/api/v2';
 const TONCENTER_TESTNET_API_URL = 'https://testnet.toncenter.com/api/v2';
 

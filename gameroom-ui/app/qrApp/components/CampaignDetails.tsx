@@ -56,7 +56,7 @@ const CampaignDetails: React.FC<CampaignDetailsProps> = ({ campaignId, onAchieve
       
   const handleSelectAchievement = useCallback(async (achievementId: string) => {
     try {
-      const selected = await selectAchievement(achievementId, userId!);
+      const selected = await selectAchievement(achievementId, userId!, "0");
       setSelectedAchievements((prev) => new Set(prev).add(achievementId));
       setLinks((prev) => ({ ...prev, [achievementId]: selected.inviteLink }));
       toast.success('Achievement selected successfully!');

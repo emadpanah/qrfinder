@@ -9,9 +9,14 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { BotModule } from './modules/bot/bot.module';
 import { ProductModule } from './modules/product/product.module';
 import { QRModule } from './modules/qr/qr.module';  
+import { ThrottlerModule } from '@nestjs/throttler';
 
 @Module({
   imports: [
+    ThrottlerModule.forRoot([{
+      ttl: 60, // Time to live (seconds)
+      limit: 10, // Maximum number of requests within the ttl
+    }]),
     ConfigModule.forRoot({
       isGlobal: true,
       load: [config],

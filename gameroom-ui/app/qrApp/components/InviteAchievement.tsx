@@ -65,7 +65,7 @@ const InviteAchievement: React.FC<InviteAchievementProps> = ({ achievement }) =>
 
   return (
     <div className={styles.qrAchievement}>
-      <div className="relative border border-gray-300 p-1 pl-6 pr-6 pb-1 ml-6 mt-4 mr-6 mb-4">
+      <div className="relative border border-gray-300 p-1 pl-6 pr-6 pb-1 mt-4  mb-4">
         <h1 className="text-xl text-center font-semibold pt-1 relative pb-1">
           {achievement.name}
         </h1>
@@ -99,7 +99,7 @@ const InviteAchievement: React.FC<InviteAchievementProps> = ({ achievement }) =>
       </div>
 
       {/* Progress bar for invited users */}
-      <div className="relative border border-gray-300 p-4 ml-6 mt-4 mr-6 mb-4">
+      <div className="relative border border-gray-300 p-4 mt-4  mb-4">
         <div className="relative pt-1">
           <div className="flex mb-2 items-center justify-between">
             <div>
@@ -123,16 +123,16 @@ const InviteAchievement: React.FC<InviteAchievementProps> = ({ achievement }) =>
       </div>
 
       {/* Table for displaying AchievementSelectedRef properties */}
-      <div className="relative border border-gray-300 p-4 ml-6 mt-4 mr-6 mb-4">
+      <div className="relative border border-gray-300 p-4 mt-4 mb-2">
         <h2 className="text-l text-center font-semibold relative pb-2">
-          Selected Achievements
+          Invitation List 
         </h2>
-        <table className="table-auto w-full text-center">
+        <table className="table-auto w-full text-center text-xs">
           <thead>
             <tr>
-              <th className="px-4 py-2">Achievement</th>
-              <th className="px-4 py-2">User</th>
-              <th className="px-4 py-2">Added Date</th>
+              <th className="px-4 py-2">achievement</th>
+              <th className="px-4 py-2">user</th>
+              <th className="px-4 py-2">date</th>
             </tr>
           </thead>
           <tbody>
@@ -141,7 +141,7 @@ const InviteAchievement: React.FC<InviteAchievementProps> = ({ achievement }) =>
                 <tr key={ref._id.toString()}>
                   <td className="border px-4 py-2">
                     <div className="relative group">
-                      <span className="cursor-pointer">{shortenAddress(ref.name, 6)}</span>
+                      <span className="cursor-pointer">{shortenAddress(ref.name, 4)}</span>
                       <div className="absolute hidden group-hover:block bg-gray-700 text-white text-xs rounded py-1 px-4 left-1/2 transform -translate-x-1/2 -translate-y-full">
                         {ref.name}
                       </div>

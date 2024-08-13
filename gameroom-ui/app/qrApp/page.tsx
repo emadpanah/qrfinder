@@ -12,11 +12,13 @@ import { AccountType, Campaign, AchievementSelectedFull, Achievement } from '@/a
 import { fetchActiveCampaigns, fetchAchievementSelectFullByUA, fetchCampaignById, fetchAchievementById, selectAchievement, createQrScan } from '@/app/lib/api';
 import { useUser } from '@/app/contexts/UserContext';
 import styles from './css/qrApp.module.css';
+import CampaignInsert from './components/CampaignInsert';
 
 enum ActiveSection {
   Campaigns,
   AchievementDetails,
-  CampaignDetails
+  CampaignDetails,
+  InsertCampaign
 }
 
 const QRAppPageContent: React.FC = () => {
@@ -124,6 +126,9 @@ const QRAppPageContent: React.FC = () => {
       setActiveSection(ActiveSection.Campaigns);
     }
   };
+  const handleInsertCampaignClick = () => {
+    setActiveSection(ActiveSection.InsertCampaign);
+  };
 
   const renderActiveSection = () => {
     console.log(`Rendering section: ${activeSection}`);
@@ -131,7 +136,17 @@ const QRAppPageContent: React.FC = () => {
       case ActiveSection.Campaigns:
         return (
           <div className={styles.campaignListContainer}>
-            <p className="text-small text-center pt-4 pb-2 ">New Campaigns</p>
+             <div className="flex justify-between items-center w-full">
+              <p className="text-s pt-4 pb-2">New Campaigns</p>
+              <div className="flex justify-end ">
+                <button
+                  className="bg-green-500 text-xl text-white px-2 pb-1 rounded"
+                  onClick={handleInsertCampaignClick}
+                >
+                  +
+                </button>
+              </div>
+            </div>
             <div className={`${styles.container} ${styles.spaceY4} pt-2 md:pt-4 lg:pt-8 ${styles.campaignList}`}>
               {campaigns.map((campaign) => (
                 <CampaignButton
@@ -144,6 +159,10 @@ const QRAppPageContent: React.FC = () => {
             <MyAchievements onAchievementClick={handleMyAchievementClick} />
           </div>
         );
+      case ActiveSection.InsertCampaign:
+      return (
+        <CampaignInsert onInsertSuccess={() => setActiveSection(ActiveSection.Campaigns)} />
+      );
       case ActiveSection.AchievementDetails:
         return selectedAchievement?._id ? <AchievementDetails achievement={selectedAchievement!} onBack={handleBackButtonClick} /> : null;
       case ActiveSection.CampaignDetails:
