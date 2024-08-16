@@ -5,12 +5,28 @@ import { QRCode, AchievementSelectedFull, Balance } from './definitions';
 const iamServiceUrl = process.env.NEXT_PUBLIC_IAM_SERVICE_URL;
 const APP_SECRET = process.env.NEXT_PUBLIC_APP_SECRET || 'default_app_secret';
 
+function getCsrfToken() {
+  const matches = document.cookie.match(new RegExp(
+    '(?:^|; )' + encodeURIComponent('XSRF-TOKEN').replace(/[-.+*]/g, '\\$&') + '=([^;]*)'
+  ));
+  return matches ? decodeURIComponent(matches[1]) : undefined;
+}
+
+// Create an Axios instance with CSRF token in headers
 const api = axios.create({
   baseURL: iamServiceUrl,
   headers: {
     'Content-Type': 'application/json',
+    'X-CSRF-TOKEN': getCsrfToken(), // Add CSRF token to headers
   },
 });
+
+// const api = axios.create({
+//   baseURL: iamServiceUrl,
+//   headers: {
+//     'Content-Type': 'application/json',
+//   },
+// });
 
 interface RegisterUserParams {
   address: string;

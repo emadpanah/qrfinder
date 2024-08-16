@@ -1,5 +1,15 @@
-import { IsString, IsNotEmpty, IsNumber, IsDate, IsObject, IsBoolean, isNumber } from 'class-validator';
+import { IsString, IsNotEmpty, IsNumber, IsDate, IsObject, IsBoolean } from 'class-validator';
 import { Types } from 'mongoose';
+import { Sanitize } from 'class-sanitizer';
+import sanitizeHtml from 'sanitize-html';
+
+// Custom HTML sanitizer
+function htmlSanitizer(value: string): string {
+  return sanitizeHtml(value, {
+    allowedTags: [], // No HTML tags allowed
+    allowedAttributes: {}, // No attributes allowed
+  });
+}
 
 export class AchievementDto {
   @IsString()
@@ -12,6 +22,7 @@ export class AchievementDto {
 
   @IsString()
   @IsNotEmpty()
+  @Sanitize(htmlSanitizer)
   name: string;
 
   @IsNumber()
@@ -20,6 +31,7 @@ export class AchievementDto {
 
   @IsString()
   @IsNotEmpty()
+  @Sanitize(htmlSanitizer)
   description: string;
 
   @IsString()
@@ -56,9 +68,7 @@ export class AchievementDto {
   @IsDate()
   @IsNotEmpty()
   addedDate: Date;
-
 }
-
 
 export class AchievementInsertDto {
 
@@ -68,6 +78,7 @@ export class AchievementInsertDto {
 
   @IsString()
   @IsNotEmpty()
+  @Sanitize(htmlSanitizer)
   name: string;
 
   @IsNumber()
@@ -76,6 +87,7 @@ export class AchievementInsertDto {
   
   @IsString()
   @IsNotEmpty()
+  @Sanitize(htmlSanitizer)
   description: string;
 
   @IsString()

@@ -1,6 +1,7 @@
 import { Controller, Post, Body, Get, Query, ValidationPipe, BadRequestException, Logger } from '@nestjs/common';
 import { CampaignService } from '../services/qr-campaign.service';
 import { CampaignDto } from '../dto/campaign.dto';
+import { SkipThrottle, Throttle } from '@nestjs/throttler';
 
 @Controller('qr-campaigns')
 export class CampaignController {
@@ -49,4 +50,12 @@ export class CampaignController {
       throw new BadRequestException('Error fetching all campaigns');
     }
   }
+
+  //@Throttle({ default: { limit: 1, ttl: 60 000 } })
+  //@SkipThrottle()
+  @Get('/showtest')
+  async showTest(): Promise<string> {
+    return "hello world";
+  }
+
 }

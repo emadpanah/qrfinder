@@ -1,100 +1,201 @@
 // src/modules/qr/dto/campaign.dto.ts
 
-import { IsString, IsNotEmpty, IsDateString, IsNumber, IsObject } from 'class-validator';
-import { Types } from 'mongoose';
+// src/modules/qr/dto/campaign.dto.ts
 
-export class CampaignDto {
+// src/modules/qr/dto/campaign.dto.ts
+
+import {
+  IsString,
+  IsNotEmpty,
+  IsDateString,
+  IsNumber,
+  IsObject,
+  IsMongoId,
+  ArrayNotEmpty,
+  ArrayMinSize,
+  ValidateNested,
+  IsUrl,
+} from 'class-validator';
+import { Types } from 'mongoose';
+import { Type } from 'class-transformer';
+import { Sanitize } from 'class-sanitizer';
+import sanitizeHtml from 'sanitize-html';
+
+// Custom HTML sanitizer
+function htmlSanitizer(value: string): string {
+  return sanitizeHtml(value, {
+    allowedTags: [], // No HTML tags allowed
+    allowedAttributes: {}, // No attributes allowed
+  });
+}
+
+// Nested DTO for rewards
+export class RewardDto {
+  @IsNumber()
+  @IsNotEmpty()
+  tokens: number;
+
+  @IsString({ each: true })
+  @ArrayNotEmpty()
+  @ArrayMinSize(1)
+  products: string[];
+}
+
+// DTO for inserting a new campaign
+export class CampaignInsertDto {
+  @IsMongoId()
+  @IsNotEmpty()
+  shopId: Types.ObjectId;
+
   @IsString()
+  @IsNotEmpty()
+  @Sanitize(htmlSanitizer) // Sanitizes HTML input
+  name: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @Sanitize(htmlSanitizer) // Sanitizes HTML input
+  description: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @IsUrl()
+  videoUrl: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @IsUrl()
+  imageUrl: string;
+
+  @IsDateString()
+  @IsNotEmpty()
+  expirationDate: Date;
+
+  @IsNumber()
+  @IsNotEmpty()
+  target: number;
+
+  @IsObject()
+  @ValidateNested()
+  @Type(() => RewardDto)
+  @IsNotEmpty()
+  reward: RewardDto;
+
+  @IsString()
+  @IsNotEmpty()
+  @Sanitize(htmlSanitizer) // Sanitizes HTML input
+  readonly ownerTelegramId: string;
+
+  @IsString()
+  @IsNotEmpty()
+  readonly ownerAddress: string;
+}
+
+// DTO for a campaign, includes ID field
+export class CampaignDto extends CampaignInsertDto {
+  @IsMongoId()
   @IsNotEmpty()
   _id: Types.ObjectId;
-
-  @IsString()
-  @IsNotEmpty()
-  shopId: Types.ObjectId;
-
-  @IsString()
-  @IsNotEmpty()
-  name: string;
-
-  @IsString()
-  @IsNotEmpty()
-  description: string;
-
-  @IsString()
-  @IsNotEmpty()
-  videoUrl: string;
-
-  @IsString()
-  @IsNotEmpty()
-  imageUrl: string;
-
-  @IsDateString()
-  @IsNotEmpty()
-  expirationDate: Date;
-
-  @IsNumber()
-  @IsNotEmpty()
-  target: number;
-
-  @IsObject()
-  @IsNotEmpty()
-  reward: {
-    tokens: number;
-    products: string[];
-  };
-
-  @IsString()
-  @IsNotEmpty()
-  readonly ownerTelegramId: string;
-
-  @IsString()
-  @IsNotEmpty()
-  readonly ownerAddress: string;
 }
 
-export class CampaignInsertDto {
 
-  @IsString()
-  @IsNotEmpty()
-  shopId: Types.ObjectId;
 
-  @IsString()
-  @IsNotEmpty()
-  name: string;
 
-  @IsString()
-  @IsNotEmpty()
-  description: string;
+// import { IsString, IsNotEmpty, IsDateString, IsNumber, IsObject } from 'class-validator';
+// import { Types } from 'mongoose';
 
-  @IsString()
-  @IsNotEmpty()
-  videoUrl: string;
+// export class CampaignDto {
+//   @IsString()
+//   @IsNotEmpty()
+//   _id: Types.ObjectId;
 
-  @IsString()
-  @IsNotEmpty()
-  imageUrl: string;
+//   @IsString()
+//   @IsNotEmpty()
+//   shopId: Types.ObjectId;
 
-  @IsDateString()
-  @IsNotEmpty()
-  expirationDate: Date;
+//   @IsString()
+//   @IsNotEmpty()
+//   name: string;
 
-  @IsNumber()
-  @IsNotEmpty()
-  target: number;
+//   @IsString()
+//   @IsNotEmpty()
+//   description: string;
 
-  @IsObject()
-  @IsNotEmpty()
-  reward: {
-    tokens: number;
-    products: string[];
-  };
+//   @IsString()
+//   @IsNotEmpty()
+//   videoUrl: string;
 
-  @IsString()
-  @IsNotEmpty()
-  readonly ownerTelegramId: string;
+//   @IsString()
+//   @IsNotEmpty()
+//   imageUrl: string;
 
-  @IsString()
-  @IsNotEmpty()
-  readonly ownerAddress: string;
-}
+//   @IsDateString()
+//   @IsNotEmpty()
+//   expirationDate: Date;
+
+//   @IsNumber()
+//   @IsNotEmpty()
+//   target: number;
+
+//   @IsObject()
+//   @IsNotEmpty()
+//   reward: {
+//     tokens: number;
+//     products: string[];
+//   };
+
+//   @IsString()
+//   @IsNotEmpty()
+//   readonly ownerTelegramId: string;
+
+//   @IsString()
+//   @IsNotEmpty()
+//   readonly ownerAddress: string;
+// }
+
+// export class CampaignInsertDto {
+
+//   @IsString()
+//   @IsNotEmpty()
+//   shopId: Types.ObjectId;
+
+//   @IsString()
+//   @IsNotEmpty()
+//   name: string;
+
+//   @IsString()
+//   @IsNotEmpty()
+//   description: string;
+
+//   @IsString()
+//   @IsNotEmpty()
+//   videoUrl: string;
+
+//   @IsString()
+//   @IsNotEmpty()
+//   imageUrl: string;
+
+//   @IsDateString()
+//   @IsNotEmpty()
+//   expirationDate: Date;
+
+//   @IsNumber()
+//   @IsNotEmpty()
+//   target: number;
+
+//   @IsObject()
+//   @IsNotEmpty()
+//   reward: {
+//     tokens: number;
+//     products: string[];
+//   };
+
+//   @IsString()
+//   @IsNotEmpty()
+//   readonly ownerTelegramId: string;
+
+//   @IsString()
+//   @IsNotEmpty()
+//   readonly ownerAddress: string;
+// }
 

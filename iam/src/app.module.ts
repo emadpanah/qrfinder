@@ -1,6 +1,6 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { APP_INTERCEPTOR } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { IamModule } from './modules/iam/iam.module';
 //import { UserLoginModel } from './modules/auth/auth.module';
 import { HttpLoggerInterceptor } from './shared/inetrceptors/http-logger.interceptor';
@@ -9,13 +9,15 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { BotModule } from './modules/bot/bot.module';
 import { ProductModule } from './modules/product/product.module';
 import { QRModule } from './modules/qr/qr.module';  
-import { ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { rateThrottlerGuard } from './modules/qr/guards/rateGuard';
+import * as csurf from 'csurf';
 
 @Module({
   imports: [
     ThrottlerModule.forRoot([{
-      ttl: 60, // Time to live (seconds)
-      limit: 10, // Maximum number of requests within the ttl
+      ttl: 60000, 
+      limit: 100, 
     }]),
     ConfigModule.forRoot({
       isGlobal: true,
@@ -35,6 +37,15 @@ import { ThrottlerModule } from '@nestjs/throttler';
     QRModule,
   ],
   controllers: [],
-  providers: [{ provide: APP_INTERCEPTOR, useClass: HttpLoggerInterceptor }],
+  providers: [{ provide: APP_INTERCEPTOR, useClass: HttpLoggerInterceptor },  {
+    provide: APP_GUARD,
+    useClass: rateThrottlerGuard,
+  }],
 })
-export class AppModule {}
+
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(csurf({ cookie: true })).forRoutes('*');
+  }
+}
+// export class AppModule {}
