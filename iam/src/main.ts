@@ -37,7 +37,34 @@ async function bootstrap() {
 
   app.use(cookieParser());
 
-  app.use(csurf({ cookie: true }));
+  // Apply CSRF protection middleware after cookieParser
+  // app.use(csurf({ cookie: { key: 'XSRF-TOKEN' } }));
+
+  // // app.use((req, res, next) => {
+  // //   const token = req.csrfToken();
+  // //   console.log("Generated CSRF Token:", token);  // Log the token
+  // //   res.cookie('XSRF-TOKEN', token);
+  // //   next();
+  // // });
+
+  // app.use((req, res, next) => {
+  //   const token = req.csrfToken();
+  //   console.log("Generated CSRF Token:", token);  // Log the generated token
+  //   res.cookie('XSRF-TOKEN', token, {
+  //     httpOnly: false, // Make sure it's not HttpOnly so that it can be read by client-side JavaScript
+  //     secure: process.env.NODE_ENV === 'production', // Ensure secure in production
+  //     sameSite: 'Lax', // Adjust this according to your needs
+  //   });
+  //   next();
+  // });
+
+  // app.use((req, res, next) => {
+  //   console.log("Headers in Request:", req.headers); // Log all headers
+  //   console.log("Cookies in Request:", req.cookies); // Log all cookies
+  //   console.log("CSRF Token in Request Header:", req.get('X-CSRF-TOKEN')); // Log the CSRF token in the header
+  //   next();
+  // });
+  
 
   await app.listen(process.env.PORT);
 }

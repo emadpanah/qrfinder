@@ -11,7 +11,6 @@ import { ProductModule } from './modules/product/product.module';
 import { QRModule } from './modules/qr/qr.module';  
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { rateThrottlerGuard } from './modules/qr/guards/rateGuard';
-import * as csurf from 'csurf';
 
 @Module({
   imports: [
@@ -43,9 +42,8 @@ import * as csurf from 'csurf';
   }],
 })
 
-export class AppModule implements NestModule {
-  configure(consumer: MiddlewareConsumer) {
-    consumer.apply(csurf({ cookie: true })).forRoutes('*');
-  }
-}
-// export class AppModule {}
+// export class AppModule implements NestModule {
+//   configure(consumer: MiddlewareConsumer) {
+//   }
+// }
+ export class AppModule {}

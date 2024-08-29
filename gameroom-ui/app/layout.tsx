@@ -38,8 +38,8 @@ export default function RootLayout({ children }: LayoutProps) {
   return (
     <html lang="en" className={theme}>
       <body className={`min-h-screen flex flex-col ${theme}`}>
-        <TonConnectUIProvider manifestUrl={manifestUrl} uiPreferences={{ theme: theme === 'dark' ? THEME.DARK : THEME.LIGHT }}>
-          <UserProvider> {/* Wrap with UserProvider */}
+      <TonConnectUIProvider manifestUrl={manifestUrl} uiPreferences={{ theme: theme === 'dark' ? THEME.DARK : THEME.LIGHT }}>
+      <UserProvider>
             <Header toggleTheme={toggleTheme} currentTheme={theme} />
             <main className="flex-grow">
               {children}
@@ -47,7 +47,7 @@ export default function RootLayout({ children }: LayoutProps) {
             <Footer />
             <ToastContainer /> 
           </UserProvider>
-        </TonConnectUIProvider>
+          </TonConnectUIProvider>
       </body>
     </html>
   );
