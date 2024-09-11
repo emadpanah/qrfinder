@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { PiCompassToolDuotone } from 'react-icons/pi';
-import { QRCode, AchievementSelectedFull, Balance } from './definitions';
+import { QRCode, AchievementSelectedFull, Balance, Campaign } from './definitions';
 
 const iamServiceUrl = process.env.NEXT_PUBLIC_IAM_SERVICE_URL;
 const APP_SECRET = process.env.NEXT_PUBLIC_APP_SECRET || 'default_app_secret';
@@ -347,8 +347,9 @@ export const unselectAchievement = async (achievementId: string, userId: string)
 };
 
 
-export const createCampaign = async (campaignData: any) => {
+export const createCampaign = async (campaignData: Campaign) => {
   try {
+    console.log(campaignData);
     const response = await api.post('/qr-campaigns/create', campaignData);
     return response.data;
   } catch (error) {

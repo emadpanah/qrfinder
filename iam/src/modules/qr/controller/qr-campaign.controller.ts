@@ -1,6 +1,6 @@
 import { Controller, Post, Body, Get, Query, ValidationPipe, BadRequestException, Logger } from '@nestjs/common';
 import { CampaignService } from '../services/qr-campaign.service';
-import { CampaignDto } from '../dto/campaign.dto';
+import { CampaignDto, CampaignInsertDto } from '../dto/campaign.dto';
 import { SkipThrottle, Throttle } from '@nestjs/throttler';
 
 @Controller('qr-campaigns')
@@ -10,8 +10,9 @@ export class CampaignController {
   constructor(private readonly campaignService: CampaignService) {}
 
   @Post('/create')
-  async createCampaign(@Body(new ValidationPipe()) body: CampaignDto): Promise<CampaignDto> {
+  async createCampaign(@Body(new ValidationPipe()) body: CampaignInsertDto): Promise<CampaignDto> {
     try {
+      console.log("createCampaign-------------------------");
       const campaign = await this.campaignService.createCampaign(body);
       return campaign;
     } catch (error) {

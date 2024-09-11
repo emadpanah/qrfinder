@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useUser } from '@/app/contexts/UserContext';
 import { createCampaign } from '@/app/lib/api';
+import { Types } from 'mongoose';
 
 const generateRandomNumber = () => {
   return Math.floor(100000 + Math.random() * 900000).toString();
@@ -50,22 +51,25 @@ const CampaignInsert: React.FC<CampaignInsertProps> = ({ onInsertSuccess }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const telegramID = window.Telegram?.WebApp?.initDataUnsafe?.user?.id || 'unknown';
 
     try {
       await createCampaign({
-        shopId: 'shopId-placeholder',
-        name,
-        description,
-        videoUrl: videoUrl || '',
-        imageUrl: imageUrl || '',
-        expirationDate: new Date(expirationDate),
-        target,
-        reward: {
-          tokens,
-        },
-        ownerTelegramId: userId!,
+        shopId: '66b625aace4f2777cf3be0dd',
+        name: name,
+        description: description || 'tyt',
+        videoUrl: videoUrl || 'https://example.com/video',
+        imageUrl: imageUrl || 'https://example.com/image',
+        expirationDate: new Date(expirationDate),//"2026-08-26T00:00:00.000Z"),
+        target: target,
+        reward: { tokens: tokens, products: [] },
+        ownerTelegramId: userId ? userId: telegramID,
         ownerAddress: accountData.address!,
+        _id: new Types.ObjectId().toString(),
       });
+
+      
+
       onInsertSuccess();
     } catch (error) {
       console.error('Error inserting campaign:', error);
