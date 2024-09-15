@@ -7,7 +7,7 @@ import Image from 'next/image';
 import { ethers } from 'ethers';
 import GameHeader from './components/gameHeader';
 import axios from 'axios';
-import HubButton from './components/hubButton';
+import HubButton from './components/HubButton';
 import MyGames from './components/myGames';
 import TapGame from './components/tapGame';
 import { AccountType } from '@/app/lib/definitions';

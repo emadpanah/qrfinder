@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { TapGameModel } from '../../lib/definitions';
-import GameButton from '../components/gameButton';
+import GameButton from '../components/GameButton';
 
 interface MyGamesProps {
   onGameDoubleClick: (gameId: number) => void;
