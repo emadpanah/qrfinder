@@ -2,12 +2,20 @@ import { Types } from "mongoose";
 
 // app/lib/definitions.ts
 export interface Campaign {
+  shopId: string;
   _id: string;
   name: string;
   description: string;
   imageUrl?: string;
   videoUrl?: string;
-  // Add other properties if needed
+  expirationDate?: Date;
+  target?: number,
+  reward: {
+    tokens: number;
+    products: string[];
+  };
+  ownerTelegramId: string;
+  ownerAddress: string,
 }
 
 export interface Achievement {

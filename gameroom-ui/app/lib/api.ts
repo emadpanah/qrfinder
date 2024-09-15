@@ -1,25 +1,20 @@
 import axios from 'axios';
 import { PiCompassToolDuotone } from 'react-icons/pi';
-import { QRCode, AchievementSelectedFull, Balance } from './definitions';
+import { QRCode, AchievementSelectedFull, Balance, Campaign } from './definitions';
 
 const iamServiceUrl = process.env.NEXT_PUBLIC_IAM_SERVICE_URL;
 const APP_SECRET = process.env.NEXT_PUBLIC_APP_SECRET || 'default_app_secret';
 
-function getCsrfToken() {
-  const matches = document.cookie.match(new RegExp(
-    '(?:^|; )' + encodeURIComponent('XSRF-TOKEN').replace(/[-.+*]/g, '\\$&') + '=([^;]*)'
-  ));
-  return matches ? decodeURIComponent(matches[1]) : undefined;
-}
 
-// Create an Axios instance with CSRF token in headers
-const api = axios.create({
-  baseURL: iamServiceUrl,
-  headers: {
-    'Content-Type': 'application/json',
-    'X-CSRF-TOKEN': getCsrfToken(), // Add CSRF token to headers
-  },
-});
+
+// function getCsrfToken() {
+//   console.log("Retrieving CSRF token...");
+//   console.log("All cookies: " + document.cookie);
+//   const matches = document.cookie.match(new RegExp(
+//     '(?:^|; )' + encodeURIComponent('XSRF-TOKEN').replace(/[-.+*]/g, '\\$&') + '=([^;]*)'
+//   ));
+//   return matches ? decodeURIComponent(matches[1]) : undefined;
+// }
 
 // const api = axios.create({
 //   baseURL: iamServiceUrl,
@@ -27,6 +22,43 @@ const api = axios.create({
 //     'Content-Type': 'application/json',
 //   },
 // });
+
+// api.interceptors.request.use(config => {
+//   const csrfToken = getCsrfToken();
+//   console.log("CSRF Token: " + csrfToken);
+//   if (csrfToken) {
+//     config.headers['XSRF-TOKEN'] = csrfToken;
+//   }
+//   return config;
+// }, error => {
+//   return Promise.reject(error);
+// });
+
+// export default api;
+
+
+// function getCsrfToken() {
+//   const matches = document.cookie.match(new RegExp(
+//     '(?:^|; )' + encodeURIComponent('XSRF-TOKEN').replace(/[-.+*]/g, '\\$&') + '=([^;]*)'
+//   ));
+//   return matches ? decodeURIComponent(matches[1]) : undefined;
+// }
+
+// // Create an Axios instance with CSRF token in headers
+// const api = axios.create({
+//   baseURL: iamServiceUrl,
+//   headers: {
+//     'Content-Type': 'application/json',
+//     'X-CSRF-TOKEN': getCsrfToken(), // Add CSRF token to headers
+//   },
+// });
+
+export const api = axios.create({
+  baseURL: iamServiceUrl,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
 
 interface RegisterUserParams {
   address: string;
@@ -315,8 +347,9 @@ export const unselectAchievement = async (achievementId: string, userId: string)
 };
 
 
-export const createCampaign = async (campaignData: any) => {
+export const createCampaign = async (campaignData: Campaign) => {
   try {
+    console.log(campaignData);
     const response = await api.post('/qr-campaigns/create', campaignData);
     return response.data;
   } catch (error) {

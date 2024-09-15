@@ -36,8 +36,7 @@ export class RewardDto {
   tokens: number;
 
   @IsString({ each: true })
-  @ArrayNotEmpty()
-  @ArrayMinSize(1)
+  @ArrayMinSize(0)
   products: string[];
 }
 
@@ -53,17 +52,14 @@ export class CampaignInsertDto {
   name: string;
 
   @IsString()
-  @IsNotEmpty()
   @Sanitize(htmlSanitizer) // Sanitizes HTML input
   description: string;
 
   @IsString()
-  @IsNotEmpty()
   @IsUrl()
   videoUrl: string;
 
   @IsString()
-  @IsNotEmpty()
   @IsUrl()
   imageUrl: string;
 
@@ -72,13 +68,11 @@ export class CampaignInsertDto {
   expirationDate: Date;
 
   @IsNumber()
-  @IsNotEmpty()
   target: number;
 
   @IsObject()
   @ValidateNested()
   @Type(() => RewardDto)
-  @IsNotEmpty()
   reward: RewardDto;
 
   @IsString()

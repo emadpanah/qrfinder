@@ -113,9 +113,7 @@ const CampaignDetails: React.FC<CampaignDetailsProps> = ({ campaignId, onAchieve
   return (
     <div className={`container mx-auto p-6 ${styles.campaignDetailsContainer}`}>
       <>
-        <button onClick={onBack} className="text-white focus:outline-none">
-          <FaArrowLeft />
-        </button>
+        
         <h1 className="text-3xl font-bold mb-4 text-center">{campaign.name}</h1>
         <p className="mb-4 text-center">
           {line1}<br />{line2}

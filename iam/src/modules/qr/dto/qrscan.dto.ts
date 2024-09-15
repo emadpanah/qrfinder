@@ -1,5 +1,21 @@
-import { IsString, IsNotEmpty, IsNumberString, IsNumber, IsDateString } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsNumberString,
+  IsNumber,
+  IsDateString,
+} from 'class-validator';
 import { Types } from 'mongoose';
+import { Sanitize } from 'class-sanitizer';
+import sanitizeHtml from 'sanitize-html';
+
+// Custom HTML sanitizer function
+function htmlSanitizer(value: string): string {
+  return sanitizeHtml(value, {
+    allowedTags: [], // No HTML tags allowed
+    allowedAttributes: {}, // No attributes allowed
+  });
+}
 
 export class QrScanDto {
   @IsString()
@@ -21,12 +37,11 @@ export class QrScanDto {
   @IsNumber()
   @IsNotEmpty()
   lon: number;
-  
+
   @IsDateString()
   @IsNotEmpty()
-  addedDate: Date;  
+  addedDate: Date;
 }
-
 
 export class QrScanFullDto {
   @IsString()
@@ -51,14 +66,14 @@ export class QrScanFullDto {
 
   @IsString()
   @IsNotEmpty()
+  @Sanitize(htmlSanitizer) // Sanitize the link field
   link: string;
 
   @IsNumber()
   @IsNotEmpty()
   order: number;
-  
+
   @IsDateString()
   @IsNotEmpty()
-  addedDate: Date;  
-
+  addedDate: Date;
 }
