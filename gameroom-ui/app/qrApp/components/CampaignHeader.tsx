@@ -17,8 +17,8 @@ const CampaignHeader: React.FC<CampaignHeaderProps> = ({ onBack }) => {
         </button>
         <div className="flex-1 items-center gap-2">
           {/* Display account information */}
-          <span className='pr-8'>Ton Balance : {accountData.balance ?? "N/A"}<span className='text-xs'> t</span></span>
-          <span>Gain Balance : {accountData.gbalance ?? "N/A"}<span className='text-xs'> g</span></span>
+          {/* <span className='pr-8'>Ton Balance : {accountData.balance ?? "N/A"}<span className='text-xs'> t</span></span>
+          <span>Gain Balance : {accountData.gbalance ?? "N/A"}<span className='text-xs'> g</span></span> */}
         </div>
       </div>
     </div>

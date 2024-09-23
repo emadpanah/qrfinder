@@ -8,7 +8,7 @@ export interface Campaign {
   description: string;
   imageUrl?: string;
   videoUrl?: string;
-  expirationDate?: Date;
+  expirationDate?: number;
   target?: number,
   reward: {
     tokens: number;
@@ -28,10 +28,10 @@ export interface Achievement {
     products: string[];
   };
   qrTarget: number;
-  expirationDate: Date;
-  startDate: Date;
+  expirationDate: number;
+  startDate: number;
   enable: boolean;
-  addedDate: Date;
+  addedDate: number;
   qrOrderType: 'ordered' | 'unordered';
   achievementType: 'qrcode' | 'taptoken' | 'bet' | 'dailyvisit' | 'vote' | 'inviteuser';
 }
@@ -65,18 +65,18 @@ export interface AchievementSelectedFull {
     tokens: number;
     products: string[];
   };
-  expirationDate: Date;
+  expirationDate: number;
   userId: string;
   inviteLink: string;
   parentId: string; 
-  addedDate: Date;  
+  addedDate: number;  
   description: string;
   qrOrderType: string;
   achievementType: string;
   qrProofByLocation: boolean;
   campaignId: string;
   qrTarget: number;
-  startDate:Date;
+  startDate: number;
 }
 
 export interface Balance {
@@ -85,7 +85,7 @@ export interface Balance {
   amount: number;
   currency: string;
   transactionEntityId: string;
-  timestamp: Date;
+  timestamp: number;
   balanceAfterTransaction: number;
   _id: string;
 }
@@ -130,6 +130,91 @@ export interface AchievementSelectedRef {
   userId: Types.ObjectId;
   inviteLink: string;
   parentId: Types.ObjectId; 
-  addedDate: Date;  
+  addedDate: number;  
   
   }
+
+  export interface CartItem {
+    langId: string;
+    productId: string;
+    cartItemId?: string;
+    multiValuesId: string[];
+    superValuesId?: string[];
+    count: number;
+  }
+
+  export interface CustomerSyncModel {
+    userId: string;
+    password: string;
+    birthDate: string;
+    gender: string;
+    email: string;
+    name: string;
+    familyName: string;
+    phoneNumber: string;
+  }
+
+  export interface CheckoutDto {
+    addressId: string;
+    deliveryPathId: string;
+    couponCode?: string;
+    deliveryDate: string;
+    deliveryTimeRange: string;
+    langId: string;
+    paymentId: string;
+    useCredit: boolean;
+    isMerge: boolean;
+    description?: string;
+    stateId: string;
+    daystart: number;
+    refrence: string;
+    userId: string;
+  }
+  
+  export interface ProductBase {
+    Id: string;
+    MaxCountInCart: number;
+    Sort: number;
+    ReleaseDaysCount: number;
+    HourOfRelease: number;
+    MinuteOfRelease: number;
+    JustInCart: boolean;
+    Title: string;
+    RoleTitle?: string;
+    EnTitle?: string;
+    Slogan: string;
+    InternationalCodeValue: string;
+    Description: string;
+    EnDescription?: string;
+    AdditionalDescription: string;
+    AdditionalValue: string;
+    TitleParameter?: string;
+    ImagesIds: string;
+    Quantity: number;
+    IsLastQuantity: boolean;
+    UserName: string;
+  }
+  
+  export interface Product {
+    Base: ProductBase;
+    CurrentValues?: string[];
+    CurrentSuperValues?: string[] | null;
+    ValuePriceStorages?: string[] | null;
+    IsAvailable: boolean;
+    Catalogs?: string[] | null;
+    CatalogsString?: string;
+    Tags?: string[] | null;
+    TagsString?: string;
+    SpecsAndValue?: string[] | null;
+    SuperSpecsAndSelectedValues?: string[] | null;
+    MVSpecsAndSelectedValues?: string[] | null;
+    MVSpecsAndSelectedValuesStorage?: string[] | null;
+    ProductSCMVCTemp?: string[] | null;
+    Language?: string | null;
+    LargeImage?: string | null;
+    MediumImage?: string | null;
+    SmallImage?: string | null;
+  }
+  
+  
+  

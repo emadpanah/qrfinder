@@ -16,13 +16,13 @@ export class AchievementSelected {
   inviteLink: string;
 
   @Prop({ type: Types.ObjectId, ref: 'IAMUser', default: null })
-  parentId: Types.ObjectId;  // This field will store the parent user who referred this achievement
+  parentId: Types.ObjectId;  
 
-  @Prop({ type: Date, default: Date.now })
-  addedDate: Date;  // This field will store the date when the achievement was added
+  @Prop({ type: Number, default: Date.now })
+  addedDate: Number;  
 
-  @Prop({ type: Date, default: Date.now })
-  doneDate: Date;
+  @Prop({ type: Number, default: Date.now })
+  doneDate: Number;
 }
 
 const AchievementSelectedSchema = SchemaFactory.createForClass(AchievementSelected);

@@ -95,7 +95,7 @@ await currencyService.createCurrency(ethereumCurrency);
     name: 'JUSKI City Hunt',
     description: 'Join our Achievements and help us to achieve our goals and get token back',
     shopId: createdJuskiShop._id,
-    expirationDate: new Date(new Date().setMonth(new Date().getMonth() + 2)),
+    expirationDate: new Date(new Date().setMonth(new Date().getMonth() + 2)).getTime(),
     videoUrl: `${baseUrl}/shared/qr/video/juski-campaign.mp4`, // Example video URL
     imageUrl: `${baseUrl}/shared/qr/img/juski-campaign.jpg`, // Example image URL
     ownerTelegramId: null, // Set to null
@@ -108,7 +108,7 @@ await currencyService.createCurrency(ethereumCurrency);
     name: 'Maghazi City Hunt',
     description: 'Join our Achievements and help us to our goals and get token back',
     shopId: createdMaghaziShop._id,
-    expirationDate: new Date(new Date().setMonth(new Date().getMonth() + 2)),
+    expirationDate: new Date(new Date().setMonth(new Date().getMonth() + 2)).getTime(),
     videoUrl: `${baseUrl}/shared/qr/video/maghazi-campaign.mp4`, // Example video URL
     imageUrl: `${baseUrl}/shared/qr/img/maghazi-campaign.jpg`, // Example image URL
     ownerTelegramId: null, // Set to null
@@ -121,7 +121,7 @@ await currencyService.createCurrency(ethereumCurrency);
     name: 'Cayman Token ICO Hunt',
     description: 'Join Cayman challenges and get tokens',
     shopId: createdCaymanShop._id,
-    expirationDate: new Date(new Date().setMonth(new Date().getMonth() + 1)),
+    expirationDate: new Date(new Date().setMonth(new Date().getMonth() + 1)).getTime(),
     videoUrl: `${baseUrl}/shared/qr/video/cayman-campaign.mp4`, // Example video URL
     imageUrl: `${baseUrl}/shared/qr/img/cayman-campaign.jpg`, // Example image URL
     ownerTelegramId: null, // Set to null
@@ -134,7 +134,7 @@ await currencyService.createCurrency(ethereumCurrency);
     name: '4cash Exchange Engage Hunt',
     description: 'join us to make 4cash goals and earn tokens',
     shopId: createdFourcashShop._id,
-    expirationDate: new Date(new Date().setMonth(new Date().getMonth() + 1)),
+    expirationDate: new Date(new Date().setMonth(new Date().getMonth() + 1)).getTime(),
     videoUrl: `${baseUrl}/shared/qr/video/fourcash-campaign.mp4`, // Example video URL
     imageUrl: `${baseUrl}/shared/qr/img/fourcash-campaign.jpg`, // Example image URL
     ownerTelegramId: null, // Set to null
@@ -160,10 +160,10 @@ await currencyService.createCurrency(ethereumCurrency);
     qrProofByLocation: false,
     achievementType: 'inviteuser',
     enable: true,
-    addedDate: addedDatee,
-    startDate: startDatee,
+    addedDate: addedDatee.getTime(),
+    startDate: startDatee.getTime(),
     reward: { tokens: 300, products: [] },
-    expirationDate: new Date(new Date().setMonth(new Date().getMonth() + 2)),
+    expirationDate: new Date(new Date().setMonth(new Date().getMonth() + 2)).getTime(),
   };
 
   // Create Achievements
@@ -179,9 +179,9 @@ await currencyService.createCurrency(ethereumCurrency);
     qrProofByLocation: false,
     reward: { tokens: 1500, products: [] },
     enable: true,
-    addedDate: addedDate,
-    startDate: startDate,
-    expirationDate: new Date(new Date().setMonth(new Date().getMonth() + 1)),
+    addedDate: addedDate.getTime(),
+    startDate: startDate.getTime(),
+    expirationDate: new Date(new Date().setMonth(new Date().getMonth() + 1)).getTime(),
   };
 
   
@@ -195,9 +195,9 @@ await currencyService.createCurrency(ethereumCurrency);
     achievementType: 'inviteuser',
     reward: { tokens: 300, products: [] },
     enable: true,
-    addedDate: addedDatee,
-    startDate: startDatee,
-    expirationDate: new Date(new Date().setMonth(new Date().getMonth() + 4)),
+    addedDate: addedDatee.getTime(),
+    startDate: startDatee.getTime(),
+    expirationDate: new Date(new Date().setMonth(new Date().getMonth() + 4)).getTime(),
   };
 
   const juskiInviteAchievement: AchievementInsertDto = {
@@ -210,9 +210,9 @@ await currencyService.createCurrency(ethereumCurrency);
     achievementType: 'inviteuser',
     reward: { tokens: 1320, products: [] },
     enable: true,
-    addedDate: addedDatee,
-    startDate: startDatee,
-    expirationDate: new Date(new Date().setMonth(new Date().getMonth() + 4)),
+    addedDate: addedDatee.getTime(),
+    startDate: startDatee.getTime(),
+    expirationDate: new Date(new Date().setMonth(new Date().getMonth() + 4)).getTime(),
   };
 
   const juskiAchievementUnordered: AchievementInsertDto = {
@@ -225,9 +225,9 @@ await currencyService.createCurrency(ethereumCurrency);
     achievementType: 'qrcode',
     reward: { tokens: 3200, products: [] },
     enable: true,
-    addedDate: addedDate,
-    startDate: startDate,
-    expirationDate: new Date(new Date().setMonth(new Date().getMonth() + 2)),
+    addedDate: addedDate.getTime(),
+    startDate: startDate.getTime(),
+    expirationDate: new Date(new Date().setMonth(new Date().getMonth() + 2)).getTime(),
   };
 
   const caymanAchievementUnordered: AchievementInsertDto = {
@@ -240,9 +240,9 @@ await currencyService.createCurrency(ethereumCurrency);
     achievementType: 'qrcode',
     reward: { tokens: 2000, products: [] },
     enable: true,
-    addedDate: addedDate,
-    startDate: startDate,
-    expirationDate: new Date(new Date().setMonth(new Date().getMonth() + 2)),
+    addedDate: addedDate.getTime(),
+    startDate: startDate.getTime(),
+    expirationDate: new Date(new Date().setMonth(new Date().getMonth() + 2)).getTime(),
   };
 
   const caymanAchievementOrdered: AchievementInsertDto = {
@@ -255,9 +255,9 @@ await currencyService.createCurrency(ethereumCurrency);
     achievementType: 'qrcode',
     reward: { tokens: 2000, products: [] },
     enable: true,
-    addedDate: addedDate,
-    startDate: startDate,
-    expirationDate: new Date(new Date().setMonth(new Date().getMonth() + 1)),
+    addedDate: addedDate.getTime(),
+    startDate: startDate.getTime(),
+    expirationDate: new Date(new Date().setMonth(new Date().getMonth() + 1)).getTime(),
   };
 
   

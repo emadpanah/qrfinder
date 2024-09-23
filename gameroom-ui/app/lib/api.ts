@@ -2,6 +2,8 @@ import axios from 'axios';
 import { PiCompassToolDuotone } from 'react-icons/pi';
 import { QRCode, AchievementSelectedFull, Balance, Campaign } from './definitions';
 
+import { CartItem, CustomerSyncModel, CheckoutDto  } from './definitions';
+
 const iamServiceUrl = process.env.NEXT_PUBLIC_IAM_SERVICE_URL;
 const APP_SECRET = process.env.NEXT_PUBLIC_APP_SECRET || 'default_app_secret';
 
@@ -376,5 +378,92 @@ export const fetchTonBalance = async (address: string, network: 'mainnet' | 'tes
   } catch (error) {
     console.error(`Error fetching ${network} balance:`, error);
     return '0';
+  }
+};
+
+
+
+const shopServiceUrl = process.env.NEXT_PUBLIC_SHOP_SERVICE_URL;
+
+// Axios instance for shop APIs
+export const shopApi = axios.create({
+  baseURL: shopServiceUrl,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+export const addToCart = async (cartItem: CartItem, shopToken: string) => {
+  try {
+    const response = await shopApi.post('/shop/addToShoppingCart', cartItem, {
+      headers: { 'x-shop-token': shopToken },
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error adding to cart:', error);
+    throw error;
+  }
+};
+
+
+export const createCustomerSync = async (customerData: CustomerSyncModel, shopToken: string) => {
+  try {
+    const response = await shopApi.post('/shop/createCustomerSync', customerData, {
+      headers: { 'x-shop-token': shopToken },
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error creating customer sync:', error);
+    throw error;
+  }
+};
+
+
+export const checkout = async (checkoutDto: CheckoutDto, shopToken: string) => {
+  try {
+    const response = await shopApi.post('/shop/checkout', checkoutDto, {
+      headers: { 'x-shop-token': shopToken },
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error during checkout:', error);
+    throw error;
+  }
+};
+
+
+export const getAllProducts = async (
+  pageNumber: number,
+  specCategoryId: string,
+  langId: string,
+  shopToken: string,
+  options?: { 
+    pageSize?: number; 
+    catIds?: string; 
+    brandsIds?: string;
+    filter?: string;
+    tagIds?: string;
+    valIds?: string;
+    minPrice?: string;
+    maxPrice?: string;
+    justInWish?: boolean;
+    tagTitles?: string;
+    productType?: string;
+  }
+) => {
+  try {
+    const response = await api.get('/shop/getAllProducts', {
+      params: {
+        pageNumber,
+        specCategoryId,
+        langId,
+        ...options,
+      },
+      headers: { 'x-shop-token': shopToken },
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching products:', error);
+    throw error;
   }
 };

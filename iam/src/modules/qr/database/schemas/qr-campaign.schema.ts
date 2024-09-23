@@ -23,8 +23,8 @@ export class Campaign {
   
   imageUrl: string;
 
-  @Prop({ required: true })
-  expirationDate: Date;
+  @Prop({ type: Number, default: Date.now }) 
+  expirationDate: Number;
 
   @Prop({ required: true })
   ownerTelegramId: string;

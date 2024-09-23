@@ -3,11 +3,11 @@ import { Types } from 'mongoose';
 import { Sanitize } from 'class-sanitizer';
 import sanitizeHtml from 'sanitize-html';
 
-// Custom HTML sanitizer
+
 function htmlSanitizer(value: string): string {
   return sanitizeHtml(value, {
-    allowedTags: [], // No HTML tags allowed
-    allowedAttributes: {}, // No attributes allowed
+    allowedTags: [], 
+    allowedAttributes: {}, 
   });
 }
 
@@ -53,21 +53,21 @@ export class AchievementDto {
     products: string[];
   };
 
-  @IsDate()
+  @IsNumber()
   @IsNotEmpty()
-  expirationDate: Date;
+  expirationDate: number;
 
-  @IsDate()
+  @IsNumber()
   @IsNotEmpty()
-  startDate: Date;
+  startDate: number;
 
   @IsBoolean()
   @IsNotEmpty()
   enable: boolean;
 
-  @IsDate()
+  @IsNumber()
   @IsNotEmpty()
-  addedDate: Date;
+  addedDate: number;
 }
 
 export class AchievementInsertDto {
@@ -109,19 +109,19 @@ export class AchievementInsertDto {
     products: string[];
   };
 
-  @IsDate()
+  @IsNumber()
   @IsNotEmpty()
-  expirationDate: Date;
+  expirationDate: number;
   
-  @IsDate()
+  @IsNumber()
   @IsNotEmpty()
-  startDate: Date;
+  startDate: number;
 
   @IsBoolean()
   @IsNotEmpty()
   enable: boolean;
 
-  @IsDate()
+  @IsNumber()
   @IsNotEmpty()
-  addedDate: Date;
+  addedDate: number;
 }

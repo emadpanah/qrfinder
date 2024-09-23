@@ -72,7 +72,7 @@ export class AchievementController {
         userId: new Types.ObjectId(body.userId),
         parentId: new Types.ObjectId(body.parentId),
         inviteLink:"",
-        addedDate: new Date()  // Add the addedDate here
+        addedDate: new Date().getTime() // Add the addedDate here
       };
 
       const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
@@ -178,7 +178,7 @@ export class AchievementController {
         userId: new Types.ObjectId(userId),
         parentId: new Types.ObjectId(parentId), // Add parentId
         inviteLink:'',
-        addedDate: new Date()  // Add the addedDate here
+        addedDate: new Date().getTime() // Add the addedDate here
       });
 
       const baseUrl = process.env.BASE_URL || 'http://localhost:3000';

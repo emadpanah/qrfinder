@@ -33,17 +33,17 @@ export class Achievement {
     products: string[];
   };
 
-  @Prop({ required: true })
-  expirationDate: Date;
+  @Prop({ type: Number, default: Date.now, required: true })
+  expirationDate: Number;
 
-  @Prop({ required: true })
-  startDate: Date;
+  @Prop({ type: Number, default: Date.now }) 
+  startDate: Number;
 
   @Prop({ type: Boolean, required: true })
   enable: boolean;
 
-  @Prop({ required: true })
-  addedDate: Date;
+  @Prop({ type: Number, default: Date.now }) 
+  addedDate: Number;
 
 }
 

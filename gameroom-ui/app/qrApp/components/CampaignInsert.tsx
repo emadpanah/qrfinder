@@ -60,7 +60,7 @@ const CampaignInsert: React.FC<CampaignInsertProps> = ({ onInsertSuccess }) => {
         description: description || 'tyt',
         videoUrl: videoUrl || 'https://example.com/video',
         imageUrl: imageUrl || 'https://example.com/image',
-        expirationDate: new Date(expirationDate),//"2026-08-26T00:00:00.000Z"),
+        expirationDate: new Date(expirationDate).getTime(),//"2026-08-26T00:00:00.000Z"),
         target: target,
         reward: { tokens: tokens, products: [] },
         ownerTelegramId: userId ? userId: telegramID,

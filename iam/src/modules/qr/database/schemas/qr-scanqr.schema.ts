@@ -18,8 +18,8 @@ export class QRScanQr {
   @Prop({ type: Types.ObjectId, ref: 'IAMUser', required: true })
   userId: Types.ObjectId;
 
-  @Prop({ type: Date, default: Date.now })
-  addedDate: Date;
+  @Prop({ type: Number, default: Date.now })
+  addedDate: Number;
 
 }
 

@@ -3,17 +3,17 @@ import {
   IsNotEmpty,
   IsNumberString,
   IsNumber,
-  IsDateString,
+  IsDate,
 } from 'class-validator';
 import { Types } from 'mongoose';
 import { Sanitize } from 'class-sanitizer';
 import sanitizeHtml from 'sanitize-html';
 
-// Custom HTML sanitizer function
+
 function htmlSanitizer(value: string): string {
   return sanitizeHtml(value, {
-    allowedTags: [], // No HTML tags allowed
-    allowedAttributes: {}, // No attributes allowed
+    allowedTags: [], 
+    allowedAttributes: {}, 
   });
 }
 
@@ -38,7 +38,7 @@ export class QrScanDto {
   @IsNotEmpty()
   lon: number;
 
-  @IsDateString()
+  @IsNumber()
   @IsNotEmpty()
   addedDate: Date;
 }
@@ -66,14 +66,14 @@ export class QrScanFullDto {
 
   @IsString()
   @IsNotEmpty()
-  @Sanitize(htmlSanitizer) // Sanitize the link field
+  @Sanitize(htmlSanitizer) 
   link: string;
 
   @IsNumber()
   @IsNotEmpty()
   order: number;
 
-  @IsDateString()
+  @IsNumber()
   @IsNotEmpty()
   addedDate: Date;
 }

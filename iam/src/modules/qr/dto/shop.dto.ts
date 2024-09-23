@@ -3,11 +3,11 @@ import { Types } from 'mongoose';
 import { Sanitize } from 'class-sanitizer';
 import sanitizeHtml from 'sanitize-html';
 
-// Custom HTML sanitizer function
+
 function htmlSanitizer(value: string): string {
   return sanitizeHtml(value, {
-    allowedTags: [], // No HTML tags allowed
-    allowedAttributes: {}, // No attributes allowed
+    allowedTags: [], 
+    allowedAttributes: {}, 
   });
 }
 
@@ -22,12 +22,12 @@ export class ShopDto {
 
   @IsString()
   @IsNotEmpty()
-  @Sanitize(htmlSanitizer) // Sanitize the name field
+  @Sanitize(htmlSanitizer)
   name: string;
 
   @IsString()
   @IsNotEmpty()
-  @Sanitize(htmlSanitizer) // Sanitize the description field
+  @Sanitize(htmlSanitizer) 
   description: string;
 }
 
@@ -38,11 +38,11 @@ export class ShopInsertDto {
 
   @IsString()
   @IsNotEmpty()
-  @Sanitize(htmlSanitizer) // Sanitize the name field
+  @Sanitize(htmlSanitizer) 
   name: string;
 
   @IsString()
   @IsNotEmpty()
-  @Sanitize(htmlSanitizer) // Sanitize the description field
+  @Sanitize(htmlSanitizer) 
   description: string;
 }

@@ -22,7 +22,7 @@ export class QRCode {
   order: number;
 
   @Prop({ required: true })
-  allowedRange: number; // Added allowedRange property
+  allowedRange: number; 
 }
 
 export const QRCodeSchema = SchemaFactory.createForClass(QRCode);

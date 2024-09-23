@@ -16,13 +16,13 @@ const MyAchievements: React.FC<MyAchievementsProps> = ({ onAchievementClick }) =
   const { userId } = useUser();
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  const calculateRemainingDays = (expirationDate: Date) => {
-    const today = new Date();
-    const expiration = new Date(expirationDate);
-    const diffTime = Math.abs(expiration.getTime() - today.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  const calculateRemainingDays = (expirationTimestamp: number) => {
+    const todayTimestamp = Date.now(); // Current time in milliseconds (timestamp)
+    const diffTime = Math.abs(expirationTimestamp - todayTimestamp); // Difference in milliseconds
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); // Convert milliseconds to days
     return diffDays;
   };
+  
 
   const fetchAchievements = useCallback(async () => {
     try {

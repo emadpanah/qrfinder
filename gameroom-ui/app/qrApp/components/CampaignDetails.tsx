@@ -15,13 +15,13 @@ interface CampaignDetailsProps {
   onBack: () => void;
 }
 
-const calculateRemainingDays = (expirationDate: Date) => {
-  const today = new Date();
-  const expiration = new Date(expirationDate);
-  const diffTime = Math.abs(expiration.getTime() - today.getTime());
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+const calculateRemainingDays = (expirationTimestamp: number) => {
+  const todayTimestamp = Date.now(); // Current timestamp in milliseconds
+  const diffTime = Math.abs(expirationTimestamp - todayTimestamp); // Difference in milliseconds
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); // Convert milliseconds to days
   return diffDays;
 };
+
 
 const CampaignDetails: React.FC<CampaignDetailsProps> = ({ campaignId, onAchievementClick, onBack }) => {
   const [campaign, setCampaign] = useState<Campaign | null>(null);
