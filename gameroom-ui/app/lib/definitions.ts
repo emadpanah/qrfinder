@@ -214,7 +214,10 @@ export interface AchievementSelectedRef {
     LargeImage?: string | null;
     MediumImage?: string | null;
     SmallImage?: string | null;
-  }
   
+    // Add the Price and MonthlyPrice properties here:
+    Price?: string;
+    MonthlyPrice?: string;
+  }
   
   

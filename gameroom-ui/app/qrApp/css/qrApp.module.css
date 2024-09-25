@@ -463,3 +463,66 @@
   font-size: 4rem;
   animation: blink 1s infinite; /* Add blink effect */
 }
+
+
+.productListWrapper {
+  position: relative;
+  padding-bottom: 100px; /* To make room for fixed buttons */
+}
+
+.productListContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+  overflow-y: auto;
+  max-height: 80vh;
+}
+
+.productCard {
+  background-color: #1e293b;
+  padding: 16px;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.productImage {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+}
+
+.productDetails {
+  margin-left: 12px;
+}
+
+.productTitle, .productSlogan, .productDescription, .productPrice {
+  color: #fff;
+  margin: 4px 0;
+}
+
+.actionButton {
+  background-color: #22c55e;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 4px;
+}
+
+.actionButtonSecondary {
+  background-color: #2563eb;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 4px;
+}
+
+.goToCartButton, .earnMoneyButton {
+  background-color: #22c55e;
+  color: white;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+
+

@@ -100,6 +100,7 @@ const QRAppPageContent: React.FC = () => {
   // }, [searchParams, accountData.address, userId]);
 
   useEffect(() => {
+    console.log("page.tsx-useEffect");
     const achievementId = searchParams.get('a');
     const type = searchParams.get('t');
     const parentId = searchParams.get('p');
@@ -111,7 +112,12 @@ const QRAppPageContent: React.FC = () => {
     const hasValidparaInvi = !!achievementId && isAchieventInviteType;
 
     const isShopCodeType = type === 's';  // New shop type
-    const hasValidParamsShop = !!achievementId && isShopCodeType;
+    const hasValidParamsShopRef = achievementId && isShopCodeType && parentId;
+
+    
+    const hasValidParamsShop = !achievementId && !isShopCodeType && !parentId;
+    console.log("page.tsx-hasValidParamsShop - ", hasValidParamsQr);
+
 
     // Handle QR code achievement
     if (hasValidParamsQr) {
@@ -144,54 +150,82 @@ const QRAppPageContent: React.FC = () => {
     if (hasValidParamsShop) {
       if (accountData.address && userId) {
         console.log("Loading fake products for shop section");
-        const fakeProducts: Product[] = [
+        const fakeProducts = [
           {
             Base: {
-              Id: '1',
+              Id: 'e91da164-6d86-43bb-bdbf-f670b9ca86b5',
               MaxCountInCart: 10,
               Sort: 1,
               ReleaseDaysCount: 0,
               HourOfRelease: 0,
               MinuteOfRelease: 0,
               JustInCart: false,
-              Title: 'Sample Product 1',
-              Slogan: 'The best product',
-              Description: 'This is a sample product',
-              InternationalCodeValue: 'ABC123',
-              AdditionalDescription: 'Additional description for product 1',
-              AdditionalValue: 'Additional value 1',
-              ImagesIds: 'image1,image2',
-              Quantity: 5,
+              Title: 'ربات ترید SCALP BOT',
+              Slogan: 'سالیانه',
+              Description: 'This is a description for SCALP BOT Trading Robot.',
+              InternationalCodeValue: 'SCP12345',
+              AdditionalDescription: 'Additional features and details of SCALP BOT.',
+              AdditionalValue: 'Advanced AI-based trading',
+              ImagesIds: 'SCP_Image_ca0cb9dc-ff8a-401f-955d-72c536a9f765',
+              Quantity: 1,
               IsLastQuantity: false,
               UserName: 'admin',
             },
             IsAvailable: true,
-            SmallImage: 'https://via.placeholder.com/150',
+            SmallImage: '/Public/b2fcffb7-4e06-4fa0-b2e2-c1a35a1750bf/image/items/SCP_Image_ca0cb9dc-ff8a-401f-955d-72c536a9f765_.jpeg',
+            Price: '25,797,000 تومان (سالیانه)',
+            MonthlyPrice: '2,199,000 تومان (ماهانه)',
           },
           {
             Base: {
-              Id: '2',
+              Id: '7a79c32b-2a0f-42ec-9ce4-cc9cdfee6292',
               MaxCountInCart: 20,
               Sort: 2,
-              ReleaseDaysCount: 1,
-              HourOfRelease: 10,
-              MinuteOfRelease: 30,
+              ReleaseDaysCount: 0,
+              HourOfRelease: 0,
+              MinuteOfRelease: 0,
               JustInCart: false,
-              Title: 'Sample Product 2',
-              Slogan: 'Another great product',
-              Description: 'Another sample product',
-              InternationalCodeValue: 'DEF456',
-              AdditionalDescription: 'Additional description for product 2',
-              AdditionalValue: 'Additional value 2',
-              ImagesIds: 'image3,image4',
-              Quantity: 10,
+              Title: 'دوره مبتدی ترید با ربات ترید هوش مصنوعی',
+              Slogan: '',
+              Description: 'Beginner trading course with AI trading robot.',
+              InternationalCodeValue: 'TRADE001',
+              AdditionalDescription: 'Course details for beginner traders using AI robots.',
+              AdditionalValue: 'Complete package for beginners',
+              ImagesIds: 'SCP_Image_69ab9f7d-5f6a-4b6a-9cf9-690cf8173873',
+              Quantity: 1,
               IsLastQuantity: false,
               UserName: 'admin',
             },
             IsAvailable: true,
-            SmallImage: 'https://via.placeholder.com/150',
+            SmallImage: '/Public/b2fcffb7-4e06-4fa0-b2e2-c1a35a1750bf/image/items/SCP_Image_69ab9f7d-5f6a-4b6a-9cf9-690cf8173873_.jpeg',
+            Price: '1,890,000 تومان',
           },
-        ];
+          {
+            Base: {
+              Id: 'b9554aa6-8065-46c8-93f4-a232b10c8c54',
+              MaxCountInCart: 15,
+              Sort: 3,
+              ReleaseDaysCount: 0,
+              HourOfRelease: 0,
+              MinuteOfRelease: 0,
+              JustInCart: false,
+              Title: 'ربات تریدر تلگرامی پرادو',
+              Slogan: 'سالیانه',
+              Description: 'Telegram Prado trading bot with various subscription options.',
+              InternationalCodeValue: 'PRADO001',
+              AdditionalDescription: 'Advanced Telegram trading with Prado.',
+              AdditionalValue: 'Multiple subscription packages available',
+              ImagesIds: 'SCP_Image_a09fe10a-29c5-424d-8a22-ac402a3b0f4b',
+              Quantity: 1,
+              IsLastQuantity: false,
+              UserName: 'admin',
+            },
+            IsAvailable: true,
+            SmallImage: '/Public/b2fcffb7-4e06-4fa0-b2e2-c1a35a1750bf/image/items/SCP_Image_a09fe10a-29c5-424d-8a22-ac402a3b0f4b_.jpeg',
+            Price: '39,000,000 تومان (سالیانه)',
+            MonthlyPrice: '3,990,000 تومان (ماهانه)',
+          },
+        ];        
         setProducts(fakeProducts); // Set fake products
         setActiveSection(ActiveSection.Shop); // Switch to shop section
       }
@@ -270,6 +304,18 @@ const QRAppPageContent: React.FC = () => {
     setActiveSection(ActiveSection.Basket); // Navigate to basket
   };
 
+  const handleAddToCart = (product: Product) => {
+    // Logic for adding the product to the cart
+    setBasket([...basket, product]);
+    alert(`${product.Base.Title} added to cart`);
+  };
+  
+  // Add the handler for onEarnMoney
+  const handleEarnMoney = (product: Product) => {
+    // Logic for earning money from the product
+    alert(`Earn money from ${product.Base.Title}`);
+  };
+
   const renderActiveSection = () => {
     console.log(`Rendering section: ${activeSection}`);
     switch (activeSection) {
@@ -308,7 +354,7 @@ const QRAppPageContent: React.FC = () => {
       case ActiveSection.CampaignDetails:
         return selectedCampaign?._id ? <CampaignDetails campaignId={selectedCampaign._id} onAchievementClick={handleAchievementClick} onBack={handleBackButtonClick} /> : null;
         case ActiveSection.Shop:
-          return <ProductList products={products} onViewDetails={handleViewProductDetails} onNavigateToBasket={handleNavigateToBasket}/>;
+          return <ProductList  onEarnMoney={handleEarnMoney} products={products} onAddToCart={handleAddToBasket}  onNavigateToBasket={handleNavigateToBasket}/>;
           case ActiveSection.ProductDetails:
             return selectedProduct ? <ProductDetails product={selectedProduct}  onBack={() => setActiveSection(ActiveSection.Shop)} onAddToBasket={handleAddToBasket} onNavigateToBasket={handleNavigateToBasket} /> : null;
           case ActiveSection.Basket:

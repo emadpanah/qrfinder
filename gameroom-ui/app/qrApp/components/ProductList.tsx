@@ -1,37 +1,70 @@
-// app/qrApp/components/ProductList.tsx
 import React from 'react';
 import { Product } from '@/app/lib/definitions';
+import styles from '../css/qrApp.module.css';
 
 interface ProductListProps {
   products: Product[];
-  onViewDetails: (product: Product) => void;
+  onAddToCart: (product: Product) => void;
+  onEarnMoney: (product: Product) => void;
   onNavigateToBasket: () => void;
 }
 
-const ProductList: React.FC<ProductListProps> = ({ products, onViewDetails, onNavigateToBasket }) => {
+const ProductList: React.FC<ProductListProps> = ({ products, onAddToCart, onEarnMoney, onNavigateToBasket }) => {
   return (
-    <div className="product-list">
-        <button onClick={onNavigateToBasket} className="shopping-cart-btn">Go to Cart</button>
-      {products.length > 0 ? (
-        products.map((product) => (
-          <div key={product.Base.Id} className="product-item">
-            <img
-              src={product.SmallImage || 'https://via.placeholder.com/150'}
-              alt={product.Base.Title}
-              className="product-image"
-            />
-            <div className="product-details">
-              <h2 className="product-title">{product.Base.Title}</h2>
-              <p className="product-slogan">{product.Base.Slogan}</p>
-              <p className="product-description">{product.Base.Description}</p>
-              <p className="product-quantity">Quantity: {product.Base.Quantity}</p>
-              <button onClick={() => onViewDetails(product)}>View Details</button>
+    <div className={`${styles.productListWrapper}`}>
+      <div className="fixed bottom-0 w-full flex justify-center gap-4 p-4 bg-white">
+        <button onClick={onNavigateToBasket} className={`${styles.goToCartButton}`}>
+          Go to Cart
+        </button>
+        <button className={`${styles.earnMoneyButton}`}>
+          Earn Money
+        </button>
+      </div>
+      <div className={`${styles.productListContainer}`}>
+        {products.length > 0 ? (
+          products.map((product) => (
+            <div key={product.Base.Id} className={`${styles.productCard}`}>
+              <img
+                src={product.SmallImage || 'https://via.placeholder.com/150'}
+                alt={product.Base.Title}
+                className={`${styles.productImage}`}
+              />
+              <div className={`${styles.productDetails}`}>
+                <h2 className={`${styles.productTitle}`}>{product.Base.Title}</h2>
+                <p className={`${styles.productSlogan}`}>{product.Base.Slogan}</p>
+                <p className={`${styles.productDescription}`}>{product.Base.Description}</p>
+                <p className={`${styles.productPrice}`}>
+                  {product.Price}
+                  {product.MonthlyPrice && (
+                    <>
+                      <br />
+                      <span className={`${styles.monthlyPrice}`}>
+                        Monthly: {product.MonthlyPrice}
+                      </span>
+                    </>
+                  )}
+                </p>
+              </div>
+              <div className="flex gap-4 mt-2">
+                <button
+                  className={`${styles.actionButton}`}
+                  onClick={() => onAddToCart(product)}
+                >
+                  Add to Cart
+                </button>
+                <button
+                  className={`${styles.actionButtonSecondary}`}
+                  onClick={() => onEarnMoney(product)}
+                >
+                  Earn Money
+                </button>
+              </div>
             </div>
-          </div>
-        ))
-      ) : (
-        <p>No products available</p>
-      )}
+          ))
+        ) : (
+          <p className={`${styles.noProducts}`}>No products available</p>
+        )}
+      </div>
     </div>
   );
 };
