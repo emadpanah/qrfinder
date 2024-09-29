@@ -11,16 +11,9 @@ interface ProductListProps {
 
 const ProductList: React.FC<ProductListProps> = ({ products, onAddToCart, onEarnMoney, onNavigateToBasket }) => {
   return (
-    <div className={`${styles.productListWrapper}`}>
-      <div className="fixed bottom-0 w-full flex justify-center gap-4 p-4 bg-white">
-        <button onClick={onNavigateToBasket} className={`${styles.goToCartButton}`}>
-          Go to Cart
-        </button>
-        <button className={`${styles.earnMoneyButton}`}>
-          Earn Money
-        </button>
-      </div>
-      <div className={`${styles.productListContainer}`}>
+    <div className={`${styles.productListContainer}`}>
+      {/* Scrollable Product List */}
+      <div className={`${styles.productScrollContainer}`}>
         {products.length > 0 ? (
           products.map((product) => (
             <div key={product.Base.Id} className={`${styles.productCard}`}>
@@ -44,26 +37,37 @@ const ProductList: React.FC<ProductListProps> = ({ products, onAddToCart, onEarn
                     </>
                   )}
                 </p>
-              </div>
-              <div className="flex gap-4 mt-2">
-                <button
-                  className={`${styles.actionButton}`}
-                  onClick={() => onAddToCart(product)}
-                >
-                  Add to Cart
-                </button>
-                <button
-                  className={`${styles.actionButtonSecondary}`}
-                  onClick={() => onEarnMoney(product)}
-                >
-                  Earn Money
-                </button>
+                {/* Add More Button and Add to Cart */}
+                <div className={`${styles.buttonContainer}`}>
+                  <button
+                    className={`${styles.actionButton}`}
+                    onClick={() => onAddToCart(product)}
+                  >
+                    Add to Cart
+                  </button>
+                  <button
+                    className={`${styles.actionButtonSecondary}`}
+                    onClick={() => onEarnMoney(product)}
+                  >
+                    Earn Money
+                  </button>
+                </div>
               </div>
             </div>
           ))
         ) : (
           <p className={`${styles.noProducts}`}>No products available</p>
         )}
+      </div>
+
+      {/* Fixed Buttons at the bottom */}
+      <div className={`${styles.fixedBottomButtons}`}>
+        <button onClick={onNavigateToBasket} className={`${styles.cartButton}`}>
+          Go to Cart
+        </button>
+        <button onClick={() => alert("Earn money clicked")} className={`${styles.earnMoneyButton}`}>
+          Earn Money
+        </button>
       </div>
     </div>
   );

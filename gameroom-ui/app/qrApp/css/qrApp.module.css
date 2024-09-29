@@ -464,64 +464,80 @@
   animation: blink 1s infinite; /* Add blink effect */
 }
 
-
-.productListWrapper {
-  position: relative;
-  padding-bottom: 100px; /* To make room for fixed buttons */
-}
-
 .productListContainer {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 16px;
-  overflow-y: auto;
-  max-height: 80vh;
+  height: 100vh;
+}
+
+.productScrollContainer {
+  overflow-y: scroll;
+  flex: 1;
 }
 
 .productCard {
-  background-color: #1e293b;
+  background-color: #1b1b2f;
+  color: white;
+  border-radius: 10px;
   padding: 16px;
-  border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin: 10px;
+  text-align: center;
 }
 
 .productImage {
-  width: 100px;
-  height: 100px;
+  width: 100%;
+  height: 150px;
   object-fit: cover;
+  border-radius: 5px;
 }
 
 .productDetails {
-  margin-left: 12px;
+  margin-top: 10px;
 }
 
 .productTitle, .productSlogan, .productDescription, .productPrice {
-  color: #fff;
-  margin: 4px 0;
+  margin: 5px 0;
+}
+
+.buttonContainer {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+}
+
+.actionButton, .actionButtonSecondary {
+  padding: 8px 16px;
+  border-radius: 5px;
+  font-weight: bold;
+  cursor: pointer;
 }
 
 .actionButton {
-  background-color: #22c55e;
+  background-color: #28a745;
   color: white;
-  padding: 8px 16px;
-  border-radius: 4px;
 }
 
 .actionButtonSecondary {
-  background-color: #2563eb;
+  background-color: #007bff;
   color: white;
-  padding: 8px 16px;
-  border-radius: 4px;
 }
 
-.goToCartButton, .earnMoneyButton {
-  background-color: #22c55e;
+.fixedBottomButtons {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px;
+  background-color: white;
+  border-top: 1px solid #ddd;
+}
+
+.cartButton, .earnMoneyButton {
+  background-color: green;
   color: white;
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-size: 16px;
+  border: none;
+  padding: 10px;
   cursor: pointer;
+  flex: 1;
+  margin-right: 10px;
 }
 
 
