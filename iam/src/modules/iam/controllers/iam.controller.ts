@@ -1,10 +1,19 @@
 // iam/controllers/iam.controller.ts
-import { Controller, Post, Body, ValidationPipe, Get, Param, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  ValidationPipe,
+  Get,
+  Param,
+  UseGuards,
+} from '@nestjs/common';
 import { IamService } from '../services/iam.service';
-import { UserDto, UserInsertDto} from '../dto/user.dto'; // Import UserDto
-import { UserLogin } from '../database/schemas/user-login.schema'
+import { UserDto, UserInsertDto } from '../dto/user.dto'; // Import UserDto
+import { UserLogin } from '../database/schemas/user-login.schema';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard'; // Import the guard
 import { Logger } from '@nestjs/common';
+import { Types } from 'mongoose';
 
 @Controller('iam')
 export class IamController {
@@ -12,27 +21,34 @@ export class IamController {
   constructor(private readonly iamService: IamService) {}
 
   @Post('/register') // Apply the guard
-  async register(@Body(new ValidationPipe()) body: UserInsertDto): Promise<{ token: string, isNewToken: boolean, userId: string }> {
+  async register(
+    @Body(new ValidationPipe()) body: UserInsertDto,
+  ): Promise<{ token: string; isNewToken: boolean; userId: string }> {
     try {
-      console.log("register : ");
+      console.log('register : ');
       const token = await this.iamService.registerOrLogin(body);
-      return { token: token.token, isNewToken: token.isNewToken, userId: token.userId };
+      return {
+        token: token.token,
+        isNewToken: token.isNewToken,
+        userId: token.userId,
+      };
     } catch (error) {
       // Log the error or handle it as necessary
       throw error; // Re-throw the error for NestJS to handle
     }
   }
 
-
   @Post('/getHello')
   getHello(): string {
     return this.iamService.getHello();
   }
 
-  @Get('/loginHistory/:address')
+  @Get('/loginHistory/:id')
   @UseGuards(JwtAuthGuard) // Apply the guard
-  async getUserLoginHistory(@Param('address') address: string): Promise<UserLogin[]> {
-    return this.iamService.getUserLoginHistory(address);
+  async getUserLoginHistory(
+    @Param('id') id: Types.ObjectId,
+  ): Promise<UserLogin[]> {
+    return this.iamService.getUserLoginHistory(id);
   }
   // ... other IAM-related endpoints
 }

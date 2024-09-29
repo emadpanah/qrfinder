@@ -11,7 +11,12 @@ import HubButton from './components/HubButton';
 import MyGames from './components/myGames';
 import TapGame from './components/tapGame';
 import { AccountType } from '@/app/lib/definitions';
-import { PiHandTapBold, PiSkullBold, PiMegaphoneBold, PiRocketBold } from 'react-icons/pi';
+import {
+  PiHandTapBold,
+  PiSkullBold,
+  PiMegaphoneBold,
+  PiRocketBold,
+} from 'react-icons/pi';
 import jwt from 'jsonwebtoken';
 
 const IAM_SERVICE_URL = process.env.NEXT_PUBLIC_IAM_SERVICE_URL;
@@ -31,13 +36,16 @@ const GameAppPage: React.FC = () => {
   const router = useRouter();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [accountData, setAccountData] = useState<AccountType>({
-    address: null,
-    balance: null,
-    chainId: null,
-    network: null,
-    gbalance: null
+    // address: null,
+    // balance: null,
+    // chainId: null,
+    // network: null,
+    userId: null,
+    gbalance: null,
   });
-  const [activeSection, setActiveSection] = useState<ActiveSection>(ActiveSection.MetaMaskLogin);
+  const [activeSection, setActiveSection] = useState<ActiveSection>(
+    ActiveSection.MetaMaskLogin,
+  );
   const [selectedGameId, setSelectedGameId] = useState<number | null>(null);
 
   const checkMetaMask = useCallback(async () => {
@@ -51,13 +59,13 @@ const GameAppPage: React.FC = () => {
         const provider = new ethers.BrowserProvider(ethereum);
         const balance = await provider.getBalance(address);
         const network = await provider.getNetwork();
-        setAccountData({
-          address,
-          balance: ethers.formatEther(balance),
-          chainId: network.chainId.toString(),
-          network: network.name,
-          gbalance: '0'
-        });
+        // setAccountData({
+        //   address,
+        //   balance: ethers.formatEther(balance),
+        //   chainId: network.chainId.toString(),
+        //   network: network.name,
+        //   gbalance: '0'
+        // });
 
         const response = await axios.post(`${IAM_SERVICE_URL}/iam/register`, {
           ethAddress: address,
@@ -69,7 +77,7 @@ const GameAppPage: React.FC = () => {
         localStorage.setItem('authToken', authToken);
         if (isNewToken) {
           await window.ethereum.request({
-            method: "wallet_requestPermissions",
+            method: 'wallet_requestPermissions',
             params: [
               {
                 eth_accounts: { address },
@@ -115,7 +123,10 @@ const GameAppPage: React.FC = () => {
               style={{ width: 'auto', height: 'auto' }}
               priority
             />
-            <button onClick={checkMetaMask} className="bg-black text-white p-4 rounded-lg">
+            <button
+              onClick={checkMetaMask}
+              className="bg-black rounded-lg p-4 text-white"
+            >
               Connect to MetaMask
             </button>
           </div>
@@ -123,11 +134,29 @@ const GameAppPage: React.FC = () => {
       case ActiveSection.HubButtons:
         return (
           <div className="grid gap-4 pt-4 md:pt-8 lg:pt-12">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <HubButton label="My Games" onClick={() => setActiveSection(ActiveSection.MyGames)} icon={<PiHandTapBold />} />
-              <HubButton label="New Games" onClick={() => setActiveSection(ActiveSection.NewGames)} icon={<PiSkullBold />} />
-              <HubButton label="4cash Exchange" onClick={() => window.location.href = 'https://4cash.exchange'} icon={<PiMegaphoneBold />} />
-              <HubButton label="Create Game" onClick={() => setActiveSection(ActiveSection.CreateGame)} icon={<PiRocketBold />} />
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <HubButton
+                label="My Games"
+                onClick={() => setActiveSection(ActiveSection.MyGames)}
+                icon={<PiHandTapBold />}
+              />
+              <HubButton
+                label="New Games"
+                onClick={() => setActiveSection(ActiveSection.NewGames)}
+                icon={<PiSkullBold />}
+              />
+              <HubButton
+                label="4cash Exchange"
+                onClick={() =>
+                  (window.location.href = 'https://4cash.exchange')
+                }
+                icon={<PiMegaphoneBold />}
+              />
+              <HubButton
+                label="Create Game"
+                onClick={() => setActiveSection(ActiveSection.CreateGame)}
+                icon={<PiRocketBold />}
+              />
             </div>
           </div>
         );
@@ -140,16 +169,20 @@ const GameAppPage: React.FC = () => {
       case ActiveSection.CreateGame:
         return <div>Create Game Component</div>;
       case ActiveSection.TapGame:
-        return selectedGameId !== null ? <TapGame gameId={selectedGameId} /> : null;
+        return selectedGameId !== null ? (
+          <TapGame gameId={selectedGameId} />
+        ) : null;
       default:
         return null;
     }
   };
 
   return (
-    <div className={`h-full flex flex-col before:from-white after:from-sky-200 py-2`}>
+    <div
+      className={`flex h-full flex-col py-2 before:from-white after:from-sky-200`}
+    >
       <GameHeader {...accountData} />
-      <div className="flex flex-col flex-1 justify-center items-center">
+      <div className="flex flex-1 flex-col items-center justify-center">
         {renderActiveSection()}
       </div>
     </div>

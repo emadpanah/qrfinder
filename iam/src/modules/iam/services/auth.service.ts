@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { JwtService, JwtVerifyOptions } from '@nestjs/jwt';
 import { TokenExpiredError } from 'jsonwebtoken';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { Types } from 'mongoose';
 
 @Injectable()
 export class AuthService {
@@ -10,9 +11,9 @@ export class AuthService {
     private readonly configService: ConfigService,
   ) {}
 
-  async generateJwt(address: string): Promise<string> {
+  async generateJwt(id: Types.ObjectId): Promise<string> {
     return this.jwtService.sign({
-      sub: address,
+      sub: id,
     });
   }
 

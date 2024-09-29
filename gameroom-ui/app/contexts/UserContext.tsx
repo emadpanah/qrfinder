@@ -19,19 +19,19 @@ interface UserProviderProps {
 export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
   const [userId, setUserId] = useState<string | null>(null);
   const [accountData, setAccountData] = useState<AccountType>({
-    address: null,
-    balance: null,
-    chainId: null,
-    network: null,
+    //address: null,
+    //balance: null,
+    //chainId: null,
+    //network: null,
+    userId: null,
     gbalance: null,
   });
-
 
   const updateBalance = async () => {
     if (userId) {
       const defaultCurr = await fetchDefaultCurrency();
       const gbalance = await fetchBalance(userId, defaultCurr._id);
-      setAccountData(prevState => ({
+      setAccountData((prevState) => ({
         ...prevState,
         gbalance: gbalance,
       }));
@@ -39,7 +39,9 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
   };
 
   return (
-    <UserContext.Provider value={{ userId, setUserId, accountData, setAccountData, updateBalance }}>
+    <UserContext.Provider
+      value={{ userId, setUserId, accountData, setAccountData, updateBalance }}
+    >
       {children}
     </UserContext.Provider>
   );

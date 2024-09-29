@@ -1,11 +1,22 @@
 // user.dto.ts
-import { IsString, IsNotEmpty, MaxLength, MinLength, Length, IsDateString } from 'class-validator';
+import { Prop } from '@nestjs/mongoose';
+import {
+  IsString,
+  IsNotEmpty,
+  MaxLength,
+  MinLength,
+  Length,
+  IsDateString,
+} from 'class-validator';
+import { Types } from 'mongoose';
 
 export class UserLoginDto {
   @IsString()
   @IsNotEmpty()
-  @Length(30, 200) // Exact length of an Ethereum address
-  address: string;
+  _id: Types.ObjectId;
+
+  @Prop({ type: Types.ObjectId, ref: 'IAMUser', required: true })
+  userId: Types.ObjectId;
 
   @IsString()
   @IsNotEmpty()

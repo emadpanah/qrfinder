@@ -1,13 +1,17 @@
 import axios from 'axios';
 import { PiCompassToolDuotone } from 'react-icons/pi';
-import { QRCode, AchievementSelectedFull, Balance, Campaign } from './definitions';
+import {
+  QRCode,
+  AchievementSelectedFull,
+  Balance,
+  Campaign,
+} from './definitions';
 
-import { CartItem, CustomerSyncModel, CheckoutDto  } from './definitions';
+import { CartItem, CustomerSyncModel, CheckoutDto } from './definitions';
+import { Types } from 'mongoose';
 
 const iamServiceUrl = process.env.NEXT_PUBLIC_IAM_SERVICE_URL;
 const APP_SECRET = process.env.NEXT_PUBLIC_APP_SECRET || 'default_app_secret';
-
-
 
 // function getCsrfToken() {
 //   console.log("Retrieving CSRF token...");
@@ -38,7 +42,6 @@ const APP_SECRET = process.env.NEXT_PUBLIC_APP_SECRET || 'default_app_secret';
 
 // export default api;
 
-
 // function getCsrfToken() {
 //   const matches = document.cookie.match(new RegExp(
 //     '(?:^|; )' + encodeURIComponent('XSRF-TOKEN').replace(/[-.+*]/g, '\\$&') + '=([^;]*)'
@@ -62,18 +65,12 @@ export const api = axios.create({
   },
 });
 
-interface RegisterUserParams {
-  address: string;
-  telegramID: string;
-  walletType: string;
-}
-
-export const registerUser = async ({ address, telegramID, walletType }: RegisterUserParams) => {
+export const registerUser = async (telegramID: string) => {
   try {
+    console.log('register');
     const response = await api.post('/iam/register', {
-      address,
-      telegramID,
-      walletType,
+      _id: new Types.ObjectId(),
+      telegramID: telegramID,
       clientSecret: APP_SECRET,
     });
 
@@ -83,7 +80,10 @@ export const registerUser = async ({ address, telegramID, walletType }: Register
     return { authToken, isNewToken, userId };
   } catch (error) {
     if (axios.isAxiosError(error)) {
-      console.error('Axios error registering user:', error.response?.data || error.message);
+      console.error(
+        'Axios error registering user:',
+        error.response?.data || error.message,
+      );
       throw new Error(error.response?.data || error.message);
     } else if (error instanceof Error) {
       console.error('Error registering user:', error.message);
@@ -95,32 +95,35 @@ export const registerUser = async ({ address, telegramID, walletType }: Register
   }
 };
 
-
-export const createBalance = async (userId: string, transactionType: string,
-  amount: number, currency: string, transactionEntityId: string, 
-  balanceAfterTransaction: number) => {
+export const createBalance = async (
+  userId: string,
+  transactionType: string,
+  amount: number,
+  currency: string,
+  transactionEntityId: string,
+  balanceAfterTransaction: number,
+) => {
   try {
-
     const response = await api.post('/balance/addtransaction', {
       userId: userId,
       transactionType: transactionType,
       amount: amount,
       currency: currency,
       transactionEntityId: transactionEntityId,
-      balanceAfterTransaction: balanceAfterTransaction
+      balanceAfterTransaction: balanceAfterTransaction,
     });
     return response.data;
   } catch (error) {
     console.error('Error fetching campaigns:', error);
     throw error;
   }
-  
 };
 
-
-export const fetchBalance = async (userId : string, currencyId?: string) => {
+export const fetchBalance = async (userId: string, currencyId?: string) => {
   try {
-    const response = await api.get('/balance/', { params: { userId: userId, currency: currencyId } });
+    const response = await api.get('/balance/', {
+      params: { userId: userId, currency: currencyId },
+    });
     return response.data;
   } catch (error) {
     console.error('Error fetching campaigns:', error);
@@ -138,9 +141,11 @@ export const fetchDefaultCurrency = async () => {
   }
 };
 
-export const fetchCurrency = async (name : string) => {
+export const fetchCurrency = async (name: string) => {
   try {
-    const response = await api.get('/balance/currencybyname', { params: { name: name } });
+    const response = await api.get('/balance/currencybyname', {
+      params: { name: name },
+    });
     return response.data;
   } catch (error) {
     console.error('Error fetching campaigns:', error);
@@ -160,7 +165,7 @@ export const fetchCampaigns = async () => {
 
 export const fetchActiveCampaigns = async () => {
   try {
-    console.log("get campaigns active");
+    console.log('get campaigns active');
     const response = await api.get('/qr-campaigns/active');
     return response.data;
   } catch (error) {
@@ -171,7 +176,9 @@ export const fetchActiveCampaigns = async () => {
 
 export const fetchCampaignById = async (campaignId: string) => {
   try {
-    const response = await api.get(`/qr-campaigns/findbyid`, { params: { id: campaignId } });
+    const response = await api.get(`/qr-campaigns/findbyid`, {
+      params: { id: campaignId },
+    });
     return response.data;
   } catch (error) {
     console.error(`Error fetching campaign by ID ${campaignId}:`, error);
@@ -182,17 +189,24 @@ export const fetchCampaignById = async (campaignId: string) => {
 export const fetchQrCodesByAchievementId = async (achievementId: string) => {
   try {
     console.log('fetchQrCodesByAchievementId');
-    const response = await api.get(`/qr-achievements/get-allqrcodes`, { params: { achievementId: achievementId } });
-    return response.data;// as unknown as QRCode[];;
+    const response = await api.get(`/qr-achievements/get-allqrcodes`, {
+      params: { achievementId: achievementId },
+    });
+    return response.data; // as unknown as QRCode[];;
   } catch (error) {
-    console.error(`Error fetching Qrcodes for achievements ID ${achievementId}:`, error);
+    console.error(
+      `Error fetching Qrcodes for achievements ID ${achievementId}:`,
+      error,
+    );
     throw error;
   }
 };
 
 export const fetchAchievementById = async (achievementId: string) => {
   try {
-    const response = await api.get(`/qr-achievements/findbyid`, { params: { id: achievementId } });
+    const response = await api.get(`/qr-achievements/findbyid`, {
+      params: { id: achievementId },
+    });
     return response.data;
   } catch (error) {
     console.error(`Error fetching achievement by ID ${achievementId}:`, error);
@@ -202,20 +216,33 @@ export const fetchAchievementById = async (achievementId: string) => {
 
 export const fetchAchievementsByCampaignId = async (campaignId: string) => {
   try {
-    const response = await api.get(`/qr-achievements/getall`, { params: { campaignId: campaignId } });
+    const response = await api.get(`/qr-achievements/getall`, {
+      params: { campaignId: campaignId },
+    });
     return response.data;
   } catch (error) {
-    console.error(`Error fetching achievements for campaign ID ${campaignId}:`, error);
+    console.error(
+      `Error fetching achievements for campaign ID ${campaignId}:`,
+      error,
+    );
     throw error;
   }
 };
 
-export const fetchAchievementsSelectedByCampaignId = async (campaignId: string, userId: string) => {
+export const fetchAchievementsSelectedByCampaignId = async (
+  campaignId: string,
+  userId: string,
+) => {
   try {
-    const response = await api.get(`/qr-achievements/getallbyuser`, { params: { campaignId: campaignId, userId: userId } });
+    const response = await api.get(`/qr-achievements/getallbyuser`, {
+      params: { campaignId: campaignId, userId: userId },
+    });
     return response.data;
   } catch (error) {
-    console.error(`Error fetching achievements selected for campaign ID ${campaignId}: and userId ${userId}`, error);
+    console.error(
+      `Error fetching achievements selected for campaign ID ${campaignId}: and userId ${userId}`,
+      error,
+    );
     throw error;
   }
 };
@@ -230,18 +257,29 @@ export const fetchUserDetails = async (userId: string) => {
   }
 };
 
-export const selectAchievement = async (achievementId: string, userId: string, parentId: string): Promise<AchievementSelectedFull>  => {
+export const selectAchievement = async (
+  achievementId: string,
+  userId: string,
+  parentId: string,
+): Promise<AchievementSelectedFull> => {
   try {
-    const requestBody: { achievementId: string; userId: string; parentId?: string } = {
+    const requestBody: {
+      achievementId: string;
+      userId: string;
+      parentId?: string;
+    } = {
       achievementId: achievementId,
       userId: userId,
     };
     console.log('p :', parentId);
-    if (parentId!=='0') {
+    if (parentId !== '0') {
       requestBody.parentId = parentId;
     }
 
-    const response = await api.post('/qr-achievements/create-selected', requestBody);
+    const response = await api.post(
+      '/qr-achievements/create-selected',
+      requestBody,
+    );
     console.log('create-selected', response);
     return response.data;
   } catch (error) {
@@ -250,13 +288,20 @@ export const selectAchievement = async (achievementId: string, userId: string, p
   }
 };
 
-
-export const fetchAchievementSelectFullByUA = async (achievementId: string, userId: string): Promise<AchievementSelectedFull>  => {
+export const fetchAchievementSelectFullByUA = async (
+  achievementId: string,
+  userId: string,
+): Promise<AchievementSelectedFull> => {
   try {
-    const response = await api.get(`/qr-achievements/get-selectedfullUA`, { params: { userId: userId, achievementId: achievementId } });
+    const response = await api.get(`/qr-achievements/get-selectedfullUA`, {
+      params: { userId: userId, achievementId: achievementId },
+    });
     return response.data;
   } catch (error) {
-    console.error(`Error fetching selected achievements for user ID ${userId} and achievement ID ${achievementId}`, error);
+    console.error(
+      `Error fetching selected achievements for user ID ${userId} and achievement ID ${achievementId}`,
+      error,
+    );
     throw error;
   }
 };
@@ -267,24 +312,43 @@ export const doneSelectAchievement = async (selectedAchievementId: string) => {
       selectedAchievementId: selectedAchievementId,
     };
 
-    const response = await api.post('/qr-achievements/done-selected', requestBody);
+    const response = await api.post(
+      '/qr-achievements/done-selected',
+      requestBody,
+    );
     return response.data;
   } catch (error) {
-    console.error(`Error in setting done to selected achievement by ID ${selectedAchievementId}:`, error);
+    console.error(
+      `Error in setting done to selected achievement by ID ${selectedAchievementId}:`,
+      error,
+    );
     throw error;
   }
 };
 
-export const createQrScan = async (qrId: string, userId: string, lon?: number, lat?: number) => {
+export const createQrScan = async (
+  qrId: string,
+  userId: string,
+  lon?: number,
+  lat?: number,
+) => {
   try {
-    const requestBody: { qrId: string; userId: string; lon?:number; lat?:number } = {
+    const requestBody: {
+      qrId: string;
+      userId: string;
+      lon?: number;
+      lat?: number;
+    } = {
       qrId: qrId,
       userId: userId,
       lon: lon,
-      lat: lat
+      lat: lat,
     };
 
-    const response = await api.post('/qr-achievements/create-qrscan', requestBody);
+    const response = await api.post(
+      '/qr-achievements/create-qrscan',
+      requestBody,
+    );
     return response.data;
   } catch (error) {
     console.error(`Error scanning qrcode ID ${qrId}:`, error);
@@ -294,52 +358,79 @@ export const createQrScan = async (qrId: string, userId: string, lon?: number, l
 
 export const fetchSelectedAchievementsByUser = async (userId: string) => {
   try {
-    const response = await api.get(`/qr-achievements/get-selected`, { params: { userId: userId } });
+    const response = await api.get(`/qr-achievements/get-selected`, {
+      params: { userId: userId },
+    });
     return response.data;
   } catch (error) {
-    console.error(`Error fetching selected achievements for user ID ${userId}:`, error);
+    console.error(
+      `Error fetching selected achievements for user ID ${userId}:`,
+      error,
+    );
     throw error;
   }
 };
 
-export const fetchQrScannedByUser = async (userId: string, achievementId: string) => {
+export const fetchQrScannedByUser = async (
+  userId: string,
+  achievementId: string,
+) => {
   try {
-    const response = await api.get(`/qr-achievements/get-qrscan`, { params: { userId: userId, achievementId: achievementId } });
+    const response = await api.get(`/qr-achievements/get-qrscan`, {
+      params: { userId: userId, achievementId: achievementId },
+    });
     return response.data;
   } catch (error) {
-    console.error(`Error fetching scanned qr for user ID 
-      ${userId} and  achievement Id ${achievementId}:`, error);
+    console.error(
+      `Error fetching scanned qr for user ID 
+      ${userId} and  achievement Id ${achievementId}:`,
+      error,
+    );
     throw error;
   }
 };
 
-
-export const fetchSelFullAchisRefByUserIdCamId = async (userId: string, campaignId: string) => {
+export const fetchSelFullAchisRefByUserIdCamId = async (
+  userId: string,
+  campaignId: string,
+) => {
   try {
-    const response = await api.get(`/qr-achievements/get-selectedfullref`, { params: { userId: userId, campaignId: campaignId } });
+    const response = await api.get(`/qr-achievements/get-selectedfullref`, {
+      params: { userId: userId, campaignId: campaignId },
+    });
     return response.data;
   } catch (error) {
-    console.error(`Error fetching selected achievements referrer by user ${userId}:`, error);
+    console.error(
+      `Error fetching selected achievements referrer by user ${userId}:`,
+      error,
+    );
     throw error;
   }
 };
-
 
 export const fetchSelectedFullAchievementsByUser = async (userId: string) => {
   try {
-    const response = await api.get(`/qr-achievements/get-selectedfull`, { params: { userId: userId } });
+    const response = await api.get(`/qr-achievements/get-selectedfull`, {
+      params: { userId: userId },
+    });
     return response.data;
   } catch (error) {
-    console.error(`Error fetching selected achievements for user ID ${userId}:`, error);
+    console.error(
+      `Error fetching selected achievements for user ID ${userId}:`,
+      error,
+    );
     throw error;
   }
 };
 
-export const unselectAchievement = async (achievementId: string, userId: string) => {
+export const unselectAchievement = async (
+  achievementId: string,
+  userId: string,
+) => {
   try {
-    console.log("unselectAchievement", achievementId, userId);
+    console.log('unselectAchievement', achievementId, userId);
     const response = await api.delete('/qr-achievements/delete-selected', {
-      data: { achievementId, userId }
+      data: { achievementId, userId },
     });
     return response.data;
   } catch (error) {
@@ -347,7 +438,6 @@ export const unselectAchievement = async (achievementId: string, userId: string)
     throw error;
   }
 };
-
 
 export const createCampaign = async (campaignData: Campaign) => {
   try {
@@ -360,13 +450,17 @@ export const createCampaign = async (campaignData: Campaign) => {
   }
 };
 
-
-
 const TONCENTER_MAINNET_API_URL = 'https://toncenter.com/api/v2';
 const TONCENTER_TESTNET_API_URL = 'https://testnet.toncenter.com/api/v2';
 
-export const fetchTonBalance = async (address: string, network: 'mainnet' | 'testnet'): Promise<string> => {
-  const apiUrl = network === 'mainnet' ? TONCENTER_MAINNET_API_URL : TONCENTER_TESTNET_API_URL;
+export const fetchTonBalance = async (
+  address: string,
+  network: 'mainnet' | 'testnet',
+): Promise<string> => {
+  const apiUrl =
+    network === 'mainnet'
+      ? TONCENTER_MAINNET_API_URL
+      : TONCENTER_TESTNET_API_URL;
 
   try {
     const response = await axios.get(`${apiUrl}/getAddressBalance`, {
@@ -380,8 +474,6 @@ export const fetchTonBalance = async (address: string, network: 'mainnet' | 'tes
     return '0';
   }
 };
-
-
 
 const shopServiceUrl = process.env.NEXT_PUBLIC_SHOP_SERVICE_URL;
 
@@ -405,19 +497,24 @@ export const addToCart = async (cartItem: CartItem, shopToken: string) => {
   }
 };
 
-
-export const createCustomerSync = async (customerData: CustomerSyncModel, shopToken: string) => {
+export const createCustomerSync = async (
+  customerData: CustomerSyncModel,
+  shopToken: string,
+) => {
   try {
-    const response = await shopApi.post('/shop/createCustomerSync', customerData, {
-      headers: { 'x-shop-token': shopToken },
-    });
+    const response = await shopApi.post(
+      '/shop/createCustomerSync',
+      customerData,
+      {
+        headers: { 'x-shop-token': shopToken },
+      },
+    );
     return response.data;
   } catch (error) {
     console.error('Error creating customer sync:', error);
     throw error;
   }
 };
-
 
 export const checkout = async (checkoutDto: CheckoutDto, shopToken: string) => {
   try {
@@ -431,15 +528,14 @@ export const checkout = async (checkoutDto: CheckoutDto, shopToken: string) => {
   }
 };
 
-
 export const getAllProducts = async (
   pageNumber: number,
   specCategoryId: string,
   langId: string,
   shopToken: string,
-  options?: { 
-    pageSize?: number; 
-    catIds?: string; 
+  options?: {
+    pageSize?: number;
+    catIds?: string;
     brandsIds?: string;
     filter?: string;
     tagIds?: string;
@@ -449,7 +545,7 @@ export const getAllProducts = async (
     justInWish?: boolean;
     tagTitles?: string;
     productType?: string;
-  }
+  },
 ) => {
   try {
     const response = await api.get('/shop/getAllProducts', {

@@ -1,7 +1,7 @@
 // iam/services/iam.service.ts
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { IAMUser, IAMUserDocument } from '../database/schemas/iam-user.schema';
 import { UserLogin } from '../database/schemas/user-login.schema';
 import * as bcrypt from 'bcrypt';
@@ -16,13 +16,15 @@ export class IamService {
   //private readonly jwtSecret: string = process.env.JWT_SECRET || 'your-secret-key';
   private readonly tokenSecret: string;
 
-  constructor(private readonly iamRepository: IamRepository,
-    private readonly userLoginRepository: UserLoginRepository, private readonly authService: AuthService){
-      //@InjectModel(IAMUser.name) private readonly iamUserModel: 
-      //Model<IAMUserDocument>) {
+  constructor(
+    private readonly iamRepository: IamRepository,
+    private readonly userLoginRepository: UserLoginRepository,
+    private readonly authService: AuthService,
+  ) {
+    //@InjectModel(IAMUser.name) private readonly iamUserModel:
+    //Model<IAMUserDocument>) {
     // Set the token secret from the environment variable
     this.tokenSecret = process.env.JWT_SECRET;
-
   }
 
   private async hashPassword(password: string): Promise<string> {
@@ -30,60 +32,65 @@ export class IamService {
     return bcrypt.hash(password, salt);
   }
 
-  async registerOrLogin(dto: UserInsertDto): Promise<{ token: string, isNewToken: boolean, userId: string }> {
+  async registerOrLogin(
+    dto: UserInsertDto,
+  ): Promise<{ token: string; isNewToken: boolean; userId: string }> {
     try {
-  
       if (process.env.NEXT_PUBLIC_APP_SECRET !== dto.clientSecret) {
         throw new UnauthorizedException();
       }
-  
+
       // Check if the user already exists
-      const user = await this.iamRepository.findUserByAddress(dto.address);
+      const user = await this.iamRepository.findUserByTelegramID(
+        dto.telegramID,
+      );
       if (user) {
         // User exists, check if there is a valid token
-        const existingLoginInfo = await this.userLoginRepository.findLatestLoginByAddress(dto.address);
+        const existingLoginInfo =
+          await this.userLoginRepository.findLatestLoginByUserId(user._id);
+        console.log('latestlogin - ', existingLoginInfo);
+        console.log('userId - ', user._id);
         if (existingLoginInfo) {
           try {
             await this.authService.verifyJwt(existingLoginInfo.token);
-            return { token: existingLoginInfo.token, isNewToken: false, userId: user._id }; // Return existing valid token
+            return {
+              token: existingLoginInfo.token,
+              isNewToken: false,
+              userId: user._id,
+            }; // Return existing valid token
           } catch (error) {
             if (error instanceof TokenExpiredError) {
               // Generate a new token if the existing one is expired
-              const newToken = await this.authService.generateJwt(dto.address);
-              await this.userLoginRepository.createLogin(dto.address, newToken);            
+              const newToken = await this.authService.generateJwt(dto._id);
+              await this.userLoginRepository.createLogin(dto._id, newToken);
               return { token: newToken, isNewToken: true, userId: user._id };
             } else {
               throw error; // Re-throw the error if it's not a TokenExpiredError
             }
           }
         }
-  
+
         // Generate a new token if no valid token exists
-        const newToken = await this.authService.generateJwt(dto.address);
-        await this.userLoginRepository.createLogin(dto.address, newToken);
+        const newToken = await this.authService.generateJwt(dto._id);
+        await this.userLoginRepository.createLogin(dto._id, newToken);
         return { token: newToken, isNewToken: true, userId: user._id };
       }
-  
+
       // User does not exist, proceed with registration
       const newUser = await this.iamRepository.createUser(dto);
-  
+
       // Generate a new token for the new user
-      const token = await this.authService.generateJwt(dto.address);
-      await this.userLoginRepository.createLogin(dto.address, token);
-  
+      const token = await this.authService.generateJwt(dto._id);
+      await this.userLoginRepository.createLogin(newUser._id, token);
+
       return { token: token, isNewToken: true, userId: newUser._id };
     } catch (error) {
       throw error;
     }
   }
-  
-    
 
- 
- 
-
-  async getUserLoginHistory(address: string): Promise<UserLogin[]> {
-    return this.userLoginRepository.findLoginHistoryByAddress(address);
+  async getUserLoginHistory(id: Types.ObjectId): Promise<UserLogin[]> {
+    return this.userLoginRepository.findLoginHistoryByUserId(id);
   }
 
   getHello(): string {

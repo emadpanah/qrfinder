@@ -8,8 +8,21 @@ import MyAchievements from './components/MyAchievements';
 import CampaignDetails from './components/CampaignDetails';
 import AchievementDetails from './components/AchievementDetails';
 import QRAchievement from './components/QRAchievement';
-import { AccountType, Campaign, AchievementSelectedFull, Achievement, Product } from '@/app/lib/definitions';
-import { fetchActiveCampaigns, fetchAchievementSelectFullByUA, fetchCampaignById, fetchAchievementById, selectAchievement, createQrScan } from '@/app/lib/api';
+import {
+  AccountType,
+  Campaign,
+  AchievementSelectedFull,
+  Achievement,
+  Product,
+} from '@/app/lib/definitions';
+import {
+  fetchActiveCampaigns,
+  fetchAchievementSelectFullByUA,
+  fetchCampaignById,
+  fetchAchievementById,
+  selectAchievement,
+  createQrScan,
+} from '@/app/lib/api';
 import { useUser } from '@/app/contexts/UserContext';
 import styles from './css/qrApp.module.css';
 import CampaignInsert from './components/CampaignInsert';
@@ -30,11 +43,17 @@ enum ActiveSection {
 }
 
 const QRAppPageContent: React.FC = () => {
-  const [activeSection, setActiveSection] = useState<ActiveSection>(ActiveSection.Campaigns);
+  const [activeSection, setActiveSection] = useState<ActiveSection>(
+    ActiveSection.Campaigns,
+  );
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
-  const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
-  const [selectedAchievement, setSelectedAchievement] = useState<Achievement | null>(null);
-  const [selectedAchievementFull, setSelectedAchievementFull] = useState<AchievementSelectedFull | null>(null);
+  const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(
+    null,
+  );
+  const [selectedAchievement, setSelectedAchievement] =
+    useState<Achievement | null>(null);
+  const [selectedAchievementFull, setSelectedAchievementFull] =
+    useState<AchievementSelectedFull | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [basket, setBasket] = useState<Product[]>([]);
@@ -100,56 +119,70 @@ const QRAppPageContent: React.FC = () => {
   // }, [searchParams, accountData.address, userId]);
 
   useEffect(() => {
-    console.log("page.tsx-useEffect");
+    console.log('page.tsx-useEffect');
     const achievementId = searchParams.get('a');
     const type = searchParams.get('t');
     const parentId = searchParams.get('p');
-    
+
     const isQrCodeType = type === 'q';
     const hasValidParamsQr = !!achievementId && isQrCodeType;
-    
+
     const isAchieventInviteType = type === 'a';
     const hasValidparaInvi = !!achievementId && isAchieventInviteType;
 
-    const isShopCodeType = type === 's';  // New shop type
+    const isShopCodeType = type === 's'; // New shop type
     const hasValidParamsShopRef = achievementId && isShopCodeType && parentId;
 
-    
-    const hasValidParamsShop = !achievementId && !isShopCodeType && !parentId;
-    console.log("page.tsx-hasValidParamsShop - ", hasValidParamsQr);
-
+    const hasValidParamsShop = !achievementId && !parentId && !type;
 
     // Handle QR code achievement
     if (hasValidParamsQr) {
-      if (accountData.address && userId && parentId) {
-        selectAchievement(achievementId!, userId, "0").then((achievement) => {
-          setSelectedAchievementFull(achievement);
-          fetchAchievementById(achievement.achievementId).then((ach) => {
-            setSelectedAchievement(ach);
-            createQrScan(parentId.toString(), userId, 0, 0);
-            setActiveSection(ActiveSection.AchievementDetails);
-          }).catch((error) => console.error('Error fetching achievement:', error));
-        }).catch((error) => console.error('Error selecting achievement:', error));
+      if (userId && parentId) {
+        selectAchievement(achievementId!, userId, '0')
+          .then((achievement) => {
+            setSelectedAchievementFull(achievement);
+            fetchAchievementById(achievement.achievementId)
+              .then((ach) => {
+                setSelectedAchievement(ach);
+                createQrScan(parentId.toString(), userId, 0, 0);
+                setActiveSection(ActiveSection.AchievementDetails);
+              })
+              .catch((error) =>
+                console.error('Error fetching achievement:', error),
+              );
+          })
+          .catch((error) =>
+            console.error('Error selecting achievement:', error),
+          );
       }
     }
 
     // Handle Invite achievement
     if (hasValidparaInvi) {
-      if (accountData.address && userId) {
-        selectAchievement(achievementId!, userId, parentId ? parentId : '0').then((select) => {
-          setSelectedAchievementFull(select);
-          fetchAchievementById(achievementId!).then((achievement) => {
-            setSelectedAchievement(achievement);
-            setActiveSection(ActiveSection.AchievementDetails);
-          }).catch((error) => console.error('Error fetching achievement:', error));
-        }).catch((error) => console.error('Error selecting achievement:', error));
+      if (userId) {
+        selectAchievement(achievementId!, userId, parentId ? parentId : '0')
+          .then((select) => {
+            setSelectedAchievementFull(select);
+            fetchAchievementById(achievementId!)
+              .then((achievement) => {
+                setSelectedAchievement(achievement);
+                setActiveSection(ActiveSection.AchievementDetails);
+              })
+              .catch((error) =>
+                console.error('Error fetching achievement:', error),
+              );
+          })
+          .catch((error) =>
+            console.error('Error selecting achievement:', error),
+          );
       }
     }
 
     // New logic for handling shop code type
     if (hasValidParamsShop) {
-      if (accountData.address && userId) {
-        console.log("Loading fake products for shop section");
+      console.log(userId);
+      if (userId) {
+        console.log('Loading fake products for shop section');
         const fakeProducts = [
           {
             Base: {
@@ -164,7 +197,8 @@ const QRAppPageContent: React.FC = () => {
               Slogan: 'سالیانه',
               Description: 'This is a description for SCALP BOT Trading Robot.',
               InternationalCodeValue: 'SCP12345',
-              AdditionalDescription: 'Additional features and details of SCALP BOT.',
+              AdditionalDescription:
+                'Additional features and details of SCALP BOT.',
               AdditionalValue: 'Advanced AI-based trading',
               ImagesIds: 'SCP_Image_ca0cb9dc-ff8a-401f-955d-72c536a9f765',
               Quantity: 1,
@@ -172,7 +206,8 @@ const QRAppPageContent: React.FC = () => {
               UserName: 'admin',
             },
             IsAvailable: true,
-            SmallImage: '/Public/b2fcffb7-4e06-4fa0-b2e2-c1a35a1750bf/image/items/SCP_Image_ca0cb9dc-ff8a-401f-955d-72c536a9f765_.jpeg',
+            SmallImage:
+              '/Public/b2fcffb7-4e06-4fa0-b2e2-c1a35a1750bf/image/items/SCP_Image_ca0cb9dc-ff8a-401f-955d-72c536a9f765_.jpeg',
             Price: '25,797,000 تومان (سالیانه)',
             MonthlyPrice: '2,199,000 تومان (ماهانه)',
           },
@@ -189,7 +224,8 @@ const QRAppPageContent: React.FC = () => {
               Slogan: '',
               Description: 'Beginner trading course with AI trading robot.',
               InternationalCodeValue: 'TRADE001',
-              AdditionalDescription: 'Course details for beginner traders using AI robots.',
+              AdditionalDescription:
+                'Course details for beginner traders using AI robots.',
               AdditionalValue: 'Complete package for beginners',
               ImagesIds: 'SCP_Image_69ab9f7d-5f6a-4b6a-9cf9-690cf8173873',
               Quantity: 1,
@@ -197,7 +233,8 @@ const QRAppPageContent: React.FC = () => {
               UserName: 'admin',
             },
             IsAvailable: true,
-            SmallImage: '/Public/b2fcffb7-4e06-4fa0-b2e2-c1a35a1750bf/image/items/SCP_Image_69ab9f7d-5f6a-4b6a-9cf9-690cf8173873_.jpeg',
+            SmallImage:
+              '/Public/b2fcffb7-4e06-4fa0-b2e2-c1a35a1750bf/image/items/SCP_Image_69ab9f7d-5f6a-4b6a-9cf9-690cf8173873_.jpeg',
             Price: '1,890,000 تومان',
           },
           {
@@ -211,7 +248,8 @@ const QRAppPageContent: React.FC = () => {
               JustInCart: false,
               Title: 'ربات تریدر تلگرامی پرادو',
               Slogan: 'سالیانه',
-              Description: 'Telegram Prado trading bot with various subscription options.',
+              Description:
+                'Telegram Prado trading bot with various subscription options.',
               InternationalCodeValue: 'PRADO001',
               AdditionalDescription: 'Advanced Telegram trading with Prado.',
               AdditionalValue: 'Multiple subscription packages available',
@@ -221,17 +259,17 @@ const QRAppPageContent: React.FC = () => {
               UserName: 'admin',
             },
             IsAvailable: true,
-            SmallImage: '/Public/b2fcffb7-4e06-4fa0-b2e2-c1a35a1750bf/image/items/SCP_Image_a09fe10a-29c5-424d-8a22-ac402a3b0f4b_.jpeg',
+            SmallImage:
+              '/Public/b2fcffb7-4e06-4fa0-b2e2-c1a35a1750bf/image/items/SCP_Image_a09fe10a-29c5-424d-8a22-ac402a3b0f4b_.jpeg',
             Price: '39,000,000 تومان (سالیانه)',
             MonthlyPrice: '3,990,000 تومان (ماهانه)',
           },
-        ];        
+        ];
         setProducts(fakeProducts); // Set fake products
         setActiveSection(ActiveSection.Shop); // Switch to shop section
       }
     }
-  }, [searchParams, accountData.address, userId]);
-
+  }, [searchParams, userId]);
 
   const handleCampaignClick = async (campaignId: string) => {
     try {
@@ -240,9 +278,14 @@ const QRAppPageContent: React.FC = () => {
       console.log(`Fetched campaign: ${campaign.name}`);
       setSelectedCampaign(campaign);
       setActiveSection(ActiveSection.CampaignDetails);
-      console.log(`Active section set to CampaignDetails with ID: ${campaignId}`);
+      console.log(
+        `Active section set to CampaignDetails with ID: ${campaignId}`,
+      );
     } catch (error) {
-      console.error(`Error fetching campaign details for ID ${campaignId}:`, error);
+      console.error(
+        `Error fetching campaign details for ID ${campaignId}:`,
+        error,
+      );
     }
   };
 
@@ -254,15 +297,19 @@ const QRAppPageContent: React.FC = () => {
   };
 
   const handleMyAchievementClick = (achievementId: string) => {
-    fetchAchievementById(achievementId).then((achievement) => {
-      setSelectedAchievement(achievement);
-      fetchAchievementSelectFullByUA(achievement._id, userId!).then((select) => {
-        setSelectedAchievementFull(select);
-        setActiveSection(ActiveSection.AchievementDetails);
+    fetchAchievementById(achievementId)
+      .then((achievement) => {
+        setSelectedAchievement(achievement);
+        fetchAchievementSelectFullByUA(achievement._id, userId!).then(
+          (select) => {
+            setSelectedAchievementFull(select);
+            setActiveSection(ActiveSection.AchievementDetails);
+          },
+        );
+      })
+      .catch((error) => {
+        console.error('Error fetching achievement:', error);
       });
-    }).catch((error) => {
-      console.error('Error fetching achievement:', error);
-    });
   };
 
   const handleViewProductDetails = (product: Product) => {
@@ -290,7 +337,10 @@ const QRAppPageContent: React.FC = () => {
   };
 
   const handleBackButtonClick = () => {
-    if (activeSection === ActiveSection.CampaignDetails || activeSection === ActiveSection.AchievementDetails) {
+    if (
+      activeSection === ActiveSection.CampaignDetails ||
+      activeSection === ActiveSection.AchievementDetails
+    ) {
       setActiveSection(ActiveSection.Campaigns);
     } else {
       setActiveSection(ActiveSection.Campaigns);
@@ -309,7 +359,7 @@ const QRAppPageContent: React.FC = () => {
     setBasket([...basket, product]);
     alert(`${product.Base.Title} added to cart`);
   };
-  
+
   // Add the handler for onEarnMoney
   const handleEarnMoney = (product: Product) => {
     // Logic for earning money from the product
@@ -322,18 +372,20 @@ const QRAppPageContent: React.FC = () => {
       case ActiveSection.Campaigns:
         return (
           <div className={styles.campaignListContainer}>
-             <div className="flex justify-between items-center w-full">
-              <p className="text-s pt-4 pb-2">New Campaigns</p>
+            <div className="flex w-full items-center justify-between">
+              <p className="text-s pb-2 pt-4">New Campaigns</p>
               <div className="flex justify-end ">
                 <button
-                  className="bg-green-500 text-xl text-white px-2 pb-1 rounded"
+                  className="rounded bg-green-500 px-2 pb-1 text-xl text-white"
                   onClick={handleInsertCampaignClick}
                 >
                   +
                 </button>
               </div>
             </div>
-            <div className={`${styles.container} ${styles.spaceY4} pt-2 md:pt-4 lg:pt-8 ${styles.campaignList}`}>
+            <div
+              className={`${styles.container} ${styles.spaceY4} pt-2 md:pt-4 lg:pt-8 ${styles.campaignList}`}
+            >
               {campaigns.map((campaign) => (
                 <CampaignButton
                   key={campaign._id}
@@ -346,30 +398,70 @@ const QRAppPageContent: React.FC = () => {
           </div>
         );
       case ActiveSection.InsertCampaign:
-      return (
-        <CampaignInsert onInsertSuccess={() => setActiveSection(ActiveSection.Campaigns)} />
-      );
+        return (
+          <CampaignInsert
+            onInsertSuccess={() => setActiveSection(ActiveSection.Campaigns)}
+          />
+        );
       case ActiveSection.AchievementDetails:
-        return selectedAchievement?._id ? <AchievementDetails achievement={selectedAchievement!} onBack={handleBackButtonClick} /> : null;
+        return selectedAchievement?._id ? (
+          <AchievementDetails
+            achievement={selectedAchievement!}
+            onBack={handleBackButtonClick}
+          />
+        ) : null;
       case ActiveSection.CampaignDetails:
-        return selectedCampaign?._id ? <CampaignDetails campaignId={selectedCampaign._id} onAchievementClick={handleAchievementClick} onBack={handleBackButtonClick} /> : null;
-        case ActiveSection.Shop:
-          return <ProductList  onEarnMoney={handleEarnMoney} products={products} onAddToCart={handleAddToBasket}  onNavigateToBasket={handleNavigateToBasket}/>;
-          case ActiveSection.ProductDetails:
-            return selectedProduct ? <ProductDetails product={selectedProduct}  onBack={() => setActiveSection(ActiveSection.Shop)} onAddToBasket={handleAddToBasket} onNavigateToBasket={handleNavigateToBasket} /> : null;
-          case ActiveSection.Basket:
-            return <ProductBasket basket={basket} onCheckout={handleCheckout} onRemoveFromBasket={handleRemoveFromBasket} />;
-          case ActiveSection.Checkout:
-            return <ProductCheckout onConfirmCheckout={handleConfirmCheckout} onCancel={() => setActiveSection(ActiveSection.Basket)} />;
-          default:
+        return selectedCampaign?._id ? (
+          <CampaignDetails
+            campaignId={selectedCampaign._id}
+            onAchievementClick={handleAchievementClick}
+            onBack={handleBackButtonClick}
+          />
+        ) : null;
+      case ActiveSection.Shop:
+        return (
+          <ProductList
+            onEarnMoney={handleEarnMoney}
+            products={products}
+            onAddToCart={handleAddToBasket}
+            onNavigateToBasket={handleNavigateToBasket}
+          />
+        );
+      case ActiveSection.ProductDetails:
+        return selectedProduct ? (
+          <ProductDetails
+            product={selectedProduct}
+            onBack={() => setActiveSection(ActiveSection.Shop)}
+            onAddToBasket={handleAddToBasket}
+            onNavigateToBasket={handleNavigateToBasket}
+          />
+        ) : null;
+      case ActiveSection.Basket:
+        return (
+          <ProductBasket
+            basket={basket}
+            onCheckout={handleCheckout}
+            onRemoveFromBasket={handleRemoveFromBasket}
+          />
+        );
+      case ActiveSection.Checkout:
+        return (
+          <ProductCheckout
+            onConfirmCheckout={handleConfirmCheckout}
+            onCancel={() => setActiveSection(ActiveSection.Basket)}
+          />
+        );
+      default:
         return null;
     }
   };
 
   return (
-    <div className={`h-full flex flex-col before:from-white after:from-sky-200 `}>
+    <div
+      className={`flex h-full flex-col before:from-white after:from-sky-200 `}
+    >
       <CampaignHeader onBack={handleBackButtonClick} />
-      <div className="flex flex-col flex-1 justify-center items-center">
+      <div className="flex flex-1 flex-col items-center justify-center">
         {renderActiveSection()}
       </div>
     </div>

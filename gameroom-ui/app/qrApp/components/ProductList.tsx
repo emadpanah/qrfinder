@@ -9,7 +9,12 @@ interface ProductListProps {
   onNavigateToBasket: () => void;
 }
 
-const ProductList: React.FC<ProductListProps> = ({ products, onAddToCart, onEarnMoney, onNavigateToBasket }) => {
+const ProductList: React.FC<ProductListProps> = ({
+  products,
+  onAddToCart,
+  onEarnMoney,
+  onNavigateToBasket,
+}) => {
   return (
     <div className={`${styles.productListContainer}`}>
       {/* Scrollable Product List */}
@@ -23,9 +28,15 @@ const ProductList: React.FC<ProductListProps> = ({ products, onAddToCart, onEarn
                 className={`${styles.productImage}`}
               />
               <div className={`${styles.productDetails}`}>
-                <h2 className={`${styles.productTitle}`}>{product.Base.Title}</h2>
-                <p className={`${styles.productSlogan}`}>{product.Base.Slogan}</p>
-                <p className={`${styles.productDescription}`}>{product.Base.Description}</p>
+                <h2 className={`${styles.productTitle}`}>
+                  {product.Base.Title}
+                </h2>
+                <p className={`${styles.productSlogan}`}>
+                  {product.Base.Slogan}
+                </p>
+                <p className={`${styles.productDescription}`}>
+                  {product.Base.Description}
+                </p>
                 <p className={`${styles.productPrice}`}>
                   {product.Price}
                   {product.MonthlyPrice && (
@@ -49,7 +60,7 @@ const ProductList: React.FC<ProductListProps> = ({ products, onAddToCart, onEarn
                     className={`${styles.actionButtonSecondary}`}
                     onClick={() => onEarnMoney(product)}
                   >
-                    Earn Money
+                    More Details
                   </button>
                 </div>
               </div>
@@ -65,7 +76,10 @@ const ProductList: React.FC<ProductListProps> = ({ products, onAddToCart, onEarn
         <button onClick={onNavigateToBasket} className={`${styles.cartButton}`}>
           Go to Cart
         </button>
-        <button onClick={() => alert("Earn money clicked")} className={`${styles.earnMoneyButton}`}>
+        <button
+          onClick={() => alert('Earn money clicked')}
+          className={`${styles.earnMoneyButton}`}
+        >
           Earn Money
         </button>
       </div>
