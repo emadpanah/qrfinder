@@ -107,7 +107,7 @@ export interface AccountType {
   // balance: string | null;
   // chainId: string | null;
   // network: string | null;
-  userId: string | null;
+  //userId: string | null;
   gbalance: string | null;
 }
 

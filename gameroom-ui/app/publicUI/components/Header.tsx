@@ -11,6 +11,8 @@ import {
   fetchTonBalance,
   fetchBalance,
   fetchDefaultCurrency,
+  createCustomerSync,
+  getAllProducts,
 } from '@/app/lib/api';
 import { useUser } from '@/app/contexts/UserContext';
 import { Balance } from '@/app/lib/definitions';
@@ -25,7 +27,7 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ toggleTheme, currentTheme }) => {
   const [theme, setTheme] = useState<string>('light');
-  const { setUserId, setAccountData } = useUser();
+  const { setUserId, setAccountData, userId } = useUser();
   const [network, setNetwork] = useState<string>('N/A');
 
   useEffect(() => {
@@ -43,21 +45,40 @@ const Header: React.FC<HeaderProps> = ({ toggleTheme, currentTheme }) => {
         const { authToken, isNewToken, userId } =
           await registerUser(telegramID);
         console.log('Server response:', { authToken, isNewToken, userId });
-
         const defaultCurr = await fetchDefaultCurrency();
         console.log('defaultCurr :', defaultCurr._id);
         const gbalance = await fetchBalance(userId, defaultCurr._id);
         console.log('gbalance :', gbalance);
-
+        //register shop user
         setUserId(userId); // Set user ID in context
         setAccountData({
           //address: '',
           //balance: '0',
           //chainId: '0', //wallet.chainId,
           //network: '',
-          userId: userId,
           gbalance: gbalance,
         });
+
+        const customerData = {
+          name: '-',
+          familyName: '-',
+          phoneNumber: telegramID,
+          password: '-',
+          email: '-',
+          gender: 2,
+          birthDate: '-',
+          userId: userId,
+        };
+
+        // Create customer and fetch the token from response
+        const customerSyncResponse = await createCustomerSync(customerData);
+        const tokenShop = customerSyncResponse.token; // Token from response
+
+        console.log('Customer created successfully:', customerSyncResponse);
+
+        // Now fetch all products using the received token
+        const products = await getAllProducts(tokenShop);
+        console.log('Products fetched:', products);
       } catch (error) {
         console.error('Error during registration:', error);
       }

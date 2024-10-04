@@ -475,15 +475,47 @@ export const fetchTonBalance = async (
   }
 };
 
-const shopServiceUrl = process.env.NEXT_PUBLIC_SHOP_SERVICE_URL;
-
 // Axios instance for shop APIs
-export const shopApi = axios.create({
+const shopServiceUrl = process.env.NEXT_PUBLIC_SHOP_API_DOMAIN; // from .env
+const shopApi = axios.create({
   baseURL: shopServiceUrl,
   headers: {
     'Content-Type': 'application/json',
   },
 });
+
+export const createCustomerSync = async (customerData: {
+  name: string;
+  familyName: string;
+  phoneNumber: string;
+  password: string;
+  email: string;
+  gender: number;
+  birthDate: string;
+  userId: string;
+}) => {
+  try {
+    console.log('SHOP_API_DOMAIN', process.env.NEXT_PUBLIC_SHOP_API_DOMAIN);
+    console.log(
+      'NEXT_PUBLIC_APP_BASE_URL',
+      process.env.NEXT_PUBLIC_APP_BASE_URL,
+    );
+    const response = await shopApi.post(
+      '/api/CreateCustomerSync', // API endpoint
+      {
+        ...customerData,
+        apiKey: process.env.NEXT_PUBLIC_SHOP_API_SECRECT, // From .env
+      },
+      {
+        headers: { 'x-shop-token': process.env.NEXT_PUBLIC_X_SHOP_TOKEN }, // Token from .env
+      },
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error creating customer sync:', error);
+    throw error;
+  }
+};
 
 export const addToCart = async (cartItem: CartItem, shopToken: string) => {
   try {
@@ -493,25 +525,6 @@ export const addToCart = async (cartItem: CartItem, shopToken: string) => {
     return response.data;
   } catch (error) {
     console.error('Error adding to cart:', error);
-    throw error;
-  }
-};
-
-export const createCustomerSync = async (
-  customerData: CustomerSyncModel,
-  shopToken: string,
-) => {
-  try {
-    const response = await shopApi.post(
-      '/shop/createCustomerSync',
-      customerData,
-      {
-        headers: { 'x-shop-token': shopToken },
-      },
-    );
-    return response.data;
-  } catch (error) {
-    console.error('Error creating customer sync:', error);
     throw error;
   }
 };
@@ -528,34 +541,18 @@ export const checkout = async (checkoutDto: CheckoutDto, shopToken: string) => {
   }
 };
 
-export const getAllProducts = async (
-  pageNumber: number,
-  specCategoryId: string,
-  langId: string,
-  shopToken: string,
-  options?: {
-    pageSize?: number;
-    catIds?: string;
-    brandsIds?: string;
-    filter?: string;
-    tagIds?: string;
-    valIds?: string;
-    minPrice?: string;
-    maxPrice?: string;
-    justInWish?: boolean;
-    tagTitles?: string;
-    productType?: string;
-  },
-) => {
+export const getAllProducts = async (token: string) => {
   try {
-    const response = await api.get('/shop/getAllProducts', {
+    const response = await shopApi.get('/api/GetAllProducts', {
       params: {
-        pageNumber,
-        specCategoryId,
-        langId,
-        ...options,
+        langId: 'f018d2b5-71df-4d1a-9ea4-277811f71c02',
+        specCategoryId: '879bc488-2047-4c21-b6ec-7f9a4284cafc',
+        pageNumber: 0,
       },
-      headers: { 'x-shop-token': shopToken },
+      headers: {
+        'x-shop-token': process.env.NEXT_PUBLIC_X_SHOP_TOKEN, // Shop token from .env
+        Authorization: `Bearer ${token}`, // Authorization Bearer token
+      },
     });
     return response.data;
   } catch (error) {

@@ -1,22 +1,36 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Achievement, AchievementSelectedRef } from '@/app/lib/definitions';
-import { fetchCampaignById, fetchSelFullAchisRefByUserIdCamId } from '@/app/lib/api';
+import {
+  fetchCampaignById,
+  fetchSelFullAchisRefByUserIdCamId,
+} from '@/app/lib/api';
 import { useUser } from '@/app/contexts/UserContext';
 import styles from '../css/qrApp.module.css';
-import { calculateRemainingDays, calculateTotalDays, shortenAddress } from '../../lib/utils';
+import {
+  calculateRemainingDays,
+  calculateTotalDays,
+  shortenAddress,
+} from '../../lib/utils';
 
 interface InviteAchievementProps {
   achievement: Achievement;
 }
 
-const InviteAchievement: React.FC<InviteAchievementProps> = ({ achievement }) => {
-  const [selectedAchievementsRef, setSelectedAchievementsRef] = useState<AchievementSelectedRef[]>([]);
+const InviteAchievement: React.FC<InviteAchievementProps> = ({
+  achievement,
+}) => {
+  const [selectedAchievementsRef, setSelectedAchievementsRef] = useState<
+    AchievementSelectedRef[]
+  >([]);
   const { accountData, userId, updateBalance } = useUser();
   const [isOwner, setIsOwner] = useState<boolean>(false);
   const [isAchievementComplete, setIsAchievementComplete] = useState(false);
-  
+
   const remainingDays = calculateRemainingDays(achievement.expirationDate);
-  const totalDays = calculateTotalDays(achievement.startDate, achievement.expirationDate);
+  const totalDays = calculateTotalDays(
+    achievement.startDate,
+    achievement.expirationDate,
+  );
   const passedDays = totalDays - remainingDays;
 
   // Calculate the number of invited users and the target
@@ -34,7 +48,8 @@ const InviteAchievement: React.FC<InviteAchievementProps> = ({ achievement }) =>
         document.getElementById('token-count')!.textContent = count.toString();
       } else {
         clearInterval(interval);
-        document.getElementById('token-count')!.textContent = achievement.reward.tokens.toString();
+        document.getElementById('token-count')!.textContent =
+          achievement.reward.tokens.toString();
       }
     }, 15);
 
@@ -45,10 +60,13 @@ const InviteAchievement: React.FC<InviteAchievementProps> = ({ achievement }) =>
     const fetchData = async () => {
       try {
         const campaign = await fetchCampaignById(achievement.campaignId);
-        if (campaign.ownerAddress === accountData.address) {
+        if (campaign.ownerAddress === userId) {
           setIsOwner(true);
         }
-        const selectedRefs = await fetchSelFullAchisRefByUserIdCamId(userId!, achievement.campaignId);
+        const selectedRefs = await fetchSelFullAchisRefByUserIdCamId(
+          userId!,
+          achievement.campaignId,
+        );
         setSelectedAchievementsRef(selectedRefs);
 
         if (selectedRefs.length >= targetInvitations) {
@@ -61,34 +79,49 @@ const InviteAchievement: React.FC<InviteAchievementProps> = ({ achievement }) =>
     };
 
     fetchData();
-  }, [accountData.address, userId, achievement.campaignId, targetInvitations, updateBalance]);
+  }, [userId, achievement.campaignId, targetInvitations, updateBalance]);
 
   return (
     <div className={styles.qrAchievement}>
-      <div className="relative border border-gray-300 p-1 pl-6 pr-6 pb-1 mt-4  mb-4">
-        <h1 className="text-xl text-center font-semibold pt-1 relative pb-1">
+      <div className="relative mb-4 mt-4 border border-gray-300 p-1 pb-1 pl-6  pr-6">
+        <h1 className="relative pb-1 pt-1 text-center text-xl font-semibold">
           {achievement.name}
         </h1>
         <p className="text-center">
-          <span id="token-count" className={isAchievementComplete ? `${styles.greenText}` : ''} style={{ fontSize: '4rem' }}>0</span><span style={{ color: '#38a169', fontSize: '2rem' }}>g</span>
+          <span
+            id="token-count"
+            className={isAchievementComplete ? `${styles.greenText}` : ''}
+            style={{ fontSize: '4rem' }}
+          >
+            0
+          </span>
+          <span style={{ color: '#38a169', fontSize: '2rem' }}>g</span>
         </p>
         <div className="relative pt-1">
-          <div className="flex mb-2 items-center justify-between">
+          <div className="mb-2 flex items-center justify-between">
             <div>
-              <span className="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-red-600 bg-red-200">
+              <span className="inline-block rounded-full bg-red-200 px-2 py-1 text-xs font-semibold uppercase text-red-600">
                 {passedDays} / {totalDays} days
               </span>
             </div>
             <div className="text-right">
-              <span className="text-xs font-semibold inline-block text-blue-600">
+              <span className="inline-block text-xs font-semibold text-blue-600">
                 Days Progress
               </span>
             </div>
           </div>
-          <div className="overflow-hidden h-2 mb-1 text-xs flex rounded bg-red-200" title={`${remainingDays} days remaining`}>
-            <div style={{ width: `${(passedDays / totalDays) * 100}%` }} className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-red-500"></div>
+          <div
+            className="mb-1 flex h-2 overflow-hidden rounded bg-red-200 text-xs"
+            title={`${remainingDays} days remaining`}
+          >
+            <div
+              style={{ width: `${(passedDays / totalDays) * 100}%` }}
+              className="flex flex-col justify-center whitespace-nowrap bg-red-500 text-center text-white shadow-none"
+            ></div>
           </div>
-          <p className="text-center text-xs text-red-600">{remainingDays} days remaining</p>
+          <p className="text-center text-xs text-red-600">
+            {remainingDays} days remaining
+          </p>
         </div>
         {isAchievementComplete && (
           <div className={styles.congratsMessage}>
@@ -99,35 +132,40 @@ const InviteAchievement: React.FC<InviteAchievementProps> = ({ achievement }) =>
       </div>
 
       {/* Progress bar for invited users */}
-      <div className="relative border border-gray-300 p-4 mt-4  mb-4">
+      <div className="relative mb-4 mt-4 border border-gray-300  p-4">
         <div className="relative pt-1">
-          <div className="flex mb-2 items-center justify-between">
+          <div className="mb-2 flex items-center justify-between">
             <div>
-              <span className="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-green-600 bg-green-200">
+              <span className="inline-block rounded-full bg-green-200 px-2 py-1 text-xs font-semibold uppercase text-green-600">
                 {invitedUsersCount} / {targetInvitations} invited
               </span>
             </div>
             <div className="text-right">
-              <span className="text-xs font-semibold inline-block text-green-600">
+              <span className="inline-block text-xs font-semibold text-green-600">
                 Invitations Progress
               </span>
             </div>
           </div>
-          <div className="overflow-hidden h-2 mb-1 text-xs flex rounded bg-green-200">
-            <div style={{ width: `${progressPercentage}%` }} className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-green-500"></div>
+          <div className="mb-1 flex h-2 overflow-hidden rounded bg-green-200 text-xs">
+            <div
+              style={{ width: `${progressPercentage}%` }}
+              className="flex flex-col justify-center whitespace-nowrap bg-green-500 text-center text-white shadow-none"
+            ></div>
           </div>
           <p className="text-center text-xs text-green-600">
-            {remainingInvitations > 0 ? `${remainingInvitations} more invitations needed` : 'Invitation target achieved!'}
+            {remainingInvitations > 0
+              ? `${remainingInvitations} more invitations needed`
+              : 'Invitation target achieved!'}
           </p>
         </div>
       </div>
 
       {/* Table for displaying AchievementSelectedRef properties */}
-      <div className="relative border border-gray-300 p-4 mt-4 mb-2">
-        <h2 className="text-l text-center font-semibold relative pb-2">
-          Invitation List 
+      <div className="relative mb-2 mt-4 border border-gray-300 p-4">
+        <h2 className="text-l relative pb-2 text-center font-semibold">
+          Invitation List
         </h2>
-        <table className="table-auto w-full text-center text-xs">
+        <table className="w-full table-auto text-center text-xs">
           <thead>
             <tr>
               <th className="px-4 py-2">achievement</th>
@@ -140,27 +178,35 @@ const InviteAchievement: React.FC<InviteAchievementProps> = ({ achievement }) =>
               selectedAchievementsRef.map((ref) => (
                 <tr key={ref._id.toString()}>
                   <td className="border px-4 py-2">
-                    <div className="relative group">
-                      <span className="cursor-pointer">{shortenAddress(ref.name, 4)}</span>
-                      <div className="absolute hidden group-hover:block bg-gray-700 text-white text-xs rounded py-1 px-4 left-1/2 transform -translate-x-1/2 -translate-y-full">
+                    <div className="group relative">
+                      <span className="cursor-pointer">
+                        {shortenAddress(ref.name, 4)}
+                      </span>
+                      <div className="absolute left-1/2 hidden -translate-x-1/2 -translate-y-full transform rounded bg-gray-700 px-4 py-1 text-xs text-white group-hover:block">
                         {ref.name}
                       </div>
                     </div>
                   </td>
                   <td className="border px-4 py-2">
-                    <div className="relative group">
-                      <span className="cursor-pointer">{shortenAddress(ref.userId.toString(), 6)}</span>
-                      <div className="absolute hidden group-hover:block bg-gray-700 text-white text-xs rounded py-1 px-4 left-1/2 transform -translate-x-1/2 -translate-y-full">
+                    <div className="group relative">
+                      <span className="cursor-pointer">
+                        {shortenAddress(ref.userId.toString(), 6)}
+                      </span>
+                      <div className="absolute left-1/2 hidden -translate-x-1/2 -translate-y-full transform rounded bg-gray-700 px-4 py-1 text-xs text-white group-hover:block">
                         {ref.userId.toString()}
                       </div>
                     </div>
                   </td>
-                  <td className="border px-4 py-2">{new Date(ref.addedDate).toLocaleDateString()}</td>
+                  <td className="border px-4 py-2">
+                    {new Date(ref.addedDate).toLocaleDateString()}
+                  </td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan={3} className="border px-4 py-2">There is no invitation from you.</td>
+                <td colSpan={3} className="border px-4 py-2">
+                  There is no invitation from you.
+                </td>
               </tr>
             )}
           </tbody>

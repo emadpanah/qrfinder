@@ -54,17 +54,17 @@ const Header: React.FC<HeaderProps> = ({ toggleTheme, currentTheme }) => {
           console.log('Address:', tonAddress);
           console.log('Telegram ID:', telegramID);
 
-          const { authToken, isNewToken, userId } = await registerUser({
-            address: tonAddress,
-            telegramID,
-            walletType: wallet.device.appName,
-          });
-          console.log('Server response:', { authToken, isNewToken, userId });
+          // const { authToken, isNewToken, userId } = await registerUser({
+          //   address: tonAddress,
+          //   telegramID,
+          //   walletType: wallet.device.appName,
+          // });
+          // console.log('Server response:', { authToken, isNewToken, userId });
 
           const defaultCurr = await fetchDefaultCurrency();
           console.log('defaultCurr :', defaultCurr._id);
-          const gbalance = await fetchBalance(userId, defaultCurr._id);
-          console.log('gbalance :', gbalance);
+          // const gbalance = await fetchBalance(userId, defaultCurr._id);
+          // console.log('gbalance :', gbalance);
 
           const tonBalance = Number.parseInt(
             await fetchTonBalance(tonAddress, 'mainnet'),
@@ -79,14 +79,14 @@ const Header: React.FC<HeaderProps> = ({ toggleTheme, currentTheme }) => {
           //      tonAddress, tonBalance);
           // }
 
-          setUserId(userId); // Set user ID in context
-          setAccountData({
-            address: tonAddress,
-            balance: tonBalance.toString(),
-            chainId: '0', //wallet.chainId,
-            network: wallet.device.appName,
-            gbalance: gbalance,
-          });
+          // setUserId(userId); // Set user ID in context
+          // setAccountData({
+          //   address: tonAddress,
+          //   balance: tonBalance.toString(),
+          //   chainId: '0', //wallet.chainId,
+          //   network: wallet.device.appName,
+          //   gbalance: gbalance,
+          // });
 
           // let balance;
           // if (wallet.network === 'mainnet') {

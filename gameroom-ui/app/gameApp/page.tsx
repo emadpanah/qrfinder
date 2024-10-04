@@ -40,7 +40,7 @@ const GameAppPage: React.FC = () => {
     // balance: null,
     // chainId: null,
     // network: null,
-    userId: null,
+    //userId: null,
     gbalance: null,
   });
   const [activeSection, setActiveSection] = useState<ActiveSection>(

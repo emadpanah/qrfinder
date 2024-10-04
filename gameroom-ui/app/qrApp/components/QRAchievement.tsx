@@ -1,6 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Achievement, AchievementSelectedFull } from '@/app/lib/definitions';
-import { fetchQrCodesByAchievementId, fetchCampaignById, fetchQrScannedByUser, doneSelectAchievement, fetchDefaultCurrency, fetchBalance, fetchAchievementSelectFullByUA } from '@/app/lib/api';
+import {
+  fetchQrCodesByAchievementId,
+  fetchCampaignById,
+  fetchQrScannedByUser,
+  doneSelectAchievement,
+  fetchDefaultCurrency,
+  fetchBalance,
+  fetchAchievementSelectFullByUA,
+} from '@/app/lib/api';
 import QRAchievementQrView from './QRAchievementQrView';
 import { useUser } from '@/app/contexts/UserContext';
 import styles from '../css/qrApp.module.css';
@@ -21,25 +29,35 @@ const QRAchievement: React.FC<QRAchievementProps> = ({ achievement }) => {
   const [selectedQR, setSelectedQR] = useState<QRScanFull | null>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
   const [isAchievementComplete, setIsAchievementComplete] = useState(false);
-  const [achievementSelected, setAchievementSelected] = useState<AchievementSelectedFull>();
+  const [achievementSelected, setAchievementSelected] =
+    useState<AchievementSelectedFull>();
 
   const remainingDays = calculateRemainingDays(achievement.expirationDate);
-  const totalDays = calculateTotalDays(achievement.startDate, achievement.expirationDate);
+  const totalDays = calculateTotalDays(
+    achievement.startDate,
+    achievement.expirationDate,
+  );
   const passedDays = totalDays - remainingDays;
 
   useEffect(() => {
     const checkOwnership = async () => {
       try {
         const campaign = await fetchCampaignById(achievement.campaignId);
-        if (campaign.ownerAddress === accountData.address) {
+        if (campaign.ownerAddress === userId) {
           setIsOwner(true);
         }
         const qrCodes = await fetchQrCodesByAchievementId(achievement._id);
         setQrCodes(qrCodes);
-        const selected = await fetchAchievementSelectFullByUA(achievement._id, userId!);
+        const selected = await fetchAchievementSelectFullByUA(
+          achievement._id,
+          userId!,
+        );
         if (selected) {
           setAchievementSelected(selected);
-          const scanned = await fetchQrScannedByUser(userId!, selected.achievementId);
+          const scanned = await fetchQrScannedByUser(
+            userId!,
+            selected.achievementId,
+          );
           setqrCodesScanned(scanned);
           if (scanned.length === achievement.qrTarget) {
             const done = await doneSelectAchievement(selected._id);
@@ -55,8 +73,7 @@ const QRAchievement: React.FC<QRAchievementProps> = ({ achievement }) => {
     };
 
     checkOwnership();
-  }, [accountData.address, userId, achievement.qrTarget, achievement.campaignId,
-    achievement._id]);
+  }, [userId, achievement.qrTarget, achievement.campaignId, achievement._id]);
 
   const handleQRClick = (qrCode: QRScanFull) => {
     setSelectedQR(qrCode);
@@ -64,7 +81,10 @@ const QRAchievement: React.FC<QRAchievementProps> = ({ achievement }) => {
   };
 
   const handleOutsideClick = (event: MouseEvent) => {
-    if (dialogRef.current && !dialogRef.current.contains(event.target as Node)) {
+    if (
+      dialogRef.current &&
+      !dialogRef.current.contains(event.target as Node)
+    ) {
       setShowQRDialog(false);
     }
   };
@@ -85,7 +105,8 @@ const QRAchievement: React.FC<QRAchievementProps> = ({ achievement }) => {
         document.getElementById('token-count')!.textContent = count.toString();
       } else {
         clearInterval(interval);
-        document.getElementById('token-count')!.textContent = achievement.reward.tokens.toString();
+        document.getElementById('token-count')!.textContent =
+          achievement.reward.tokens.toString();
       }
     }, 15);
 
@@ -94,30 +115,45 @@ const QRAchievement: React.FC<QRAchievementProps> = ({ achievement }) => {
 
   return (
     <div className={styles.qrAchievement}>
-      <div className="relative border border-gray-300 p-1 pl-6 pr-6 pb-1 ml-6 mt-4 mr-6 mb-4">
-        <h1 className="text-xl text-center font-semibold pt-1 relative pb-1" >
+      <div className="relative mb-4 ml-6 mr-6 mt-4 border border-gray-300 p-1 pb-1 pl-6 pr-6">
+        <h1 className="relative pb-1 pt-1 text-center text-xl font-semibold">
           {achievement.name}
         </h1>
         <p className="text-center">
-          <span id="token-count" className={isAchievementComplete ? `${styles.greenText}` : ''} style={{ fontSize: '4rem' }}>0</span><span style={{ color: '#38a169', fontSize: '2rem' }}>g</span>
+          <span
+            id="token-count"
+            className={isAchievementComplete ? `${styles.greenText}` : ''}
+            style={{ fontSize: '4rem' }}
+          >
+            0
+          </span>
+          <span style={{ color: '#38a169', fontSize: '2rem' }}>g</span>
         </p>
         <div className="relative pt-1">
-          <div className="flex mb-2 items-center justify-between">
+          <div className="mb-2 flex items-center justify-between">
             <div>
-              <span className="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-red-600 bg-red-200">
+              <span className="inline-block rounded-full bg-red-200 px-2 py-1 text-xs font-semibold uppercase text-red-600">
                 {passedDays} / {totalDays} days
               </span>
             </div>
             <div className="text-right">
-              <span className="text-xs font-semibold inline-block text-blue-600 ">
+              <span className="inline-block text-xs font-semibold text-blue-600 ">
                 Days Progress
               </span>
             </div>
           </div>
-          <div className="overflow-hidden h-2 mb-1 text-xs flex rounded bg-red-200" title={`${remainingDays} days remaining`}>
-            <div style={{ width: `${(passedDays / totalDays) * 100}%` }} className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-red-500"></div>
+          <div
+            className="mb-1 flex h-2 overflow-hidden rounded bg-red-200 text-xs"
+            title={`${remainingDays} days remaining`}
+          >
+            <div
+              style={{ width: `${(passedDays / totalDays) * 100}%` }}
+              className="flex flex-col justify-center whitespace-nowrap bg-red-500 text-center text-white shadow-none"
+            ></div>
           </div>
-          <p className="text-center text-xs text-red-600">{remainingDays} days remaining</p>
+          <p className="text-center text-xs text-red-600">
+            {remainingDays} days remaining
+          </p>
         </div>
         {isAchievementComplete && (
           <div className={styles.congratsMessage}>
@@ -126,13 +162,17 @@ const QRAchievement: React.FC<QRAchievementProps> = ({ achievement }) => {
           </div>
         )}
       </div>
-      <div className="relative border border-gray-300 p-1 pl-6 pr-6 ml-6 mt-4 mr-6 mb-4">
-        <h2 className="text-l text-center font-semibold relative pb-2" >
+      <div className="relative mb-4 ml-6 mr-6 mt-4 border border-gray-300 p-1 pl-6 pr-6">
+        <h2 className="text-l relative pb-2 text-center font-semibold">
           Scanned QR Codes
         </h2>
         <div className={styles.qrCodeGrid}>
           {qrCodesScanned.map((qrCode, index) => (
-            <div key={index} className={styles.qrThumbnail} onClick={() => handleQRClick(qrCode)}>
+            <div
+              key={index}
+              className={styles.qrThumbnail}
+              onClick={() => handleQRClick(qrCode)}
+            >
               <QRCodeSVG value={qrCode.link} size={64} />
               <p className={styles.qrOrder}>Order: {qrCode.order}</p>
             </div>
@@ -146,32 +186,49 @@ const QRAchievement: React.FC<QRAchievementProps> = ({ achievement }) => {
           )}
         </div>
         <div className="relative pt-1">
-          <div className="flex mb-2 items-center justify-between">
+          <div className="mb-2 flex items-center justify-between">
             <div>
-              <span className="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-green-600 bg-green-200">
-                {Math.round((qrCodesScanned.length / achievement.qrTarget) * 100)}%
+              <span className="inline-block rounded-full bg-green-200 px-2 py-1 text-xs font-semibold uppercase text-green-600">
+                {Math.round(
+                  (qrCodesScanned.length / achievement.qrTarget) * 100,
+                )}
+                %
               </span>
             </div>
             <div className="text-right">
-              <span className="text-xs font-semibold inline-block text-green-600">
+              <span className="inline-block text-xs font-semibold text-green-600">
                 Progress
               </span>
             </div>
           </div>
-          <div className="overflow-hidden h-2 mb-1 text-xs flex rounded bg-green-200">
-            <div style={{ width: `${(qrCodesScanned.length / achievement.qrTarget) * 100}%` }} className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-green-500"></div>
+          <div className="mb-1 flex h-2 overflow-hidden rounded bg-green-200 text-xs">
+            <div
+              style={{
+                width: `${(qrCodesScanned.length / achievement.qrTarget) * 100}%`,
+              }}
+              className="flex flex-col justify-center whitespace-nowrap bg-green-500 text-center text-white shadow-none"
+            ></div>
           </div>
-          <p className="text-center text-xs text-green-600 ">you need to scan {achievement.qrTarget} from {qrCodes.length} qrcodes</p>
+          <p className="text-center text-xs text-green-600 ">
+            you need to scan {achievement.qrTarget} from {qrCodes.length}{' '}
+            qrcodes
+          </p>
           <p className="text-center text-xs text-red-600 ">
-          {achievement.qrTarget - qrCodesScanned.length} QR codes remaining.
+            {achievement.qrTarget - qrCodesScanned.length} QR codes remaining.
           </p>
         </div>
       </div>
       {isOwner && (
-        <div className="relative border text-center border-gray-300 p-4 ml-6 mt-4 mr-6 mb-4">
-          <h2 className="text-l text-center pt-2 font-semibold mb-2 relative inline-block " style={{ top: '-1rem' }}>
+        <div className="relative mb-4 ml-6 mr-6 mt-4 border border-gray-300 p-4 text-center">
+          <h2
+            className="text-l relative mb-2 inline-block pt-2 text-center font-semibold "
+            style={{ top: '-1rem' }}
+          >
             QR Codes
-            <p className='text-xs text-red-500'>campaign owner section, print qr codes and put them in different places</p>
+            <p className="text-xs text-red-500">
+              campaign owner section, print qr codes and put them in different
+              places
+            </p>
           </h2>
           <QRAchievementQrView qrCodes={qrCodes} />
         </div>
@@ -181,5 +238,3 @@ const QRAchievement: React.FC<QRAchievementProps> = ({ achievement }) => {
 };
 
 export default QRAchievement;
-
-
