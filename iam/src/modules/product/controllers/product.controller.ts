@@ -1,7 +1,8 @@
-import { Controller, Get, Post, Logger, Body } from '@nestjs/common';
+import { Controller, Get, Post, Logger, Body, Query } from '@nestjs/common';
 import { ProductService } from '../services/product.service';
 import { ProductDto } from '../dto/product.dto';
 import { AddToCartDto, CheckoutDto, ConfirmOrderDto, CreateCustomerSyncDto } from '../dto/shop.dto';
+import { Types } from 'mongoose';
 
 
 @Controller('products')
@@ -26,12 +27,6 @@ export class ProductController {
     }).join('\n');
   }
 
-  @Post('create-customer-sync')
-  async createCustomerSync(@Body() createCustomerDto: CreateCustomerSyncDto): Promise<any> {
-    this.logger.log('Creating customer sync - - ', createCustomerDto.shopId);
-    return this.productService.createCustomerSync(createCustomerDto.shopId, createCustomerDto.bodyData);
-  }
-
   @Post('add-to-cart')
   async addToCart(@Body() addToCartDto: AddToCartDto): Promise<any> {
     this.logger.log('Adding product to cart');
@@ -45,10 +40,13 @@ export class ProductController {
   }
 
   @Get('all-products')
-  async getAllProducts(): Promise<string> {
-    const products = await this.productService.getAllProducts();
+  async getAllProducts(@Query('userId') userId: string): Promise<any> {
+    console.log("all-products - user -", userId)
+    const id = new Types.ObjectId(userId);
+    const products = await this.productService.getAllProducts(id);
     this.logger.log('Fetched Products:', products);
     return this.productService.formatProductsList(products);
   }
+
 
 }

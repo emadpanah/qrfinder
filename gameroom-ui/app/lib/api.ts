@@ -537,18 +537,11 @@ export const checkout = async (checkoutDto: CheckoutDto, shopToken: string) => {
   }
 };
 
-export const getAllProducts = async (token: string) => {
+export const getAllProducts = async (userId: Types.ObjectId) => {
   try {
-    const response = await shopApi.get('/api/GetAllProducts', {
-      params: {
-        langId: 'f018d2b5-71df-4d1a-9ea4-277811f71c02',
-        specCategoryId: '879bc488-2047-4c21-b6ec-7f9a4284cafc',
-        pageNumber: 0,
-      },
-      headers: {
-        'x-shop-token': process.env.NEXT_PUBLIC_SHOP_TOKEN, // Shop token from .env
-        Authorization: `Bearer ${token}`, // Authorization Bearer token
-      },
+    console.log("getAllProducts -- user -", userId );
+    const response = await api.get('/products/all-products', {
+      params: { userId: userId.toString() }, // Send userId as a query parameter
     });
     return response.data;
   } catch (error) {
@@ -556,3 +549,29 @@ export const getAllProducts = async (token: string) => {
     throw error;
   }
 };
+
+// export const createCustomerSync = async (customerData: {
+//   name: string;
+//   familyName: string;
+//   phoneNumber: string;
+//   password: string;
+//   email: string;
+//   gender: number;
+//   birthDate: string;
+//   userId: string;
+// }) => {
+//   try {
+//     console.log("createCustomerSync-shopId", shopToken);
+//     const response = await api.post('/iam/create-customer-sync', {
+//       shopId: shopToken, // Shop token from .env
+//       bodyData: customerData, // Send customer data to the backend
+//     });
+//     console.log("createCustomerSync-response.data", response.data);
+
+//     // No need to return the token to the UI, just return confirmation message
+//     return response.data.message; 
+//   } catch (error) {
+//     console.error('Error creating customer sync:', error);
+//     throw error;
+//   }
+// };

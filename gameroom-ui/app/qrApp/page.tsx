@@ -22,6 +22,7 @@ import {
   fetchAchievementById,
   selectAchievement,
   createQrScan,
+  getAllProducts
 } from '@/app/lib/api';
 import { useUser } from '@/app/contexts/UserContext';
 import styles from './css/qrApp.module.css';
@@ -30,6 +31,8 @@ import ProductList from './components/ProductList';
 import ProductDetails from './components/ProductDetails';
 import ProductBasket from './components/ProductBasket';
 import ProductCheckout from './components/ProductCheckout';
+import { Type } from 'react-toastify/dist/utils';
+import { Types } from 'mongoose';
 
 enum ActiveSection {
   Campaigns,
@@ -182,90 +185,97 @@ const QRAppPageContent: React.FC = () => {
     if (hasValidParamsShop) {
       console.log(userId);
       if (userId) {
-        console.log('Loading fake products for shop section');
-        const fakeProducts = [
-          {
-            Base: {
-              Id: 'e91da164-6d86-43bb-bdbf-f670b9ca86b5',
-              MaxCountInCart: 10,
-              Sort: 1,
-              ReleaseDaysCount: 0,
-              HourOfRelease: 0,
-              MinuteOfRelease: 0,
-              JustInCart: false,
-              Title: 'ربات ترید SCALP BOT',
-              Slogan: 'سالیانه',
-              Description: 'This is a description for SCALP BOT Trading Robot.',
-              InternationalCodeValue: 'SCP12345',
-              AdditionalDescription:
-                'Additional features and details of SCALP BOT.',
-              AdditionalValue: 'Advanced AI-based trading',
-              ImagesIds: 'SCP_Image_ca0cb9dc-ff8a-401f-955d-72c536a9f765',
-              Quantity: 1,
-              IsLastQuantity: false,
-              UserName: 'admin',
-            },
-            IsAvailable: true,
-            SmallImage:
-              '/Public/b2fcffb7-4e06-4fa0-b2e2-c1a35a1750bf/image/items/SCP_Image_ca0cb9dc-ff8a-401f-955d-72c536a9f765_.jpeg',
-            Price: '25,797,000 تومان (سالیانه)',
-            MonthlyPrice: '2,199,000 تومان (ماهانه)',
-          },
-          {
-            Base: {
-              Id: '7a79c32b-2a0f-42ec-9ce4-cc9cdfee6292',
-              MaxCountInCart: 20,
-              Sort: 2,
-              ReleaseDaysCount: 0,
-              HourOfRelease: 0,
-              MinuteOfRelease: 0,
-              JustInCart: false,
-              Title: 'دوره مبتدی ترید با ربات ترید هوش مصنوعی',
-              Slogan: '',
-              Description: 'Beginner trading course with AI trading robot.',
-              InternationalCodeValue: 'TRADE001',
-              AdditionalDescription:
-                'Course details for beginner traders using AI robots.',
-              AdditionalValue: 'Complete package for beginners',
-              ImagesIds: 'SCP_Image_69ab9f7d-5f6a-4b6a-9cf9-690cf8173873',
-              Quantity: 1,
-              IsLastQuantity: false,
-              UserName: 'admin',
-            },
-            IsAvailable: true,
-            SmallImage:
-              '/Public/b2fcffb7-4e06-4fa0-b2e2-c1a35a1750bf/image/items/SCP_Image_69ab9f7d-5f6a-4b6a-9cf9-690cf8173873_.jpeg',
-            Price: '1,890,000 تومان',
-          },
-          {
-            Base: {
-              Id: 'b9554aa6-8065-46c8-93f4-a232b10c8c54',
-              MaxCountInCart: 15,
-              Sort: 3,
-              ReleaseDaysCount: 0,
-              HourOfRelease: 0,
-              MinuteOfRelease: 0,
-              JustInCart: false,
-              Title: 'ربات تریدر تلگرامی پرادو',
-              Slogan: 'سالیانه',
-              Description:
-                'Telegram Prado trading bot with various subscription options.',
-              InternationalCodeValue: 'PRADO001',
-              AdditionalDescription: 'Advanced Telegram trading with Prado.',
-              AdditionalValue: 'Multiple subscription packages available',
-              ImagesIds: 'SCP_Image_a09fe10a-29c5-424d-8a22-ac402a3b0f4b',
-              Quantity: 1,
-              IsLastQuantity: false,
-              UserName: 'admin',
-            },
-            IsAvailable: true,
-            SmallImage:
-              '/Public/b2fcffb7-4e06-4fa0-b2e2-c1a35a1750bf/image/items/SCP_Image_a09fe10a-29c5-424d-8a22-ac402a3b0f4b_.jpeg',
-            Price: '39,000,000 تومان (سالیانه)',
-            MonthlyPrice: '3,990,000 تومان (ماهانه)',
-          },
-        ];
-        setProducts(fakeProducts); // Set fake products
+        console.log('Loading products from shop section');
+        const id = new Types.ObjectId(userId);
+        getAllProducts(id)
+          .then((realProducts) => {
+            setProducts(realProducts); // Once resolved, set the products
+            setActiveSection(ActiveSection.Shop); // Switch to shop section
+          })
+        // console.log('Loading fake products for shop section');
+        // const fakeProducts = [
+        //   {
+        //     Base: {
+        //       Id: 'e91da164-6d86-43bb-bdbf-f670b9ca86b5',
+        //       MaxCountInCart: 10,
+        //       Sort: 1,
+        //       ReleaseDaysCount: 0,
+        //       HourOfRelease: 0,
+        //       MinuteOfRelease: 0,
+        //       JustInCart: false,
+        //       Title: 'ربات ترید SCALP BOT',
+        //       Slogan: 'سالیانه',
+        //       Description: 'This is a description for SCALP BOT Trading Robot.',
+        //       InternationalCodeValue: 'SCP12345',
+        //       AdditionalDescription:
+        //         'Additional features and details of SCALP BOT.',
+        //       AdditionalValue: 'Advanced AI-based trading',
+        //       ImagesIds: 'SCP_Image_ca0cb9dc-ff8a-401f-955d-72c536a9f765',
+        //       Quantity: 1,
+        //       IsLastQuantity: false,
+        //       UserName: 'admin',
+        //     },
+        //     IsAvailable: true,
+        //     SmallImage:
+        //       '/Public/b2fcffb7-4e06-4fa0-b2e2-c1a35a1750bf/image/items/SCP_Image_ca0cb9dc-ff8a-401f-955d-72c536a9f765_.jpeg',
+        //     Price: '25,797,000 تومان (سالیانه)',
+        //     MonthlyPrice: '2,199,000 تومان (ماهانه)',
+        //   },
+        //   {
+        //     Base: {
+        //       Id: '7a79c32b-2a0f-42ec-9ce4-cc9cdfee6292',
+        //       MaxCountInCart: 20,
+        //       Sort: 2,
+        //       ReleaseDaysCount: 0,
+        //       HourOfRelease: 0,
+        //       MinuteOfRelease: 0,
+        //       JustInCart: false,
+        //       Title: 'دوره مبتدی ترید با ربات ترید هوش مصنوعی',
+        //       Slogan: '',
+        //       Description: 'Beginner trading course with AI trading robot.',
+        //       InternationalCodeValue: 'TRADE001',
+        //       AdditionalDescription:
+        //         'Course details for beginner traders using AI robots.',
+        //       AdditionalValue: 'Complete package for beginners',
+        //       ImagesIds: 'SCP_Image_69ab9f7d-5f6a-4b6a-9cf9-690cf8173873',
+        //       Quantity: 1,
+        //       IsLastQuantity: false,
+        //       UserName: 'admin',
+        //     },
+        //     IsAvailable: true,
+        //     SmallImage:
+        //       '/Public/b2fcffb7-4e06-4fa0-b2e2-c1a35a1750bf/image/items/SCP_Image_69ab9f7d-5f6a-4b6a-9cf9-690cf8173873_.jpeg',
+        //     Price: '1,890,000 تومان',
+        //   },
+        //   {
+        //     Base: {
+        //       Id: 'b9554aa6-8065-46c8-93f4-a232b10c8c54',
+        //       MaxCountInCart: 15,
+        //       Sort: 3,
+        //       ReleaseDaysCount: 0,
+        //       HourOfRelease: 0,
+        //       MinuteOfRelease: 0,
+        //       JustInCart: false,
+        //       Title: 'ربات تریدر تلگرامی پرادو',
+        //       Slogan: 'سالیانه',
+        //       Description:
+        //         'Telegram Prado trading bot with various subscription options.',
+        //       InternationalCodeValue: 'PRADO001',
+        //       AdditionalDescription: 'Advanced Telegram trading with Prado.',
+        //       AdditionalValue: 'Multiple subscription packages available',
+        //       ImagesIds: 'SCP_Image_a09fe10a-29c5-424d-8a22-ac402a3b0f4b',
+        //       Quantity: 1,
+        //       IsLastQuantity: false,
+        //       UserName: 'admin',
+        //     },
+        //     IsAvailable: true,
+        //     SmallImage:
+        //       '/Public/b2fcffb7-4e06-4fa0-b2e2-c1a35a1750bf/image/items/SCP_Image_a09fe10a-29c5-424d-8a22-ac402a3b0f4b_.jpeg',
+        //     Price: '39,000,000 تومان (سالیانه)',
+        //     MonthlyPrice: '3,990,000 تومان (ماهانه)',
+        //   },
+        // ];
+        // setProducts(fakeProducts); // Set fake products
         setActiveSection(ActiveSection.Shop); // Switch to shop section
       }
     }

@@ -116,7 +116,7 @@ export class IamService {
     return this.userLoginRepository.findLoginHistoryByUserId(id);
   }
 
-  async getShopToken(userId: string): Promise<string | null> {
+  async getShopToken(userId: Types.ObjectId): Promise<string | null> {
     const objectIdUserId = new Types.ObjectId(userId); // Convert string userId to ObjectId
     const latestLogin = await this.userLoginRepository.findLatestLoginByUserId(objectIdUserId);
     if (latestLogin && latestLogin.shopToken) {

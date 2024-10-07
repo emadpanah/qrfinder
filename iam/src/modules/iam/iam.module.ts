@@ -48,5 +48,6 @@ import { CurrencyRepository } from './database/repositories/currency.repository'
     //JwtAuthGuard,
     AuthService
   ],
+  exports: [IamService], 
 })
 export class IamModule {}

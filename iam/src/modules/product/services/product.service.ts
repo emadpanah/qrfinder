@@ -3,11 +3,14 @@ import { RedisRepository } from '../database/repositories/redis.repository';
 import { ProductDto } from '../dto/product.dto';
 import axios, { AxiosInstance } from 'axios';
 import { AddToCartDto, CheckoutDto } from '../dto/shop.dto';
+import { IamService } from 'src/modules/iam/services/iam.service';
+import { Types } from 'mongoose';
 
 @Injectable()
 export class ProductService {
   private shopInstance: AxiosInstance;
-  constructor(private readonly redisRepository: RedisRepository) {
+  //private readonly iamService: IamService;
+  constructor(private readonly redisRepository: RedisRepository,private readonly iamService: IamService) {
     this.shopInstance = axios.create({
       baseURL: process.env.SHOP_API_DOMAIN,
       headers: {
@@ -54,26 +57,7 @@ async getProducts(): Promise<string> {
     });
   }
 
-  async createCustomerSync(shopId: string, bodyData: object): Promise<any> {
-    console.log("createCustomerSync-service--", shopId);
-    const ret = await this.shopInstance.post('/api/CreateCustomerSync', {
-      ...bodyData,
-      apiKey: process.env.SHOP_API_SECRET, // Secret from the IAM backend .env file
-    }, {
-      headers: { 'x-shop-token': shopId }
-    });
-
-
-    // Access only relevant data fields from response
-    const { token, message, userId } = ret.data;
-
-    // Log relevant information
-    console.log('Customer created successfully - token:', token);
-
-    // Return the relevant parts of the response
-    return { token, message, userId };
-
-  }
+  
 
   async clearUserCache(customerToken: string): Promise<void> {
     await this.shopInstance.post('/api/ClearUserCache', {}, {
@@ -97,11 +81,40 @@ async getProducts(): Promise<string> {
     });
   }
 
-  async getAllProducts(): Promise<ProductDto[]> {
-    const products = await this.shopInstance.get('/api/GetAllProducts');
-    return products.data as ProductDto[];
+  // Function to fetch all products
+  async getAllProducts(userId: Types.ObjectId): Promise<any> {
+    const shopToken = await this.iamService.getShopToken(userId);
+
+    if (!shopToken) {
+      throw new Error('No shopToken found for this user');
+    }
+
+    console.log("shoptoken : ", shopToken);
+
+    // Step 2: Call the external shop API to get all products
+    try {
+      const response = await this.shopInstance.get('/api/GetAllProducts', {
+        params: {
+          //langId: 'f018d2b5-71df-4d1a-9ea4-277811f71c02', //farsi lan
+          langId: '763b6410-039d-43d0-83a6-3e8eb8160c9c', //En lan
+          specCategoryId: 'c949fc05-1243-4fa8-80bc-a28c6d4b1665',
+          pageNumber: 0,
+        },
+        headers: {
+          'x-shop-token': process.env.NEXT_PUBLIC_SHOP_TOKEN, // Use the fetched shopToken
+          Authorization: `Bearer ${shopToken}`, // Authorization token
+        },
+      });// Make sure to convert the observable to a promise
+
+      console.log("products", response.data);
+      return response.data;
+
+    } catch (error) {
+      throw new Error(`Error fetching products: ${error.message}`);
+    }
   }
-
-
-
 }
+
+
+
+
