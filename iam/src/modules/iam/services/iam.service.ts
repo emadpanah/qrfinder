@@ -10,9 +10,11 @@ import { UserLoginRepository } from '../database/repositories/user-login.reposit
 import { UserDto, UserInsertDto } from '../dto/user.dto'; // Import UserDto
 import { AuthService } from './auth.service';
 import { TokenExpiredError } from 'jsonwebtoken';
+import axios, { AxiosInstance } from 'axios';
 
 @Injectable()
 export class IamService {
+  private shopInstance: AxiosInstance;
   //private readonly jwtSecret: string = process.env.JWT_SECRET || 'your-secret-key';
   private readonly tokenSecret: string;
 
@@ -21,6 +23,13 @@ export class IamService {
     private readonly userLoginRepository: UserLoginRepository,
     private readonly authService: AuthService,
   ) {
+
+    this.shopInstance = axios.create({
+      baseURL: process.env.SHOP_API_DOMAIN,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
     //@InjectModel(IAMUser.name) private readonly iamUserModel:
     //Model<IAMUserDocument>) {
     // Set the token secret from the environment variable
@@ -89,8 +98,31 @@ export class IamService {
     }
   }
 
+  async createCustomerSync(shopId: string, bodyData: object, userId: Types.ObjectId): Promise<void> {
+    const response = await this.shopInstance.post('/api/CreateCustomerSync', {
+      ...bodyData,
+      apiKey: process.env.SHOP_API_SECRET,
+    }, {
+      headers: { 'x-shop-token': shopId }
+    });
+
+    const { token: shopToken } = response.data;
+
+    // Store shopToken in the login record
+    await this.userLoginRepository.updateLoginWithShopToken(userId, shopToken);
+  }
+
   async getUserLoginHistory(id: Types.ObjectId): Promise<UserLogin[]> {
     return this.userLoginRepository.findLoginHistoryByUserId(id);
+  }
+
+  async getShopToken(userId: string): Promise<string | null> {
+    const objectIdUserId = new Types.ObjectId(userId); // Convert string userId to ObjectId
+    const latestLogin = await this.userLoginRepository.findLatestLoginByUserId(objectIdUserId);
+    if (latestLogin && latestLogin.shopToken) {
+      return latestLogin.shopToken; // Return shopToken if available
+    }
+    return null; // Return null if no shopToken is found
   }
 
   getHello(): string {

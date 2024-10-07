@@ -55,9 +55,24 @@ async getProducts(): Promise<string> {
   }
 
   async createCustomerSync(shopId: string, bodyData: object): Promise<any> {
-    return await this.shopInstance.post('/api/CreateCustomerSync', bodyData, {
+    console.log("createCustomerSync-service--", shopId);
+    const ret = await this.shopInstance.post('/api/CreateCustomerSync', {
+      ...bodyData,
+      apiKey: process.env.SHOP_API_SECRET, // Secret from the IAM backend .env file
+    }, {
       headers: { 'x-shop-token': shopId }
     });
+
+
+    // Access only relevant data fields from response
+    const { token, message, userId } = ret.data;
+
+    // Log relevant information
+    console.log('Customer created successfully - token:', token);
+
+    // Return the relevant parts of the response
+    return { token, message, userId };
+
   }
 
   async clearUserCache(customerToken: string): Promise<void> {

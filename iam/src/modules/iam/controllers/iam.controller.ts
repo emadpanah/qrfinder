@@ -14,6 +14,7 @@ import { UserLogin } from '../database/schemas/user-login.schema';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard'; // Import the guard
 import { Logger } from '@nestjs/common';
 import { Types } from 'mongoose';
+import { CreateCustomerSyncDto } from 'src/modules/product/dto/shop.dto';
 
 @Controller('iam')
 export class IamController {
@@ -49,6 +50,19 @@ export class IamController {
     @Param('id') id: Types.ObjectId,
   ): Promise<UserLogin[]> {
     return this.iamService.getUserLoginHistory(id);
+  }
+
+  @Post('/create-customer-sync') // Updated endpoint
+  async createCustomerSync(
+    @Body() createCustomerDto: CreateCustomerSyncDto,
+  ): Promise<any> {
+    this.logger.log('Creating customer sync for shop ID:', createCustomerDto.shopId);
+    const userId = createCustomerDto.bodyData.userId;
+    // Call the service to handle customer creation and store the shopToken
+    await this.iamService.createCustomerSync(createCustomerDto.shopId, createCustomerDto.bodyData, userId);
+
+    // Return a success message without returning the token
+    return { message: 'Customer created and shop token stored successfully' };
   }
   // ... other IAM-related endpoints
 }

@@ -9,6 +9,7 @@ import {
 
 import { CartItem, CustomerSyncModel, CheckoutDto } from './definitions';
 import { Types } from 'mongoose';
+import { stringify } from 'flatted';
 
 const iamServiceUrl = process.env.NEXT_PUBLIC_IAM_SERVICE_URL;
 const APP_SECRET = process.env.NEXT_PUBLIC_APP_SECRET || 'default_app_secret';
@@ -476,7 +477,9 @@ export const fetchTonBalance = async (
 };
 
 // Axios instance for shop APIs
-const shopServiceUrl = process.env.NEXT_PUBLIC_SHOP_API_DOMAIN; // from .env
+const shopServiceUrl = process.env.NEXT_PUBLIC_SHOP_API_DOMAIN; 
+const shopToken = process.env.NEXT_PUBLIC_SHOP_TOKEN;
+
 const shopApi = axios.create({
   baseURL: shopServiceUrl,
   headers: {
@@ -495,22 +498,15 @@ export const createCustomerSync = async (customerData: {
   userId: string;
 }) => {
   try {
-    console.log('SHOP_API_DOMAIN', process.env.NEXT_PUBLIC_SHOP_API_DOMAIN);
-    console.log(
-      'NEXT_PUBLIC_APP_BASE_URL',
-      process.env.NEXT_PUBLIC_APP_BASE_URL,
-    );
-    const response = await shopApi.post(
-      '/api/CreateCustomerSync', // API endpoint
-      {
-        ...customerData,
-        apiKey: process.env.NEXT_PUBLIC_SHOP_API_SECRECT, // From .env
-      },
-      {
-        headers: { 'x-shop-token': process.env.NEXT_PUBLIC_X_SHOP_TOKEN }, // Token from .env
-      },
-    );
-    return response.data;
+    console.log("createCustomerSync-shopId", shopToken);
+    const response = await api.post('/iam/create-customer-sync', {
+      shopId: shopToken, // Shop token from .env
+      bodyData: customerData, // Send customer data to the backend
+    });
+    console.log("createCustomerSync-response.data", response.data);
+
+    // No need to return the token to the UI, just return confirmation message
+    return response.data.message; 
   } catch (error) {
     console.error('Error creating customer sync:', error);
     throw error;
@@ -550,7 +546,7 @@ export const getAllProducts = async (token: string) => {
         pageNumber: 0,
       },
       headers: {
-        'x-shop-token': process.env.NEXT_PUBLIC_X_SHOP_TOKEN, // Shop token from .env
+        'x-shop-token': process.env.NEXT_PUBLIC_SHOP_TOKEN, // Shop token from .env
         Authorization: `Bearer ${token}`, // Authorization Bearer token
       },
     });

@@ -26,17 +26,15 @@ export class CampaignRepository {
     return campaign;
   }
 
-
   async findAllActiveCampaigns(): Promise<any[]> {
     const collection = this.connection.collection('_qrcampaigns');
-    const now = Date.now(); // Get current timestamp in milliseconds
-    console.log("Current timestamp in milliseconds:", now);
+    const now = new Date();
     return collection.find({ expirationDate: { $gt: now } }).toArray();
   }
-  
 
   async findAllCampaigns(): Promise<any[]> {
     const collection = this.connection.collection('_qrcampaigns');
     return collection.find().toArray();
   }
 }
+ 

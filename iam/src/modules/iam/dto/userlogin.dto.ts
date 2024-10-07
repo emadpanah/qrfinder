@@ -5,7 +5,7 @@ import {
   IsNotEmpty,
   MaxLength,
   MinLength,
-  Length,
+  IsOptional,
   IsDateString,
 } from 'class-validator';
 import { Types } from 'mongoose';
@@ -23,6 +23,11 @@ export class UserLoginDto {
   @MinLength(8)
   @MaxLength(100)
   token: string;
+
+  @IsString()
+  @IsOptional() 
+  @MaxLength(100)
+  shopToken: string;
 
   @IsDateString()
   @IsNotEmpty()

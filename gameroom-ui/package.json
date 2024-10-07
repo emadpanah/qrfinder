@@ -20,6 +20,7 @@
     "bcrypt": "^5.1.1",
     "clsx": "^2.0.0",
     "ethers": "^6.12.1",
+    "flatted": "^3.3.1",
     "i18next": "^23.11.5",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.5.2",

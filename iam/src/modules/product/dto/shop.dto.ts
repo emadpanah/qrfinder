@@ -1,3 +1,5 @@
+import { Types } from "mongoose";
+
 export class AddToCartDto {
     customerToken: string;
     productId: string;

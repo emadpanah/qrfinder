@@ -16,6 +16,7 @@ export class UserLoginRepository {
       userId: userId,
       token: newToken,
       createdDate: Date.now(),
+      shopToken:''
     });
 
     return newToken;
@@ -39,4 +40,26 @@ export class UserLoginRepository {
 
     return userlogins;
   }
+
+  async updateLoginWithShopToken(userId: Types.ObjectId, shopToken: string): Promise<void> {
+    const collection = this.connection.collection('_userlogins');
+    const objectIdUserId = new Types.ObjectId(userId);
+    // Find the latest login entry for the user
+    const latestLogin = await collection.findOne(
+      { userId: objectIdUserId },
+      { sort: { createdDate: -1 } } // Sort by createdDate (or loginDate) in descending order
+    );
+  
+    if (latestLogin) {
+      // Update the shopToken for the latest login
+      await collection.updateOne(
+        { _id: latestLogin._id }, // Use the _id of the most recent login
+        { $set: { shopToken: shopToken } }
+      );
+    } else {
+      console.log(`No login record found for userId: ${userId}`);
+    }
+  }
+  
+
 }

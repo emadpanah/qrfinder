@@ -71,14 +71,12 @@ const Header: React.FC<HeaderProps> = ({ toggleTheme, currentTheme }) => {
         };
 
         // Create customer and fetch the token from response
-        const customerSyncResponse = await createCustomerSync(customerData);
-        const tokenShop = customerSyncResponse.token; // Token from response
+        await createCustomerSync(customerData);
 
-        console.log('Customer created successfully:', customerSyncResponse);
-
+        console.log('Customer created successfully.');
         // Now fetch all products using the received token
-        const products = await getAllProducts(tokenShop);
-        console.log('Products fetched:', products);
+        // const products = await getAllProducts(tokenShop);
+        // console.log('Products fetched:', products);
       } catch (error) {
         console.error('Error during registration:', error);
       }

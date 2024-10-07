@@ -14,6 +14,10 @@ export class UserLogin {
 
   @Prop({ required: true, default: Date.now })
   loginDate: Date;
+
+  @Prop({ type: String, required: false }) 
+  shopToken: string;
+
 }
 
 export const UserLoginSchema = SchemaFactory.createForClass(UserLogin);
