@@ -58,7 +58,6 @@ const ProductList: React.FC<ProductListProps> = ({
                     </p>
                   ) : (
                     <div>
-                      <label htmlFor={`price-select-${product.base.Id}`}>Select Price:</label>
                       <select
                         id={`price-select-${product.base.Id}`}
                         className={styles.priceDropdown}
