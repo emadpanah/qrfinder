@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Product } from '@/app/lib/definitions';
 import styles from '../css/qrApp.module.css';
 
@@ -15,57 +15,91 @@ const ProductList: React.FC<ProductListProps> = ({
   onEarnMoney,
   onNavigateToBasket,
 }) => {
+  const [selectedPrices, setSelectedPrices] = useState<{ [key: string]: string }>({});
+
+  const handlePriceSelect = (productId: string, price: string) => {
+    setSelectedPrices((prevSelectedPrices) => ({
+      ...prevSelectedPrices,
+      [productId]: price,
+    }));
+  };
+
   return (
     <div className={`${styles.productListContainer}`}>
       {/* Scrollable Product List */}
       <div className={`${styles.productScrollContainer}`}>
         {products.length > 0 ? (
-          products.map((product) => (
-            <div key={product.Base.Id} className={`${styles.productCard}`}>
-              <img
-                src={product.SmallImage || 'https://via.placeholder.com/150'}
-                alt={product.Base.Title}
-                className={`${styles.productImage}`}
-              />
-              <div className={`${styles.productDetails}`}>
-                <h2 className={`${styles.productTitle}`}>
-                  {product.Base.Title}
-                </h2>
-                <p className={`${styles.productSlogan}`}>
-                  {product.Base.Slogan}
-                </p>
-                <p className={`${styles.productDescription}`}>
-                  {product.Base.Description}
-                </p>
-                <p className={`${styles.productPrice}`}>
-                  {product.Price}
-                  {product.MonthlyPrice && (
-                    <>
-                      <br />
-                      <span className={`${styles.monthlyPrice}`}>
-                        Monthly: {product.MonthlyPrice}
-                      </span>
-                    </>
+          products.map((product) => {
+            if (!product || !product.base || !product.base.Title || !product.base.Id) {
+              console.error("Invalid product detected:", product);
+              return null; // Skip rendering invalid products
+            }
+
+            const currency = product.language?.currency || ''; // Get the currency if available
+
+            return (
+              <div key={product.base.Id} className={`${styles.productCard}`}>
+                <img
+                  src={product.base.ImagesIds 
+                    ? `https://tradeai.4cash.exchange/public/b2fcffb7-4e06-4fa0-b2e2-c1a35a1750bf/image/items/${product.base.ImagesIds}` 
+                    : 'https://via.placeholder.com/150'}
+                  alt={product.base.Title || 'Product Image'}
+                  className={`${styles.productImage}`}
+                />
+                <div className={`${styles.productDetails}`}>
+                  <h2 className={`${styles.productTitle}`}>
+                    {product.base.Title}
+                  </h2>
+
+                  {/* Conditionally render price dropdown or single price */}
+                  {product.valuePrices && product.valuePrices.length === 1 ? (
+                    <p className={styles.singlePrice}>
+                      {product.valuePrices[0].currentValues[0]?.title} - {product.valuePrices[0].currentPrice.price} {currency}
+                    </p>
+                  ) : (
+                    <div>
+                      <label htmlFor={`price-select-${product.base.Id}`}>Select Price:</label>
+                      <select
+                        id={`price-select-${product.base.Id}`}
+                        className={styles.priceDropdown}
+                        value={selectedPrices[product.base.Id] || ''}
+                        onChange={(e) =>
+                          handlePriceSelect(product.base.Id, e.target.value)
+                        }
+                      >
+                        <option value="">Select a price</option>
+                        {product.valuePrices && product.valuePrices.length > 0 ? (
+                          product.valuePrices.map((priceObj, index) => (
+                            <option key={index} value={priceObj.currentPrice.price}>
+                              {priceObj.currentValues[0]?.title} - {priceObj.currentPrice.price} {currency}
+                            </option>
+                          ))
+                        ) : (
+                          <option disabled>No prices available</option>
+                        )}
+                      </select>
+                    </div>
                   )}
-                </p>
-                {/* Add More Button and Add to Cart */}
-                <div className={`${styles.buttonContainer}`}>
-                  <button
-                    className={`${styles.actionButton}`}
-                    onClick={() => onAddToCart(product)}
-                  >
-                    Add to Cart
-                  </button>
-                  <button
-                    className={`${styles.actionButtonSecondary}`}
-                    onClick={() => onEarnMoney(product)}
-                  >
-                    More Details
-                  </button>
+
+                  {/* Add More Button and Add to Cart */}
+                  <div className={`${styles.buttonContainer}`}>
+                    <button
+                      className={`${styles.actionButton}`}
+                      onClick={() => onAddToCart(product)}
+                    >
+                      Add to Cart
+                    </button>
+                    <button
+                      className={`${styles.actionButtonSecondary}`}
+                      onClick={() => onEarnMoney(product)}
+                    >
+                      More Details
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))
+            );
+          })
         ) : (
           <p className={`${styles.noProducts}`}>No products available</p>
         )}

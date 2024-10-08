@@ -89,7 +89,7 @@ async getProducts(): Promise<string> {
       throw new Error('No shopToken found for this user');
     }
 
-    console.log("shoptoken : ", shopToken);
+    //console.log("shoptoken : ", shopToken);
 
     // Step 2: Call the external shop API to get all products
     try {
@@ -106,8 +106,136 @@ async getProducts(): Promise<string> {
         },
       });// Make sure to convert the observable to a promise
 
-      console.log("products", response.data);
-      return response.data;
+      
+      // const { products } = response.data;
+
+      // console.log("products - - -", products);
+
+      // const formattedProducts = (products.products || []).map((product: any) => {
+      //   return {
+      //     base: {
+      //       Id: product.base.Id,
+      //       MaxCountInCart: product.base.MaxCountInCart,
+      //       Sort: product.base.Sort,
+      //       ReleaseDaysCount: product.base.ReleaseDaysCount,
+      //       HourOfRelease: product.base.HourOfRelease,
+      //       MinuteOfRelease: product.base.MinuteOfRelease,
+      //       JustInCart: product.base.JustInCart,
+      //       Title: product.base.Title,
+      //       RoleTitle: product.base.RoleTitle || '',
+      //       EnTitle: product.base.EnTitle || '',
+      //       Slogan: product.base.Slogan,
+      //       InternationalCodeValue: product.base.InternationalCodeValue,
+      //       Description: product.base.Description,
+      //       EnDescription: product.base.EnDescription || '',
+      //       AdditionalDescription: product.base.AdditionalDescription,
+      //       AdditionalValue: product.base.AdditionalValue,
+      //       TitleParameter: product.base.TitleParameter || '',
+      //       ImagesIds: product.base.ImagesIds,
+      //       Quantity: product.base.Quantity,
+      //       IsLastQuantity: product.base.IsLastQuantity,
+      //       UserName: product.base.UserName,
+      //     },
+      //     createOrderDate: product.createOrderDate,
+      //     daysCountToExpire: product.daysCountToExpire,
+      //     refId: product.refId,
+      //     rateInfo: product.rateInfo,
+      //     isInWish: product.isInWish,
+      //     isMultiPricing: product.isMultiPricing,
+      //     isMultiStorage: product.isMultiStorage,
+      //     lastPrice: product.lastPrice,
+      //     listLastPrice: product.listLastPrice,
+      //     valuePrices: product.valuePrices,
+      //     lastQuantity: product.lastQuantity,
+      //     listLastQuantity: product.listLastQuantity,
+      //     valueStorages: product.valueStorages,
+      //     valuePriceStorages: product.valuePriceStorages,
+      //     isAvailable: product.isAvailable,
+      //     catalogs: product.catalogs,
+      //     catalogsString: product.catalogsString,
+      //     tags: product.tags,
+      //     tagsString: product.tagsString,
+      //     specsAndValue: product.specsAndValue,
+      //     superSpecsAndSelectedValues: product.superSpecsAndSelectedValues,
+      //     mvSpecsAndSelectedValues: product.mvSpecsAndSelectedValues,
+      //     mvSpecsAndSelectedValuesStorage: product.mvSpecsAndSelectedValuesStorage,
+      //     productSCMVCTemp: product.productSCMVCTemp,
+      //     language: product.language,
+      //     largeImage: product.largeImage,
+      //     mediumImage: product.mediumImage,
+      //     smallImage: product.smallImage,
+      //   };
+      // });
+        
+      // console.log("formattedProducts : ", formattedProducts);
+      // return formattedProducts;
+
+      const { products } = response.data;
+
+//console.log("unformatted products - - -", products);
+
+const formattedProducts = (products || []).map((product: any) => {
+  const base = product.base;
+ //Filter out any null products
+  return {
+    base: {
+      Id: base.id || '',
+      MaxCountInCart: base.maxCountInCart || 0,
+      Sort: base.sort || 0,
+      ReleaseDaysCount: base.releaseDaysCount || 0,
+      HourOfRelease: base.hourOfRelease || 0,
+      MinuteOfRelease: base.minuteOfRelease || 0,
+      JustInCart: base.justInCart || false,
+      Title: base.title || 'Unknown Title', // Default to 'Unknown Title' if title is missing
+      RoleTitle: base.roleTitle || '',
+      EnTitle: base.enTitle || '',
+      Slogan: base.slogan || '',
+      InternationalCodeValue: base.internationalCodeValue || '',
+      Description: base.description || '',
+      EnDescription: base.enDescription || '',
+      AdditionalDescription: base.additionalDescription || '',
+      AdditionalValue: base.additionalValue || '',
+      TitleParameter: base.titleParameter || '',
+      ImagesIds: base.imagesIds || '',
+      Quantity: base.quantity || 0,
+      IsLastQuantity: base.isLastQuantity || false,
+      UserName: base.userName || '',
+    },
+    createOrderDate: product.createOrderDate || -1,
+    daysCountToExpire: product.daysCountToExpire || -1,
+    refId: product.refId || '',
+    rateInfo: product.rateInfo || {},
+    isInWish: product.isInWish || false,
+    isMultiPricing: product.isMultiPricing || false,
+    isMultiStorage: product.isMultiStorage || false,
+    lastPrice: product.lastPrice || 0,
+    listLastPrice: product.listLastPrice || [],
+    valuePrices: product.valuePrices || [],
+    lastQuantity: product.lastQuantity || 0,
+    listLastQuantity: product.listLastQuantity || [],
+    valueStorages: product.valueStorages || [],
+    valuePriceStorages: product.valuePriceStorages || null,
+    isAvailable: product.isAvailable || false,
+    catalogs: product.catalogs || null,
+    catalogsString: product.catalogsString || '',
+    tags: product.tags || null,
+    tagsString: product.tagsString || '',
+    specsAndValue: product.specsAndValue || null,
+    superSpecsAndSelectedValues: product.superSpecsAndSelectedValues || null,
+    mvSpecsAndSelectedValues: product.mvSpecsAndSelectedValues || null,
+    mvSpecsAndSelectedValuesStorage: product.mvSpecsAndSelectedValuesStorage || null,
+    productSCMVCTemp: product.productSCMVCTemp || null,
+    language: product.language || null,
+    largeImage: product.largeImage || null,
+    mediumImage: product.mediumImage || null,
+    smallImage: product.smallImage || null,
+  };
+}).filter(product => product !== null); // Filter out any null products
+
+
+console.log("formattedProducts : ", formattedProducts);
+return formattedProducts;
+
 
     } catch (error) {
       throw new Error(`Error fetching products: ${error.message}`);

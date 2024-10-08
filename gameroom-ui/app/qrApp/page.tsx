@@ -276,7 +276,7 @@ const QRAppPageContent: React.FC = () => {
         //   },
         // ];
         // setProducts(fakeProducts); // Set fake products
-        setActiveSection(ActiveSection.Shop); // Switch to shop section
+        //setActiveSection(ActiveSection.Shop); // Switch to shop section
       }
     }
   }, [searchParams, userId]);
@@ -329,11 +329,11 @@ const QRAppPageContent: React.FC = () => {
 
   const handleAddToBasket = (product: Product) => {
     setBasket([...basket, product]);
-    alert(`${product.Base.Title} added to basket`);
+    alert(`${product.base.Title} added to basket`);
   };
 
   const handleRemoveFromBasket = (productId: string) => {
-    setBasket(basket.filter((product) => product.Base.Id !== productId));
+    setBasket(basket.filter((product) => product.base.Id !== productId));
   };
 
   const handleCheckout = () => {
@@ -367,13 +367,13 @@ const QRAppPageContent: React.FC = () => {
   const handleAddToCart = (product: Product) => {
     // Logic for adding the product to the cart
     setBasket([...basket, product]);
-    alert(`${product.Base.Title} added to cart`);
+    alert(`${product.base.Title} added to cart`);
   };
 
   // Add the handler for onEarnMoney
   const handleEarnMoney = (product: Product) => {
     // Logic for earning money from the product
-    alert(`Earn money from ${product.Base.Title}`);
+    alert(`Earn money from ${product.base.Title}`);
   };
 
   const renderActiveSection = () => {

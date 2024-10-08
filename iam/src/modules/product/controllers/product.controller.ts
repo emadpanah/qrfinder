@@ -44,8 +44,8 @@ export class ProductController {
     console.log("all-products - user -", userId)
     const id = new Types.ObjectId(userId);
     const products = await this.productService.getAllProducts(id);
-    this.logger.log('Fetched Products:', products);
-    return this.productService.formatProductsList(products);
+    //this.logger.log('Fetched Products:', products);
+    return products; //this.productService.formatProductsList(products);
   }
 
 

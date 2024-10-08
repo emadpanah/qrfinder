@@ -491,7 +491,7 @@
 
 .productImage {
   width: 100%;
-  height: 150px;
+  height: 300px;
   object-fit: cover;
   border-radius: 5px;
 }
@@ -558,4 +558,32 @@
 
 .cartButton:last-child {
   margin-right: 0; /* Ensure no margin on the last button */
+}
+
+/* Dropdown styling */
+.priceDropdown {
+  width: 100%;
+  padding: 8px;
+  font-size: 16px;
+  border-radius: 5px;
+  border: 1px solid #ddd;
+  background-color: #f8f9fa; /* Light background for dropdown */
+  color: #333;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.priceDropdown:focus {
+  outline: none;
+  border-color: #007bff; /* Blue border on focus */
+}
+
+.priceDropdown option {
+  background-color: #1b1b2f; /* Match product card background */
+  color: white;
+  padding: 10px;
+}
+
+.priceDropdown option:hover {
+  background-color: #007bff; /* Blue background on hover */
 }

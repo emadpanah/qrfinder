@@ -193,11 +193,15 @@ export interface ProductBase {
   Quantity: number;
   IsLastQuantity: boolean;
   UserName: string;
+
+  // Optional fields for price details (removed ValuePrices from here):
+  LastPrice?: number | null;
+  ListLastPrice?: string[] | null;
 }
 
-export interface Product {
-  Base: ProductBase;
-  CurrentValues?: string[];
+export interface Product { 
+  base: ProductBase;
+  CurrentValues?: string[]; // Additional fields for product variations
   CurrentSuperValues?: string[] | null;
   ValuePriceStorages?: string[] | null;
   IsAvailable: boolean;
@@ -210,12 +214,40 @@ export interface Product {
   MVSpecsAndSelectedValues?: string[] | null;
   MVSpecsAndSelectedValuesStorage?: string[] | null;
   ProductSCMVCTemp?: string[] | null;
-  Language?: string | null;
+  language?: { // Changed to lowercase 'language'
+    addedDate: string;
+    currency: string; // Added the 'currency' field as seen in the data
+    isoCode: string;
+    title: string;
+  } | null;
   LargeImage?: string | null;
   MediumImage?: string | null;
   SmallImage?: string | null;
 
-  // Add the Price and MonthlyPrice properties here:
-  Price?: string;
-  MonthlyPrice?: string;
+  // Price-related fields added:
+  Price?: string;           // Regular price
+  MonthlyPrice?: string;     // Monthly subscription price (if applicable)
+
+  // Additional fields:
+  CreateOrderDate?: number;  // Date when order was created (if applicable)
+  DaysCountToExpire?: number;  // Number of days to expire
+  RefId?: string;  // Reference ID (if applicable)
+  RateInfo?: {     // Rate information
+    AverageRateValue: number;
+    CurrentUserRateValue: number;
+    NumberOfUsers: number;
+    SumOfRateValue: number;
+  };
+
+  // **Moved ValuePrices to Product interface**:
+  valuePrices?: Array<{
+    currentPrice: {
+      id: string;
+      price: string;
+    };
+    currentValues: Array<{
+      id: string;
+      title: string;
+    }>;
+  }> | null;
 }
