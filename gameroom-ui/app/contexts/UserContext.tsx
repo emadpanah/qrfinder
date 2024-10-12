@@ -24,7 +24,8 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
     //chainId: null,
     //network: null,
     //userId: null,
-    gbalance: null,
+    gbalance: 0,
+    
   });
 
   const updateBalance = async () => {

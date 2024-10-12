@@ -14,7 +14,8 @@ import { UserLogin } from '../database/schemas/user-login.schema';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard'; // Import the guard
 import { Logger } from '@nestjs/common';
 import { Types } from 'mongoose';
-import { CreateCustomerSyncDto } from 'src/modules/product/dto/shop.dto';
+//import { CreateCustomerSyncDto } from 'src/modules/product/dto/shopapi.dto';
+import { CreateCustomerSyncDto } from '../../product/dto/shopapi.dto';
 
 @Controller('iam')
 export class IamController {

@@ -12,9 +12,6 @@ interface AchievementDetailsProps {
 const AchievementDetails: React.FC<AchievementDetailsProps> = ({ achievement, onBack }) => {
   return (
     <div>
-      <button onClick={onBack} className="text-white focus:outline-none">
-        <FaArrowLeft />
-      </button>
       {achievement.achievementType === 'qrcode' ? (
         <QRAchievement achievement={achievement} />
       ) : achievement.achievementType === 'inviteuser' ? (

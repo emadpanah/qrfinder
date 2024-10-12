@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Logger, Body, Query } from '@nestjs/common';
 import { ProductService } from '../services/product.service';
 import { ProductDto } from '../dto/product.dto';
-import { AddToCartDto, CheckoutDto, ConfirmOrderDto, CreateCustomerSyncDto } from '../dto/shop.dto';
+import { AddToCartDto, CheckoutDto, ConfirmOrderDto, CreateCustomerSyncDto } from '../dto/shopapi.dto';
 import { Types } from 'mongoose';
 
 

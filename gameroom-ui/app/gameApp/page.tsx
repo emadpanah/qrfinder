@@ -41,7 +41,7 @@ const GameAppPage: React.FC = () => {
     // chainId: null,
     // network: null,
     //userId: null,
-    gbalance: null,
+    gbalance: 0,
   });
   const [activeSection, setActiveSection] = useState<ActiveSection>(
     ActiveSection.MetaMaskLogin,

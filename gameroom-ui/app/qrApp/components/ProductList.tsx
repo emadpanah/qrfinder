@@ -5,7 +5,7 @@ import styles from '../css/qrApp.module.css';
 interface ProductListProps {
   products: Product[];
   onAddToCart: (product: Product) => void;
-  onEarnMoney: (product: Product) => void;
+  onEarnMoney: () => void;
   onNavigateToBasket: () => void;
 }
 
@@ -54,7 +54,7 @@ const ProductList: React.FC<ProductListProps> = ({
                   {/* Conditionally render price dropdown or single price */}
                   {product.valuePrices && product.valuePrices.length === 1 ? (
                     <p className={styles.singlePrice}>
-                      {product.valuePrices[0].currentValues[0]?.title} - {product.valuePrices[0].currentPrice.price} {currency}
+                      {product.valuePrices[0].currentValues[0]?.title} - {parseInt(product.valuePrices[0].currentPrice.price).toLocaleString()} {currency}
                     </p>
                   ) : (
                     <div>
@@ -66,11 +66,11 @@ const ProductList: React.FC<ProductListProps> = ({
                           handlePriceSelect(product.base.Id, e.target.value)
                         }
                       >
-                        <option value="">Select a price</option>
+                        <option value="">Select a time</option>
                         {product.valuePrices && product.valuePrices.length > 0 ? (
                           product.valuePrices.map((priceObj, index) => (
                             <option key={index} value={priceObj.currentPrice.price}>
-                              {priceObj.currentValues[0]?.title} - {priceObj.currentPrice.price} {currency}
+                              {priceObj.currentValues[0]?.title} - {parseInt(priceObj.currentPrice.price).toLocaleString()} {currency}
                             </option>
                           ))
                         ) : (
@@ -90,7 +90,7 @@ const ProductList: React.FC<ProductListProps> = ({
                     </button>
                     <button
                       className={`${styles.actionButtonSecondary}`}
-                      onClick={() => onEarnMoney(product)}
+                      onClick={() => onAddToCart(product)}
                     >
                       More Details
                     </button>
@@ -110,7 +110,7 @@ const ProductList: React.FC<ProductListProps> = ({
           Go to Cart
         </button>
         <button
-          onClick={() => alert('Earn money clicked')}
+          onClick={() => onEarnMoney()}
           className={`${styles.earnMoneyButton}`}
         >
           Earn Money

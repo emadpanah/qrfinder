@@ -351,7 +351,7 @@ const QRAppPageContent: React.FC = () => {
       activeSection === ActiveSection.CampaignDetails ||
       activeSection === ActiveSection.AchievementDetails
     ) {
-      setActiveSection(ActiveSection.Campaigns);
+      setActiveSection(ActiveSection.Shop);
     } else {
       setActiveSection(ActiveSection.Campaigns);
     }
@@ -370,11 +370,38 @@ const QRAppPageContent: React.FC = () => {
     alert(`${product.base.Title} added to cart`);
   };
 
-  // Add the handler for onEarnMoney
-  const handleEarnMoney = (product: Product) => {
-    // Logic for earning money from the product
-    alert(`Earn money from ${product.base.Title}`);
+  const handleEarnMoney = () => {
+    // Achievement ID to select
+    console.log("eran : ");
+    const achievementId = "670a82e0196204f8d4ff1fa3";
+    const parentId = searchParams.get('p'); // Getting the parentId from URL if available
+  
+    if (userId) {
+      // Select the achievement with or without parentId depending on its availability
+      const parentParam = parentId ? parentId : '0'; // If parentId exists, use it, otherwise use '0'
+  
+      console.log("parentId : ", parentId);
+      selectAchievement(achievementId, userId, parentParam)
+        .then((achievement) => {
+          setSelectedAchievementFull(achievement);
+          fetchAchievementById(achievementId)
+            .then((ach) => {
+              setSelectedAchievement(ach);
+              setActiveSection(ActiveSection.AchievementDetails);
+            })
+            .catch((error) =>
+              console.error('Error fetching achievement:', error),
+            );
+        })
+        .catch((error) =>
+          console.error('Error selecting achievement:', error),
+        );
+    } else {
+      console.error('User not logged in');
+    }
   };
+  
+  
 
   const renderActiveSection = () => {
     console.log(`Rendering section: ${activeSection}`);

@@ -29,33 +29,33 @@ async function bootstrap() {
   const currencyService = app.get(BalanceService);
 
 // Create default currency
-const defaultCurrency: CurrencyDto = {
-  name: 'GainToken',
-  symbol: 'g',
-  type: 'crypto',
-  isDefault: true,
-  _id: new Types.ObjectId(),
-};
+// const defaultCurrency: CurrencyDto = {
+//   name: 'GainToken',
+//   symbol: 'g',
+//   type: 'crypto',
+//   isDefault: true,
+//   _id: new Types.ObjectId(),
+// };
 
-const tonCurrency: CurrencyDto = {
-  name: 'TON',
-  symbol: 'TON',
-  type: 'crypto',
-  isDefault: false,
-  _id: new Types.ObjectId(),
-};
+// const tonCurrency: CurrencyDto = {
+//   name: 'TON',
+//   symbol: 'TON',
+//   type: 'crypto',
+//   isDefault: false,
+//   _id: new Types.ObjectId(),
+// };
 
-const ethereumCurrency: CurrencyDto = {
-  name: 'Ethereum',
-  symbol: 'ETH',
-  type: 'crypto',
-  isDefault: false,
-  _id: new Types.ObjectId(),
-};
+// const ethereumCurrency: CurrencyDto = {
+//   name: 'Ethereum',
+//   symbol: 'ETH',
+//   type: 'crypto',
+//   isDefault: false,
+//   _id: new Types.ObjectId(),
+// };
 
-await currencyService.createCurrency(defaultCurrency);
-await currencyService.createCurrency(tonCurrency);
-await currencyService.createCurrency(ethereumCurrency);
+// await currencyService.createCurrency(defaultCurrency);
+// await currencyService.createCurrency(tonCurrency);
+// await currencyService.createCurrency(ethereumCurrency);
 
   // Create Shops
   const maghaziShop: ShopInsertDto = {
@@ -78,28 +78,28 @@ await currencyService.createCurrency(ethereumCurrency);
 
   const juskiShop: ShopInsertDto = {
     shopId: new Types.ObjectId(),
-    name: 'Juski Shop',
-    description: 'Juski Online Shop',
+    name: 'Trade-AI Shop',
+    description: 'Trade-AI Online Shop',
   };
   
 
   const createdMaghaziShop = await shopService.createShop(maghaziShop);
   const createdCaymanShop = await shopService.createShop(caymanShop);
   const createdFourcashShop = await shopService.createShop(fourcashShop);
-  const createdJuskiShop = await shopService.createShop(juskiShop);
+  const createdTradeAIShop = await shopService.createShop(juskiShop);
 
   // Create Campaigns
-  const juskiCampaign: CampaignInsertDto = {
+  const TradeAICampaign: CampaignInsertDto = {
     target:3000,
     reward: { tokens: 4000, products: [] },
     name: 'JUSKI City Hunt',
-    description: 'Join our Achievements and help us to achieve our goals and get token back',
-    shopId: createdJuskiShop._id,
+    description: 'join our campaign to be rich',
+    shopId: createdTradeAIShop._id,
     expirationDate: new Date(new Date().setMonth(new Date().getMonth() + 2)).getTime(),
     videoUrl: `${baseUrl}/shared/qr/video/juski-campaign.mp4`, // Example video URL
     imageUrl: `${baseUrl}/shared/qr/img/juski-campaign.jpg`, // Example image URL
-    ownerTelegramId: null, // Set to null
-    ownerAddress: 'UQArbjQUytXhLEtxoYfNLHv1aS8tGhmRtxWI9XKj_S764NOV', // Default address
+    ownerTelegramId: '6702de479b580201943f04d6', // Set to null
+    ownerAddress: '6702de479b580201943f04d6', // Default address
   };
   
   const maghaziCampaign: CampaignInsertDto = {
@@ -111,8 +111,8 @@ await currencyService.createCurrency(ethereumCurrency);
     expirationDate: new Date(new Date().setMonth(new Date().getMonth() + 2)).getTime(),
     videoUrl: `${baseUrl}/shared/qr/video/maghazi-campaign.mp4`, // Example video URL
     imageUrl: `${baseUrl}/shared/qr/img/maghazi-campaign.jpg`, // Example image URL
-    ownerTelegramId: null, // Set to null
-    ownerAddress: 'UQArbjQUytXhLEtxoYfNLHv1aS8tGhmRtxWI9XKj_S764NOV', // Default address
+    ownerTelegramId: '6702de479b580201943f04d6', // Set to null
+    ownerAddress: '6702de479b580201943f04d6', // Default address
   };
 
   const caymanCampaign: CampaignInsertDto = {
@@ -124,8 +124,8 @@ await currencyService.createCurrency(ethereumCurrency);
     expirationDate: new Date(new Date().setMonth(new Date().getMonth() + 1)).getTime(),
     videoUrl: `${baseUrl}/shared/qr/video/cayman-campaign.mp4`, // Example video URL
     imageUrl: `${baseUrl}/shared/qr/img/cayman-campaign.jpg`, // Example image URL
-    ownerTelegramId: null, // Set to null
-    ownerAddress: 'UQArbjQUytXhLEtxoYfNLHv1aS8tGhmRtxWI9XKj_S764NOV', // Default address
+    ownerTelegramId: '6702de479b580201943f04d6', // Set to null
+    ownerAddress: '6702de479b580201943f04d6', // Default address
   };
 
   const fourcashCampaign: CampaignInsertDto = {
@@ -137,14 +137,14 @@ await currencyService.createCurrency(ethereumCurrency);
     expirationDate: new Date(new Date().setMonth(new Date().getMonth() + 1)).getTime(),
     videoUrl: `${baseUrl}/shared/qr/video/fourcash-campaign.mp4`, // Example video URL
     imageUrl: `${baseUrl}/shared/qr/img/fourcash-campaign.jpg`, // Example image URL
-    ownerTelegramId: null, // Set to null
-    ownerAddress: 'UQArbjQUytXhLEtxoYfNLHv1aS8tGhmRtxWI9XKj_S764NOV', // Default address
+    ownerTelegramId: '6702de479b580201943f04d6', // Set to null
+    ownerAddress: '6702de479b580201943f04d6', // Default address
   };
 
   const createdFourcashCampaign = await campaignService.createCampaign(fourcashCampaign);
   const createdMaghaziCampaign = await campaignService.createCampaign(maghaziCampaign);
   const createdCaymanCampaign = await campaignService.createCampaign(caymanCampaign);
-  const createdJuskiCampaign = await campaignService.createCampaign(juskiCampaign);
+  const createdTradeAICampaign = await campaignService.createCampaign(TradeAICampaign);
 
 
   const addedDatee = new Date();
@@ -200,35 +200,21 @@ await currencyService.createCurrency(ethereumCurrency);
     expirationDate: new Date(new Date().setMonth(new Date().getMonth() + 4)).getTime(),
   };
 
-  const juskiInviteAchievement: AchievementInsertDto = {
-    name: 'JUSKI User Hunt',
-    description: 'invite your friends to this achievement and get 1320 tokens',
-    campaignId: createdJuskiCampaign._id,
+  const tradeAIInviteAchievement: AchievementInsertDto = {
+    name: 'Trade AI User Hunt',
+    description: 'invite 10 friends to this achievement and get 1300 token',
+    campaignId: createdTradeAICampaign._id,
     qrOrderType: 'unordered',
-    qrTarget: 30,
+    qrTarget: 10,
     qrProofByLocation: false,
     achievementType: 'inviteuser',
-    reward: { tokens: 1320, products: [] },
+    reward: { tokens: 1300, products: [] },
     enable: true,
     addedDate: addedDatee.getTime(),
     startDate: startDatee.getTime(),
     expirationDate: new Date(new Date().setMonth(new Date().getMonth() + 4)).getTime(),
   };
 
-  const juskiAchievementUnordered: AchievementInsertDto = {
-    name: 'JUSKI QR Hunt Fereshte Area',
-    description: 'Scan qrcodes to earn 2000 tokens.',
-    campaignId: createdJuskiCampaign._id,
-    qrOrderType: 'unordered',
-    qrTarget: 7,
-    qrProofByLocation: false,
-    achievementType: 'qrcode',
-    reward: { tokens: 3200, products: [] },
-    enable: true,
-    addedDate: addedDate.getTime(),
-    startDate: startDate.getTime(),
-    expirationDate: new Date(new Date().setMonth(new Date().getMonth() + 2)).getTime(),
-  };
 
   const caymanAchievementUnordered: AchievementInsertDto = {
     name: 'Cayman Token QR Hunt InCar',
@@ -261,8 +247,7 @@ await currencyService.createCurrency(ethereumCurrency);
   };
 
   
-  const createdjuskiInviteAchievement = await achievementService.createAchievement(juskiInviteAchievement);
-  const createdJuskiAchievement = await achievementService.createAchievement(juskiAchievementUnordered);
+  const createdjuskiInviteAchievement = await achievementService.createAchievement(tradeAIInviteAchievement);
   const createdFourcashInviteAchievement = await achievementService.createAchievement(fourcashInviteAchievement);
   const createdMaghaziAchievement = await achievementService.createAchievement(maghaziAchievement);
   const createdMaghaziInviteAchievement = await achievementService.createAchievement(maghaziInviteAchievement);
@@ -270,23 +255,6 @@ await currencyService.createCurrency(ethereumCurrency);
   const createdCaymanAchievementOrdered = await achievementService.createAchievement(caymanAchievementOrdered);
 
 
-  for (let i = 1; i <= 9; i++) {
-    const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
-    const qrId = new Types.ObjectId()
-    const qrCodeLink = `${baseUrl}/qrApp?a=${createdJuskiAchievement._id}&p=${qrId}&t=q`;
-    const juskQr: QRCodeInertDto = {
-      link: qrCodeLink,
-      achievementId :createdJuskiAchievement._id,
-      latitude:0,
-      longitude:0,
-      order:i,
-      _id: qrId
-    };
-    const qrCode = await achievementService.createAchievementQrCode(
-      juskQr
-    );
-    console.log(`JUSKI QR Code ${i}: ${qrCode.link}`);
-  }
 
   // Generate QR codes for Maghazi Achievement
   for (let i = 1; i <= 5; i++) {

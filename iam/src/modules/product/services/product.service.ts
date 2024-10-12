@@ -2,8 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { RedisRepository } from '../database/repositories/redis.repository';
 import { ProductDto } from '../dto/product.dto';
 import axios, { AxiosInstance } from 'axios';
-import { AddToCartDto, CheckoutDto } from '../dto/shop.dto';
-import { IamService } from 'src/modules/iam/services/iam.service';
+import { AddToCartDto, CheckoutDto } from '../../product/dto/shopapi.dto';
+//import { CreateCustomerSyncDto } from '../../product/dto/shopapi.dto';
+//import { IamService } from 'src/modules/iam/services/iam.service';
+import { IamService } from '../../iam/services/iam.service';
 import { Types } from 'mongoose';
 
 @Injectable()
@@ -95,8 +97,8 @@ async getProducts(): Promise<string> {
     try {
       const response = await this.shopInstance.get('/api/GetAllProducts', {
         params: {
-          //langId: 'f018d2b5-71df-4d1a-9ea4-277811f71c02', //farsi lan
-          langId: '763b6410-039d-43d0-83a6-3e8eb8160c9c', //En lan
+          langId: 'f018d2b5-71df-4d1a-9ea4-277811f71c02', //farsi lan
+          //langId: '763b6410-039d-43d0-83a6-3e8eb8160c9c', //En lan
           specCategoryId: 'c949fc05-1243-4fa8-80bc-a28c6d4b1665',
           pageNumber: 0,
         },

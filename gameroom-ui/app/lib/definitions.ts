@@ -108,8 +108,7 @@ export interface AccountType {
   // chainId: string | null;
   // network: string | null;
   //userId: string | null;
-  gbalance: string | null;
-}
+  gbalance: number ;}
 
 export interface TapGameModel {
   id: number;

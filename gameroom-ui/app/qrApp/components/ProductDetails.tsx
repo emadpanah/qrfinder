@@ -13,15 +13,15 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ product, onAddToBasket,
   return (
     <div className="product-details-container">
       <button onClick={onNavigateToBasket} className="shopping-cart-btn">Go to Cart</button>
-      <h2>{product.Base.Title}</h2>
+      <h2>{product.base.Title}</h2>
       <img
         src={product.SmallImage || 'https://via.placeholder.com/150'}
-        alt={product.Base.Title}
+        alt={product.base.Title}
         className="product-image"
       />
-      <p>{product.Base.Slogan}</p>
-      <p>{product.Base.Description}</p>
-      <p>Quantity: {product.Base.Quantity}</p>
+      <p>{product.base.Slogan}</p>
+      <p>{product.base.Description}</p>
+      <p>Quantity: {product.base.Quantity}</p>
       <button onClick={() => onAddToBasket(product)}>Add to Cart</button>
       <button onClick={onBack}>Back</button>
     </div>

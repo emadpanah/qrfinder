@@ -17,10 +17,10 @@ const ProductBasket: React.FC<ProductBasketProps> = ({ basket, onCheckout, onRem
       ) : (
         <ul>
           {basket.map((product) => (
-            <li key={product.Base.Id}>
-              <h2>{product.Base.Title}</h2>
-              <p>{product.Base.Description}</p>
-              <button onClick={() => onRemoveFromBasket(product.Base.Id)}>Remove</button>
+            <li key={product.base.Id}>
+              <h2>{product.base.Title}</h2>
+              <p>{product.base.Description}</p>
+              <button onClick={() => onRemoveFromBasket(product.base.Id)}>Remove</button>
             </li>
           ))}
         </ul>

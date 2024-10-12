@@ -587,3 +587,142 @@
 .priceDropdown option:hover {
   background-color: #007bff; /* Blue background on hover */
 }
+
+/* Invite link container styles */
+.inviteLinkContainer {
+  border: 1px solid #ccc;
+  padding: 20px;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.inviteLinkInput {
+  width: 100%;
+  padding: 8px;
+  font-size: 16px;
+  border-radius: 5px;
+  border: 1px solid #ddd;
+  background-color: #f8f9fa;
+  color: #333;
+  margin-top: 10px;
+}
+
+.copyButton {
+  padding: 8px 16px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.copyButton:hover {
+  background-color: #0056b3;
+}
+
+/* Days progress container styles */
+.daysProgressContainer {
+  border: 1px solid #ccc;
+  padding: 20px;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.progressBar {
+  width: 100%;
+  height: 10px;
+  background-color: #e0e0e0;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.progressBarFill {
+  height: 100%;
+  background-color: #38a169;
+  border-radius: 5px;
+}
+
+/* Invitation progress container styles */
+.invitationProgressContainer {
+  border: 1px solid #ccc;
+  padding: 20px;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+/* Remove margin and padding at the top */
+.qrAchievement {
+  margin-top: 0;
+  padding-top: 0;
+}
+
+.circularProgressWrapper {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  margin-top: 20px;
+  border: 1px solid #ddd; /* Adding border for the section */
+  padding: 20px;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+}
+
+.circularProgressItem {
+  width: 100px; /* Ensuring equal width for both charts */
+  height: 100px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.circularProgressLabel {
+  margin-top: 10px;
+  font-size: 14px;
+  color: #38a169;
+  font-weight: bold;
+}
+
+/* Reintroducing border for invite link section */
+.invite-section {
+  border: 1px solid #ddd;
+  padding: 20px;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+}
+
+/* Invitation List table for better styling */
+.invitationListTable {
+  margin-top: 20px;
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.invitationListTable th, 
+.invitationListTable td {
+  padding: 10px;
+  border: 1px solid #ddd;
+  text-align: center;
+}
+
+.invitationListTable th {
+  background-color: #f8f8f8;
+  font-weight: bold;
+}
+
+.invitationListContainer {
+  margin-top: 20px;
+}
+
+.sectionTitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
