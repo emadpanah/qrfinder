@@ -43,10 +43,13 @@ const InviteAchievement: React.FC<InviteAchievementProps> = ({ achievement }) =>
           .then((selectedfull) => {
             setSelectedAchievementFull(selectedfull);
             setInviteLink(selectedfull.inviteLink);
+            //updateBalance();
           })
           .catch((error) => {
             console.error("Error fetching achievement:", error);
           });
+
+          //updateBalance();
 
         if (selectedRefs.length >= targetInvitations) {
           setIsAchievementComplete(true);
@@ -60,9 +63,14 @@ const InviteAchievement: React.FC<InviteAchievementProps> = ({ achievement }) =>
     fetchData();
   }, [userId, achievement.campaignId, targetInvitations, updateBalance]);
 
+  // Dynamic Invite Message
   const copyInviteLink = () => {
-    const telegramId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id || 'emad1';
-    const inviteMessage = `Hi, this is ${telegramId}. If you join this shop and invite your friends, you can earn 100g tokens for each invite, and if your friend buys any product, you will get an additional 200g tokens. Don't miss this chance! ${inviteLink}`;
+    const telegramId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id || 'Emad';
+    const tokenReward = achievement.reward?.tokens ?? 100; // Default to 100 tokens if reward is missing
+    const additionalTokens = tokenReward * 2; // Assuming an additional reward for product purchase
+    const totalTokensIfComplete = tokenReward * 3; // Assuming 3x reward on completion
+
+    const inviteMessage = `Hi, this is ${telegramId}. If you join this shop and invite your friends, you can earn ${tokenReward} tokens for each invite. If your friend buys any product, you will get an additional ${additionalTokens} tokens. Plus, if you complete the achievement, you will receive ${totalTokensIfComplete} tokens. Don't miss this chance! ${inviteLink}`;
     
     navigator.clipboard.writeText(inviteMessage)
       .then(() => alert('Invite message copied to clipboard!'))
@@ -87,7 +95,7 @@ const InviteAchievement: React.FC<InviteAchievementProps> = ({ achievement }) =>
           <div className={`${styles.inviteSection} mb-4 text-center border border-gray-300 p-4`}>
             <p className={`${styles.sectionTitle}`}>Your Invite Message</p>
             <p>
-              Hi, this is {window.Telegram?.WebApp?.initDataUnsafe?.user?.id || 'Emad'}. If you join this shop and invite your friends, you can earn 100g tokens for each invite, and if your friend buys any product, you will get an additional 200g tokens. Don&apos;t miss this chance!
+              Hi, this is {window.Telegram?.WebApp?.initDataUnsafe?.user?.id || 'Emad'}. If you join this shop and invite your friends, you can earn {achievement.reward?.tokens ?? 100} tokens for each invite. If your friend buys any product, you will get an additional {achievement.reward?.tokens ? achievement.reward.tokens * 2 : 200} tokens. Plus, if you complete the achievement, you will receive {achievement.reward?.tokens ? achievement.reward.tokens * 3 : 300} tokens. Don&apos;t miss this chance!
             </p>
             <div className="flex justify-center items-center">
               <input type="text" value={inviteLink} readOnly className="border px-2 py-1" />
@@ -131,9 +139,9 @@ const InviteAchievement: React.FC<InviteAchievementProps> = ({ achievement }) =>
           <table className={`${styles.invitationListTable}`}>
             <thead>
               <tr>
-                <th className="px-4 py-2">achievement</th>
-                <th className="px-4 py-2">user</th>
-                <th className="px-4 py-2">date</th>
+                <th className="px-4 py-2">Achievement</th>
+                <th className="px-4 py-2">User</th>
+                <th className="px-4 py-2">Date</th>
               </tr>
             </thead>
             <tbody>

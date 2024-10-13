@@ -9,6 +9,7 @@ import { CurrencyRepository } from '../../iam/database/repositories/currency.rep
 import { BalanceRepository } from '../../iam/database/repositories/balance.repository';
 //import { BalanceService } from 'src/modules/iam/services/iam-balance.service';
 import { BalanceDto } from 'src/modules/iam/dto/balance.dto';
+import { UserInsertDto } from 'src/modules/iam/dto/user.dto';
 
 @Injectable()
 export class AchievementService {
@@ -36,25 +37,113 @@ export class AchievementService {
   }
   //saveQRCode
 
-  async createAchievementSelected(dto: AchievementSelectedInsertDto): Promise<AchievementSelectedFullDto> {
-    try {
-      const result = await this.achievementRepository.createAchievementSelected(dto);
-      if (!result) {
-        throw new Error('Achievement selected insert not completed.');
+    // Create a new achievement selection
+    async createAchievementSelected(dto: AchievementSelectedInsertDto): Promise<AchievementSelectedFullDto> {
+      try {
+        // Insert the achievement selection
+        const result = await this.achievementRepository.createAchievementSelected(dto);
+        if (!result) {
+          throw new Error('Achievement selected insert not completed.');
+        }
+  
+        console.log("AchievementSelected- achiId - ", result.achievementId);
+        // Get the achievement details
+        const achisel = await this.achievementRepository.findAchievementSelectedByUserAndAchiId(dto.userId, result.achievementId);
+        if (!achisel) {
+          throw new Error('Selected achievement not found.');
+        }
+  
+        console.log("AchievementSelected - ", achisel);
+        // Get the default currency
+        const curr = await this.currencyRepository.findDefaultCurrency();
+        if (!curr) {
+          throw new Error('Currency not found.');
+        }
+  
+        // Calculate half of the reward tokens for the new user
+        const rewardHalf = Math.floor(achisel.reward.tokens / 2);
+  
+        // Handle balance update for the new user (invitee)
+        const currentBalanceUser = await this.balanceRepository.findUserBalance(
+          new Types.ObjectId(dto.userId), 
+          new Types.ObjectId(curr._id)
+        );
+        const newBalanceUser = currentBalanceUser + rewardHalf;
+  
+        // Create a balance transaction for the new user with half the reward
+        const userBalanceTransaction: BalanceDto = {
+          userId: new Types.ObjectId(dto.userId),
+          transactionType: 'achievementsreward',
+          amount: rewardHalf,
+          currency: curr._id,
+          transactionEntityId: dto.achievementId.toString(),
+          balanceAfterTransaction: newBalanceUser,
+          _id: new Types.ObjectId(),
+          timestamp: new Date(),
+        };
+  
+        await this.balanceRepository.addTransaction(userBalanceTransaction);
+  
+        // If parentId exists, update the parent's balance with the whole reward
+        if (dto.parentId) {
+          const currentBalanceParent = await this.balanceRepository.findUserBalance(
+            new Types.ObjectId(dto.parentId),
+            new Types.ObjectId(curr._id)
+          );
+          const newBalanceParent = currentBalanceParent + achisel.reward.tokens;
+  
+          // Create a balance transaction for the parent (inviter) with the full reward
+          const parentBalanceTransaction: BalanceDto = {
+            userId: new Types.ObjectId(dto.parentId),
+            transactionType: 'achievementsreward',
+            amount: achisel.reward.tokens,  // Full reward goes to the parent
+            currency: curr._id,
+            transactionEntityId: dto.achievementId.toString(),
+            balanceAfterTransaction: newBalanceParent,
+            _id: new Types.ObjectId(),
+            timestamp: new Date(),
+          };
+  
+          await this.balanceRepository.addTransaction(parentBalanceTransaction);
+        }
+  
+        // Return the inserted achievement selection
+        return result;
+      } catch (error) {
+        if (error.code === 11000) {
+          // Handle duplicate entry error (already selected achievement)
+          const added = await this.achievementRepository.findAchievementSelectedByUserAndAchiId(
+            dto.userId, 
+            dto.achievementId
+          );
+          if (added) return added;
+          throw new ConflictException('User has already selected this achievement.');
+        }
+        this.logger.error('Error creating achievement selected', error);
+        throw error;
       }
-      return result;
-    } catch (error) {
-      if (error.code === 11000) { // Duplicate key error code in MongoDB
-        const added = await this.achievementRepository
-        .findAchievementSelectedByUserAndAchiId(dto.userId, dto.achievementId);
-        if(!!added)
-          return added;
-        throw new ConflictException('User has already selected this achievement.');
-      }
-      this.logger.error('Error creating achievement selected', error);
-      throw error;
     }
-  }
+
+
+  // async createAchievementSelected(dto: AchievementSelectedInsertDto): Promise<AchievementSelectedFullDto> {
+  //   try {
+  //     const result = await this.achievementRepository.createAchievementSelected(dto);
+  //     if (!result) {
+  //       throw new Error('Achievement selected insert not completed.');
+  //     }
+  //     return result;
+  //   } catch (error) {
+  //     if (error.code === 11000) { // Duplicate key error code in MongoDB
+  //       const added = await this.achievementRepository
+  //       .findAchievementSelectedByUserAndAchiId(dto.userId, dto.achievementId);
+  //       if(!!added)
+  //         return added;
+  //       throw new ConflictException('User has already selected this achievement.');
+  //     }
+  //     this.logger.error('Error creating achievement selected', error);
+  //     throw error;
+  //   }
+  // }
 
   async createqrScan(dto: QrScanDto): Promise<QrScanDto> {
     try {
@@ -91,11 +180,12 @@ export class AchievementService {
     return achievementSelected;
   }
 
-  async doneAchievementSelected(id: string): Promise<boolean> {
+  async doneAchievementSelected(achivementId: string, userId : string): Promise<boolean> {
     try {
-      const objectId = new Types.ObjectId(id);
+      const achiId = new Types.ObjectId(achivementId);
+      const userIdd = new Types.ObjectId(userId);
       const curr = await this.currencyRepository.findDefaultCurrency();
-      const achisel = await this.achievementRepository.findAchievementSelectedFullById(objectId);
+      const achisel = await this.achievementRepository.findAchievementSelectedByUserAndAchiId(userIdd, achiId);
   
       if (!curr || !achisel) {
         throw new Error('Currency or Achievement not found.');
@@ -109,13 +199,13 @@ export class AchievementService {
         transactionType: "achievementsreward",
         amount: achisel.reward.tokens,
         currency: curr._id,
-        transactionEntityId: id,
+        transactionEntityId: achisel._id.toString(),
         balanceAfterTransaction: newBalance,
         _id: new Types.ObjectId(),
         timestamp: new Date(),
       };
   
-      const done = await this.achievementRepository.doneAchievementSelected(objectId);
+      const done = await this.achievementRepository.doneAchievementSelected(achisel._id);
       if (done) {
         try {
           const balance = await this.balanceRepository.addTransaction(create); 

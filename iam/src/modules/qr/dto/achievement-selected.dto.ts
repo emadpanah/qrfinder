@@ -20,15 +20,15 @@ function htmlSanitizer(value: string): string {
 }
 
 export class AchievementSelectedDto {
-  @IsString()
+  
   @IsNotEmpty()
   _id: Types.ObjectId;
 
-  @IsString()
+  
   @IsNotEmpty()
   achievementId: Types.ObjectId;
 
-  @IsString()
+  
   @IsNotEmpty()
   userId: Types.ObjectId;
 
@@ -37,7 +37,7 @@ export class AchievementSelectedDto {
   @Sanitize(htmlSanitizer)
   inviteLink: string;
 
-  @IsString()
+  
   @IsOptional()
   parentId: Types.ObjectId;
 
@@ -51,15 +51,15 @@ export class AchievementSelectedDto {
 }
 
 export class AchievementSelectedRefDto {
-  @IsString()
+  
   @IsNotEmpty()
   campaignId: Types.ObjectId;
 
-  @IsString()
+  
   @IsNotEmpty()
   _id: Types.ObjectId;
 
-  @IsString()
+  
   @IsNotEmpty()
   achievementId: Types.ObjectId;
 
@@ -68,7 +68,7 @@ export class AchievementSelectedRefDto {
   @Sanitize(htmlSanitizer)
   name: string;
 
-  @IsString()
+  
   @IsNotEmpty()
   userId: Types.ObjectId;
 
@@ -77,7 +77,7 @@ export class AchievementSelectedRefDto {
   @Sanitize(htmlSanitizer)
   inviteLink: string;
 
-  @IsString()
+  
   @IsOptional()
   parentId: Types.ObjectId;
 
@@ -87,7 +87,7 @@ export class AchievementSelectedRefDto {
 }
 
 export class AchievementSelectedFullDto {
-  @IsString()
+  
   @IsNotEmpty()
   campaignId: Types.ObjectId;
 
@@ -95,11 +95,11 @@ export class AchievementSelectedFullDto {
   @IsNotEmpty()
   doneDate: number;
 
-  @IsString()
+  
   @IsNotEmpty()
   _id: Types.ObjectId;
 
-  @IsString()
+  
   @IsNotEmpty()
   achievementId: Types.ObjectId;
 
@@ -140,7 +140,7 @@ export class AchievementSelectedFullDto {
   @IsNotEmpty()
   expirationDate: number;
 
-  @IsString()
+  
   @IsNotEmpty()
   userId: Types.ObjectId;
 
@@ -149,7 +149,7 @@ export class AchievementSelectedFullDto {
   @Sanitize(htmlSanitizer)
   inviteLink: string;
 
-  @IsString()
+  
   @IsOptional()
   parentId: Types.ObjectId;
 
@@ -163,11 +163,11 @@ export class AchievementSelectedFullDto {
 }
 
 export class AchievementSelectedInsertDto {
-  @IsString()
+  
   @IsNotEmpty()
   achievementId: Types.ObjectId;
 
-  @IsString()
+  
   @IsNotEmpty()
   userId: Types.ObjectId;
 
@@ -176,7 +176,7 @@ export class AchievementSelectedInsertDto {
   @Sanitize(htmlSanitizer)
   inviteLink: string;
 
-  @IsString()
+  
   @IsOptional()
   parentId: Types.ObjectId;
 

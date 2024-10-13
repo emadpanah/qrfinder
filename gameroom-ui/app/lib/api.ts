@@ -307,10 +307,11 @@ export const fetchAchievementSelectFullByUA = async (
   }
 };
 
-export const doneSelectAchievement = async (selectedAchievementId: string) => {
+export const doneSelectAchievement = async (achievementId: string, userId: string) => {
   try {
-    const requestBody: { selectedAchievementId: string } = {
-      selectedAchievementId: selectedAchievementId,
+    const requestBody: { achievementId: string, userId: string } = {
+      achievementId: achievementId,
+      userId: userId,
     };
 
     const response = await api.post(
@@ -320,7 +321,7 @@ export const doneSelectAchievement = async (selectedAchievementId: string) => {
     return response.data;
   } catch (error) {
     console.error(
-      `Error in setting done to selected achievement by ID ${selectedAchievementId}:`,
+      `Error in setting done to selected achievement by ID ${achievementId}:`,
       error,
     );
     throw error;

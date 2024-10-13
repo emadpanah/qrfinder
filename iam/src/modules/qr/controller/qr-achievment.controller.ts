@@ -70,7 +70,7 @@ export class AchievementController {
       const achievementInsertDto: AchievementSelectedInsertDto = {
         achievementId: new Types.ObjectId(body.achievementId),
         userId: new Types.ObjectId(body.userId),
-        parentId: new Types.ObjectId(body.parentId),
+        parentId: body.parentId == undefined ? null: new Types.ObjectId(body.parentId),
         inviteLink:"",
         addedDate: new Date().getTime() // Add the addedDate here
       };
@@ -113,10 +113,10 @@ export class AchievementController {
   //
   @Post('/done-selected')
   async doneAchievementSelected(
-    @Body() body: { selectedAchievementId: string;}
+    @Body() body: { achievementId: string; userId: string; }
   ): Promise<boolean> {
     try {
-      const done = await this.achievementService.doneAchievementSelected(body.selectedAchievementId);
+      const done = await this.achievementService.doneAchievementSelected(body.achievementId, body.userId);
       return done;
     } catch (error) {
       this.logger.error('Error done-selected achievement', error);

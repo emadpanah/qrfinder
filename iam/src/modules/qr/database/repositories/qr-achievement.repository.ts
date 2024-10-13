@@ -52,8 +52,17 @@ export class AchievementRepository {
 
   async createAchievementSelected(dto: AchievementSelectedInsertDto): Promise<AchievementSelectedFullDto> {
     const collection = this.connection.collection('_qrachievementselected');
-    await collection.insertOne(dto);
-    const achievementSelected = this.findAchievementSelectedByUserAndAchiId(dto.userId, dto.achievementId);
+    const insertResult = await collection.insertOne(dto);
+
+    if (!insertResult.acknowledged) {
+      throw new Error('Achievement Selected Insert not completed.');
+  }
+
+    // Ensure the correct type of ObjectId is used
+    const userId = dto.userId instanceof Types.ObjectId ? dto.userId : new Types.ObjectId(dto.userId);
+    const achievementId = dto.achievementId instanceof Types.ObjectId ? dto.achievementId : new Types.ObjectId(dto.achievementId);
+
+    const achievementSelected = this.findAchievementSelectedByUserAndAchiId(userId, achievementId);
 
     if (!achievementSelected) {
       throw new Error('Achievement Selected Insert not completed.');
@@ -141,12 +150,33 @@ export class AchievementRepository {
 
 
   async findAchievementSelectedByUserAndAchiId(userId: Types.ObjectId, achievementId: Types.ObjectId): Promise<AchievementSelectedFullDto> {
-
     const selectedCollection = this.connection.collection('_qrachievementselected');
   
+    // Log for debugging
+    console.log('findAchievementSelectedByUserAndAchiId--userId--', userId, '-achievementId-', achievementId); // Debugging
+  
+    // Ensure userId and achievementId are valid ObjectId instances
+    if (!(userId instanceof Types.ObjectId)) {
+      console.log('Converting userId to ObjectId');
+      userId = new Types.ObjectId(userId);
+    }
+  
+    if (!(achievementId instanceof Types.ObjectId)) {
+      console.log('Converting achievementId to ObjectId');
+      achievementId = new Types.ObjectId(achievementId);
+    }
+  
+    // Log the final userId and achievementId for debugging
+    console.log('Final userId:', userId);
+    console.log('Final achievementId:', achievementId);
+  
+    // Ensure that the $match stage is correctly structured
     const pipeline = [
       {
-        $match: { userId: new Types.ObjectId(userId) , achievementId: new Types.ObjectId(achievementId) }
+        $match: {
+          userId: userId, 
+          achievementId: achievementId 
+        }
       },
       {
         $lookup: {
@@ -174,24 +204,31 @@ export class AchievementRepository {
           qrOrderType: '$achievementDetails.qrOrderType',
           achievementType: '$achievementDetails.achievementType',
           qrProofByLocation: '$achievementDetails.qrProofByLocation',
-          campaignId:'$achievementDetails.campaignId',
+          campaignId: '$achievementDetails.campaignId',
           qrTarget: '$achievementDetails.qrTarget',
           startDate: '$achievementDetails.startDate',
         }
       }
     ];
   
-    const fullDtos = await selectedCollection.aggregate(pipeline).toArray();
-    //console.log('Full DTOs:', JSON.stringify(fullDtos, null, 2)); // Log the result for debugging
-
-    // Since aggregation returns an array, ensure to return the first element if it exists
-    if (fullDtos.length > 0) {
-      return fullDtos[0] as AchievementSelectedFullDto;
-    } else {
-      throw new Error('Achievement selected not found');
+    console.log('Pipeline:', JSON.stringify(pipeline, null, 2)); // Log the pipeline
+  
+    try {
+      // Execute the aggregation pipeline
+      const fullDtos = await selectedCollection.aggregate(pipeline).toArray();
+      console.log('Full DTOs:', JSON.stringify(fullDtos, null, 2)); // Debugging
+  
+      if (fullDtos.length > 0) {
+        return fullDtos[0] as AchievementSelectedFullDto;
+      } else {
+        throw new Error('Achievement selected not found');
+      }
+    } catch (error) {
+      console.error('Aggregation Error:', error); // Log aggregation error
+      throw error; // Re-throw the error for higher-level handling
     }
-
-  }  
+  }
+   
 
   async findQrScannedByUser(userId: Types.ObjectId, achievementId: Types.ObjectId): Promise<QrScanFullDto[]> {
     const collection = this.connection.collection('_qrscanqr');
@@ -236,58 +273,67 @@ export class AchievementRepository {
     return fullDtos as QrScanFullDto[];
   }
 
-  async findAchievementSelectedFullById(achiId: Types.ObjectId): Promise<AchievementSelectedFullDto> {
+  async findAchievementSelectedFullById(achiId: Types.ObjectId): Promise<AchievementSelectedFullDto[]> {
     const selectedCollection = this.connection.collection('_qrachievementselected');
-  
-   
-  
-    const pipeline = [
-      {
-        $match: { _id: new Types.ObjectId(achiId) }
-      },
-      {
-        $lookup: {
-          from: '_qrachievements',
-          localField: 'achievementId',
-          foreignField: '_id',
-          as: 'achievementDetails'
-        }
-      },
-      {
-        $unwind: '$achievementDetails'
-      },
-      {
-        $project: {
-          _id: 1,
-          achievementId: 1,
-          userId: 1,
-          inviteLink: 1,
-          parentId: 1,
-          addedDate: 1,
-          name: '$achievementDetails.name',
-          reward: '$achievementDetails.reward',
-          expirationDate: '$achievementDetails.expirationDate',
-          description: '$achievementDetails.description',
-          qrOrderType: '$achievementDetails.qrOrderType',
-          achievementType: '$achievementDetails.achievementType',
-          qrProofByLocation: '$achievementDetails.qrProofByLocation',
-          campaignId:'$achievementDetails.campaignId',
-          qrTarget: '$achievementDetails.qrTarget',
-          startDate: '$achievementDetails.startDate',
-        }
-      }
-    ];
-  
-    const fullDtos = await selectedCollection.aggregate(pipeline).toArray();
-    //console.log('Full DTOs:', JSON.stringify(fullDtos, null, 2)); // Log the result for debugging
+    
+    // Ensure that `achiId` is in the correct format
+    const objectId = new Types.ObjectId(achiId);
 
-    // Since aggregation returns an array, ensure to return the first element if it exists
+    // Step 2: Proceed with the rest of the aggregation
+    const pipeline = [
+        {
+            $match: { _id: objectId } // Ensure this is the correct ObjectId type
+        },
+        {
+            $lookup: {
+                from: '_qrachievements',
+                localField: '_id',
+                foreignField: 'achievementId',
+                as: 'achievementDetails'
+            }
+        },
+        {
+            $unwind: {
+                path: '$achievementDetails',
+                preserveNullAndEmptyArrays: false // To avoid null achievements
+            }
+        },
+        {
+            $project: {
+                _id: 1,
+                achievementId: 1,
+                userId: 1,
+                inviteLink: 1,
+                parentId: 1,
+                addedDate: 1,
+                name: '$achievementDetails.name',
+                reward: '$achievementDetails.reward',
+                expirationDate: '$achievementDetails.expirationDate',
+                description: '$achievementDetails.description',
+                qrOrderType: '$achievementDetails.qrOrderType',
+                achievementType: '$achievementDetails.achievementType',
+                qrProofByLocation: '$achievementDetails.qrProofByLocation',
+                campaignId: '$achievementDetails.campaignId',
+                qrTarget: '$achievementDetails.qrTarget',
+                startDate: '$achievementDetails.startDate',
+            }
+        }
+    ];
+
+    // Step 3: Execute the aggregation pipeline
+    const fullDtos = await selectedCollection.aggregate(pipeline).toArray();
+    console.log('Full DTOs:', JSON.stringify(fullDtos, null, 2)); // Debugging log for aggregation results
+
+    // Step 4: Return the result or throw an error if not found
     if (fullDtos.length > 0) {
-      return fullDtos[0] as AchievementSelectedFullDto;
+        console.log('Returning full achievement details');
+        return fullDtos as AchievementSelectedFullDto[];
     } else {
-      throw new Error('Achievement selected not found');
+        console.log('No full achievement details found after aggregation');
+        throw new Error('Achievement selected not found after aggregation');
     }
 }
+
 
 
   async findAchievementSelectedFullByUser(userId: Types.ObjectId): Promise<AchievementSelectedFullDto[]> {

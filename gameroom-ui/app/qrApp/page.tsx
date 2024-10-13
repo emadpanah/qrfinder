@@ -47,7 +47,7 @@ enum ActiveSection {
 
 const QRAppPageContent: React.FC = () => {
   const [activeSection, setActiveSection] = useState<ActiveSection>(
-    ActiveSection.Campaigns,
+    ActiveSection.Shop,
   );
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(
@@ -174,6 +174,7 @@ const QRAppPageContent: React.FC = () => {
               .catch((error) =>
                 console.error('Error fetching achievement:', error),
               );
+              
           })
           .catch((error) =>
             console.error('Error selecting achievement:', error),

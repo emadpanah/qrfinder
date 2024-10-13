@@ -60,7 +60,7 @@ const QRAchievement: React.FC<QRAchievementProps> = ({ achievement }) => {
           );
           setqrCodesScanned(scanned);
           if (scanned.length === achievement.qrTarget) {
-            const done = await doneSelectAchievement(selected._id);
+            const done = await doneSelectAchievement(selected.achievementId, selected.userId);
             if (done) {
               setIsAchievementComplete(true);
               updateBalance();
