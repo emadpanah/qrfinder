@@ -32,6 +32,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
     if (userId) {
       const defaultCurr = await fetchDefaultCurrency();
       const gbalance = await fetchBalance(userId, defaultCurr._id);
+      console.log("gbalance -- ",gbalance);
       setAccountData((prevState) => ({
         ...prevState,
         gbalance: gbalance,

@@ -43,13 +43,10 @@ const InviteAchievement: React.FC<InviteAchievementProps> = ({ achievement }) =>
           .then((selectedfull) => {
             setSelectedAchievementFull(selectedfull);
             setInviteLink(selectedfull.inviteLink);
-            //updateBalance();
           })
           .catch((error) => {
             console.error("Error fetching achievement:", error);
           });
-
-          //updateBalance();
 
         if (selectedRefs.length >= targetInvitations) {
           setIsAchievementComplete(true);
@@ -85,7 +82,7 @@ const InviteAchievement: React.FC<InviteAchievementProps> = ({ achievement }) =>
         </h1>
         <p className="text-center">
           <span id="token-count" className={isAchievementComplete ? `${styles.greenText}` : ''} style={{ fontSize: '4rem' }}>
-            0
+          {accountData.gbalance}
           </span>
           <span style={{ color: '#38a169', fontSize: '2rem' }}>g</span>
         </p>

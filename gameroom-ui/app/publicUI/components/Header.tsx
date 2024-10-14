@@ -19,6 +19,7 @@ import { Balance } from '@/app/lib/definitions';
 import { types } from 'util';
 import { Types } from 'mongoose';
 import { Transaction } from 'ethers';
+import loadTelegramScript from '@/app/utils/loadTelegramScript';
 
 interface HeaderProps {
   toggleTheme: () => void;
@@ -36,11 +37,32 @@ const Header: React.FC<HeaderProps> = ({ toggleTheme, currentTheme }) => {
 
   useEffect(() => {
     const handleConnect = async () => {
+
+      let telegramID = '';
       try {
-        const telegramID =
-          window.Telegram?.WebApp?.initDataUnsafe?.user?.id || 'emad1';
+
+        loadTelegramScript()
+      .then(() => {
+        if (window.Telegram) {
+          window.Telegram.WebApp.ready();
+          const user = window.Telegram.WebApp.initDataUnsafe?.user;
+          
+          if (user) {
+            telegramID = user.id.toString();
+            console.log('Telegram ID: ?', telegramID);
+          }
+          else{
+            telegramID = 'emad1';
+          }
+        }
+      })
+      .catch((err) => console.error('Failed to load Telegram Web App script', err));
+
+    
 
         console.log('Telegram ID:', telegramID);
+  
+        
 
         const { authToken, isNewToken, userId } =
           await registerUser(telegramID);

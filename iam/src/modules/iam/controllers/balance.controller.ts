@@ -45,7 +45,7 @@ export class BalanceController {
   @Query('balanceAfterTransaction') balanceAfterTransaction: string) {
     const tbalance: BalanceDto = {
         amount: Number.parseInt(amount),
-        timestamp: new Date(),
+        timestamp: Date.now(),
         transactionEntityId: transactionEntityId,
         transactionType: transactionType,
         userId: new Types.ObjectId(userId) ,

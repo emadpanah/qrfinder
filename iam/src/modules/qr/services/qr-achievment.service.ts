@@ -79,7 +79,7 @@ export class AchievementService {
           transactionEntityId: dto.achievementId.toString(),
           balanceAfterTransaction: newBalanceUser,
           _id: new Types.ObjectId(),
-          timestamp: new Date(),
+          timestamp: Date.now(),
         };
   
         await this.balanceRepository.addTransaction(userBalanceTransaction);
@@ -101,7 +101,7 @@ export class AchievementService {
             transactionEntityId: dto.achievementId.toString(),
             balanceAfterTransaction: newBalanceParent,
             _id: new Types.ObjectId(),
-            timestamp: new Date(),
+            timestamp: Date.now(),
           };
   
           await this.balanceRepository.addTransaction(parentBalanceTransaction);
@@ -202,7 +202,7 @@ export class AchievementService {
         transactionEntityId: achisel._id.toString(),
         balanceAfterTransaction: newBalance,
         _id: new Types.ObjectId(),
-        timestamp: new Date(),
+        timestamp: Date.now(),
       };
   
       const done = await this.achievementRepository.doneAchievementSelected(achisel._id);

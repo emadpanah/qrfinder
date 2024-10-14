@@ -62,7 +62,7 @@ const QRAppPageContent: React.FC = () => {
   const [basket, setBasket] = useState<Product[]>([]);
 
   const searchParams = useSearchParams();
-  const { accountData, userId } = useUser();
+  const { accountData, userId, updateBalance } = useUser();
 
   // useEffect(() => {
   //   const getCampaigns = async () => {
@@ -389,6 +389,7 @@ const QRAppPageContent: React.FC = () => {
             .then((ach) => {
               setSelectedAchievement(ach);
               setActiveSection(ActiveSection.AchievementDetails);
+              updateBalance();
             })
             .catch((error) =>
               console.error('Error fetching achievement:', error),
@@ -513,3 +514,5 @@ const QRAppPage: React.FC = () => (
 );
 
 export default QRAppPage;
+
+

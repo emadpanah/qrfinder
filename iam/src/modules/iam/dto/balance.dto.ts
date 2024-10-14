@@ -27,9 +27,9 @@ export class BalanceDto {
   @IsNotEmpty()
   transactionEntityId: string;
 
-  @IsDateString()
+  @IsNumber()
   @IsNotEmpty()
-  timestamp: Date;
+  timestamp: number;
 
   @IsNumber()
   @IsNotEmpty()

@@ -8,7 +8,7 @@ export class BotService implements OnModuleInit {
   private readonly logger = new Logger(BotService.name);
 
   constructor(private readonly productService: ProductService) {
-    this.bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, { polling: true });
+    this.bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN_MAGHAZI, { polling: true });
   }
 
   onModuleInit() {
@@ -36,11 +36,11 @@ export class BotService implements OnModuleInit {
     // Handle /start command
     this.bot.onText(/\/start/, (msg) => {
       const chatId = msg.chat.id;
-      this.bot.sendMessage(chatId, 'If you have missed the cryptocurrency market and feel that it is too late to enter, we will give you another chance. By receiving our token, you will have a new opportunity to invest.', {
+      this.bot.sendMessage(chatId, 'If you want to be rich lunch the app', {
         reply_markup: {
           inline_keyboard: [
-            [{ text: 'Launch ICO Site', web_app: { url: 'https://4bridges.ch/en/porsche-cayman-token/' } }],
-            [{ text: 'Launch Game', web_app: { url: 'https://t.farschain.com' } }]
+            //[{ text: 'Launch ICO Site', web_app: { url: 'https://4bridges.ch/en/porsche-cayman-token/' } }],
+            [{ text: 'Launch App', web_app: { url: 'https://t.farschain.com' } }]
           ]
         }
       });

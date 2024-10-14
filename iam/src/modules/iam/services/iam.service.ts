@@ -11,6 +11,7 @@ import { UserDto, UserInsertDto } from '../dto/user.dto'; // Import UserDto
 import { AuthService } from './auth.service';
 import { TokenExpiredError } from 'jsonwebtoken';
 import axios, { AxiosInstance } from 'axios';
+import { getOS } from 'mongodb-memory-server-core/lib/util/getos';
 
 @Injectable()
 export class IamService {
@@ -49,6 +50,7 @@ export class IamService {
         throw new UnauthorizedException();
       }
 
+      console.log('findUserByTelegramID - ', dto.telegramID);
       // Check if the user already exists
       const user = await this.iamRepository.findUserByTelegramID(
         dto.telegramID,

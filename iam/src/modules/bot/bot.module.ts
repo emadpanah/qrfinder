@@ -5,7 +5,8 @@ import { ProductModule } from '../product/product.module';
 
 @Module({
   imports: [ProductModule],
-  providers: [//BotService, 
-    ChatGptBotService],
+  providers: [BotService, 
+    //ChatGptBotService
+    ],
 })
 export class BotModule {}

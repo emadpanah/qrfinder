@@ -6,6 +6,7 @@ import {
   MinLength,
   Length,
   IsDateString,
+  IsNumber,
 } from 'class-validator';
 import { Types } from 'mongoose';
 
@@ -17,9 +18,9 @@ export class UserDto {
   @IsString()
   telegramID: string;
 
-  @IsDateString()
+  @IsNumber()
   @IsNotEmpty()
-  createdDate: string;
+  createdDate: number;
 }
 
 export class UserInsertDto {
