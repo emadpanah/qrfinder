@@ -8,7 +8,7 @@ import {
   registerUser,
   fetchCurrency,
   createBalance,
-  fetchTonBalance,
+  //fetchTonBalance,
   fetchBalance,
   fetchDefaultCurrency,
   createCustomerSync,
@@ -37,50 +37,52 @@ const Header: React.FC<HeaderProps> = ({ toggleTheme, currentTheme }) => {
 
   useEffect(() => {
     const handleConnect = async () => {
-
       let telegramID = '';
+  
       try {
-
-        loadTelegramScript()
-      .then(() => {
+        // Load the Telegram script and wait for it to resolve
+        await loadTelegramScript();
+  
+        // Check if the Telegram WebApp object is available
         if (window.Telegram) {
-          window.Telegram.WebApp.ready();
+          window.Telegram.WebApp.ready(); // Ensure WebApp is ready
           const user = window.Telegram.WebApp.initDataUnsafe?.user;
-          
+  
+          // Fetch Telegram ID or set fallback
           if (user) {
             telegramID = user.id.toString();
-            console.log('Telegram ID: ?', telegramID);
-          }
-          else{
+            console.log('Telegram ID (inside then):', telegramID);
+          } else {
             telegramID = 'emad1';
+            console.log('Fallback Telegram ID:', telegramID);
           }
+        } else {
+          console.error('Telegram WebApp is not available');
+          return;
         }
-      })
-      .catch((err) => console.error('Failed to load Telegram Web App script', err));
-
-    
-
+  
+        // Proceed only after you have the telegramID
         console.log('Telegram ID:', telegramID);
   
-        
-
-        const { authToken, isNewToken, userId } =
-          await registerUser(telegramID);
+        // Register the user with the telegramID
+        const { authToken, isNewToken, userId } = await registerUser(telegramID);
         console.log('Server response:', { authToken, isNewToken, userId });
+  
+        // Fetch default currency
         const defaultCurr = await fetchDefaultCurrency();
         console.log('defaultCurr :', defaultCurr._id);
+  
+        // Fetch user balance
         const gbalance = await fetchBalance(userId, defaultCurr._id);
         console.log('gbalance :', gbalance);
-        //register shop user
+  
+        // Register shop user and update context
         setUserId(userId); // Set user ID in context
         setAccountData({
-          //address: '',
-          //balance: '0',
-          //chainId: '0', //wallet.chainId,
-          //network: '',
           gbalance: gbalance,
         });
-
+  
+        // Prepare customer data
         const customerData = {
           name: '-',
           familyName: '-',
@@ -91,21 +93,19 @@ const Header: React.FC<HeaderProps> = ({ toggleTheme, currentTheme }) => {
           birthDate: '-',
           userId: userId,
         };
-
-        // Create customer and fetch the token from response
+  
+        // Create customer and log success
         await createCustomerSync(customerData);
-
         console.log('Customer created successfully.');
-        // Now fetch all products using the received token
-        // const products = await getAllProducts(tokenShop);
-        // console.log('Products fetched:', products);
+  
       } catch (error) {
         console.error('Error during registration:', error);
       }
     };
-
-    handleConnect();
+  
+    handleConnect(); // Call the async function
   }, [setUserId, setAccountData]);
+  
 
   return (
     <header

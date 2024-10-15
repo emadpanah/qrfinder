@@ -62,12 +62,13 @@ export class AchievementService {
   
         // Calculate half of the reward tokens for the new user
         const rewardHalf = Math.floor(achisel.reward.tokens / 2);
-  
+        console.log("rewardHalf ----------------------------", rewardHalf);
         // Handle balance update for the new user (invitee)
         const currentBalanceUser = await this.balanceRepository.findUserBalance(
           new Types.ObjectId(dto.userId), 
           new Types.ObjectId(curr._id)
         );
+        console.log("currentBalanceUser ----------------------------", currentBalanceUser);
         const newBalanceUser = currentBalanceUser + rewardHalf;
   
         // Create a balance transaction for the new user with half the reward
@@ -83,7 +84,8 @@ export class AchievementService {
         };
   
         await this.balanceRepository.addTransaction(userBalanceTransaction);
-  
+        console.log("addTransaction ----------------------------");
+       
         // If parentId exists, update the parent's balance with the whole reward
         if (dto.parentId) {
           const currentBalanceParent = await this.balanceRepository.findUserBalance(

@@ -3,7 +3,7 @@ import { Achievement, AchievementSelectedFull, AchievementSelectedRef } from '@/
 import { fetchAchievementSelectFullByUA, fetchCampaignById, fetchSelFullAchisRefByUserIdCamId } from '@/app/lib/api';
 import { useUser } from '@/app/contexts/UserContext';
 import styles from '../css/qrApp.module.css';
-import { calculateRemainingDays, calculateTotalDays, shortenAddress } from '../../lib/utils';
+import { calculateRemainingDays, calculateTotalDays } from '../../lib/utils';
 import { CircularProgressbar, buildStyles } from 'react-circular-progressbar';
 import 'react-circular-progressbar/dist/styles.css';
 
@@ -62,7 +62,7 @@ const InviteAchievement: React.FC<InviteAchievementProps> = ({ achievement }) =>
 
   // Dynamic Invite Message
   const copyInviteLink = () => {
-    const telegramId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id || 'Emad';
+    const telegramId = window.Telegram?.WebApp?.initDataUnsafe?.user?.username || window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
     const tokenReward = achievement.reward?.tokens ?? 100; // Default to 100 tokens if reward is missing
     const additionalTokens = tokenReward * 2; // Assuming an additional reward for product purchase
     const totalTokensIfComplete = tokenReward * 3; // Assuming 3x reward on completion
@@ -145,8 +145,8 @@ const InviteAchievement: React.FC<InviteAchievementProps> = ({ achievement }) =>
               {selectedAchievementsRef.length > 0 ? (
                 selectedAchievementsRef.map((ref) => (
                   <tr key={ref._id.toString()}>
-                    <td className="border px-4 py-2">{shortenAddress(ref.name, 4)}</td>
-                    <td className="border px-4 py-2">{shortenAddress(ref.userId.toString(), 6)}</td>
+                    <td className="border px-4 py-2">{ref.name}</td>
+                    <td className="border px-4 py-2">{ref.userId.toString()}</td>
                     <td className="border px-4 py-2">{new Date(ref.addedDate).toLocaleDateString()}</td>
                   </tr>
                 ))

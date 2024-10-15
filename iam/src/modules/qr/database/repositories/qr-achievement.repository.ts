@@ -166,9 +166,9 @@ export class AchievementRepository {
       achievementId = new Types.ObjectId(achievementId);
     }
   
-    // Log the final userId and achievementId for debugging
-    console.log('Final userId:', userId);
-    console.log('Final achievementId:', achievementId);
+    // // Log the final userId and achievementId for debugging
+    // console.log('Final userId:', userId);
+    // console.log('Final achievementId:', achievementId);
   
     // Ensure that the $match stage is correctly structured
     const pipeline = [
@@ -211,12 +211,12 @@ export class AchievementRepository {
       }
     ];
   
-    console.log('Pipeline:', JSON.stringify(pipeline, null, 2)); // Log the pipeline
+    //console.log('Pipeline:', JSON.stringify(pipeline, null, 2)); // Log the pipeline
   
     try {
       // Execute the aggregation pipeline
       const fullDtos = await selectedCollection.aggregate(pipeline).toArray();
-      console.log('Full DTOs:', JSON.stringify(fullDtos, null, 2)); // Debugging
+      //console.log('Full DTOs:', JSON.stringify(fullDtos, null, 2)); // Debugging
   
       if (fullDtos.length > 0) {
         return fullDtos[0] as AchievementSelectedFullDto;
