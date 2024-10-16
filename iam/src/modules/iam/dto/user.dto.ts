@@ -7,6 +7,7 @@ import {
   Length,
   IsDateString,
   IsNumber,
+  IsOptional,
 } from 'class-validator';
 import { Types } from 'mongoose';
 
@@ -14,6 +15,21 @@ export class UserDto {
   @IsString()
   @IsNotEmpty()
   _id: Types.ObjectId;
+
+  @IsString()
+  @IsOptional()
+  telegramFirstName: string;
+
+  @IsString()
+  @IsOptional()
+  telegramLastName: string;
+
+  @IsString()
+  @IsOptional()
+  telegramUserName: string;
+
+  @IsOptional()
+  telegramLanCode: string;
 
   @IsString()
   telegramID: string;
@@ -30,6 +46,21 @@ export class UserInsertDto {
 
   @IsString()
   telegramID: string;
+
+  @IsString()
+  @IsOptional()
+  telegramFirstName: string;
+
+  @IsString()
+  @IsOptional()
+  telegramLastName: string;
+
+  @IsString()
+  @IsOptional()
+  telegramUserName: string;
+
+  @IsOptional()
+  telegramLanCode: string;
 
   @IsString()
   @IsNotEmpty()
