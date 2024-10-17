@@ -28,7 +28,7 @@ export class CampaignRepository {
 
   async findAllActiveCampaigns(): Promise<any[]> {
     const collection = this.connection.collection('_qrcampaigns');
-    const now = new Date();
+    const now = Date.now();
     return collection.find({ expirationDate: { $gt: now } }).toArray();
   }
 

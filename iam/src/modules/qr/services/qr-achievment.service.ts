@@ -82,9 +82,9 @@ export class AchievementService {
           _id: new Types.ObjectId(),
           timestamp: Date.now(),
         };
-  
+        console.log("addTransaction start ----------------------------");
         await this.balanceRepository.addTransaction(userBalanceTransaction);
-        console.log("addTransaction ----------------------------");
+        console.log("addTransaction end ----------------------------");
        
         // If parentId exists, update the parent's balance with the whole reward
         if (dto.parentId) {
@@ -105,8 +105,9 @@ export class AchievementService {
             _id: new Types.ObjectId(),
             timestamp: Date.now(),
           };
-  
+          console.log("addTransaction parent start ----------------------------");
           await this.balanceRepository.addTransaction(parentBalanceTransaction);
+          console.log("addTransaction parent end ----------------------------");
         }
   
         // Return the inserted achievement selection

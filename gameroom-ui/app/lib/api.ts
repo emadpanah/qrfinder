@@ -10,6 +10,7 @@ import {
 import { CartItem, CustomerSyncModel, CheckoutDto } from './definitions';
 import { Types } from 'mongoose';
 import { stringify } from 'flatted';
+import { useUser } from '../contexts/UserContext';
 
 const iamServiceUrl = process.env.NEXT_PUBLIC_IAM_SERVICE_URL;
 const APP_SECRET = process.env.NEXT_PUBLIC_APP_SECRET || 'default_app_secret';
@@ -66,12 +67,16 @@ export const api = axios.create({
   },
 });
 
-export const registerUser = async (telegramID: string) => {
-  try {
+export const registerUser = async (telegramID: string, telegramUserName: string,
+  telegramFirstName:string, telegramLastName: string, telegramLanCode: string) => { try {
     console.log('register');
     const response = await api.post('/iam/register', {
       _id: new Types.ObjectId(),
       telegramID: telegramID,
+      telegramUserName: telegramUserName,
+      telegramFirstName: telegramFirstName,
+      telegramLastName: telegramLastName,
+      telegramLanCode: telegramLanCode,
       clientSecret: APP_SECRET,
     });
 
@@ -455,27 +460,27 @@ export const createCampaign = async (campaignData: Campaign) => {
 const TONCENTER_MAINNET_API_URL = 'https://toncenter.com/api/v2';
 const TONCENTER_TESTNET_API_URL = 'https://testnet.toncenter.com/api/v2';
 
-export const fetchTonBalance = async (
-  address: string,
-  network: 'mainnet' | 'testnet',
-): Promise<string> => {
-  const apiUrl =
-    network === 'mainnet'
-      ? TONCENTER_MAINNET_API_URL
-      : TONCENTER_TESTNET_API_URL;
+// export const fetchTonBalance = async (
+//   address: string,
+//   network: 'mainnet' | 'testnet',
+// ): Promise<string> => {
+//   const apiUrl =
+//     network === 'mainnet'
+//       ? TONCENTER_MAINNET_API_URL
+//       : TONCENTER_TESTNET_API_URL;
 
-  try {
-    const response = await axios.get(`${apiUrl}/getAddressBalance`, {
-      params: { address },
-    });
-    const nanoTONs = response.data.result;
-    const tonBalance = (parseInt(nanoTONs, 10) / 1e9).toFixed(2); // Convert to TON and format to 2 decimal places
-    return tonBalance;
-  } catch (error) {
-    console.error(`Error fetching ${network} balance:`, error);
-    return '0';
-  }
-};
+//   try {
+//     const response = await axios.get(`${apiUrl}/getAddressBalance`, {
+//       params: { address },
+//     });
+//     const nanoTONs = response.data.result;
+//     const tonBalance = (parseInt(nanoTONs, 10) / 1e9).toFixed(2); // Convert to TON and format to 2 decimal places
+//     return tonBalance;
+//   } catch (error) {
+//     console.error(`Error fetching ${network} balance:`, error);
+//     return '0';
+//   }
+// };
 
 // Axios instance for shop APIs
 const shopServiceUrl = process.env.NEXT_PUBLIC_SHOP_API_DOMAIN; 
@@ -498,6 +503,7 @@ export const createCustomerSync = async (customerData: {
   birthDate: string;
   userId: string;
 }) => {
+  
   try {
     console.log("createCustomerSync-shopId", shopToken);
     const response = await api.post('/iam/create-customer-sync', {
@@ -538,11 +544,11 @@ export const checkout = async (checkoutDto: CheckoutDto, shopToken: string) => {
   }
 };
 
-export const getAllProducts = async (userId: Types.ObjectId) => {
+export const getAllProducts = async (userId: string) => {
   try {
     console.log("getAllProducts -- user -", userId );
     const response = await api.get('/products/all-products', {
-      params: { userId: userId.toString() }, // Send userId as a query parameter
+      params: { userId: userId }, // Send userId as a query parameter
     });
     return response.data;
   } catch (error) {

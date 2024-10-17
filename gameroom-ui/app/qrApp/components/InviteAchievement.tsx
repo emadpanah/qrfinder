@@ -60,20 +60,44 @@ const InviteAchievement: React.FC<InviteAchievementProps> = ({ achievement }) =>
     fetchData();
   }, [userId, achievement.campaignId, targetInvitations, updateBalance]);
 
-  // Dynamic Invite Message
+  const fallbackCopyTextToClipboard = (text: string) => {
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    
+    try {
+      document.execCommand('copy');
+      alert('Invite message copied to clipboard!');
+    } catch (err) {
+      console.error('Fallback: Oops, unable to copy', err);
+      alert('Failed to copy invite message. Please copy it manually.');
+    }
+    
+    document.body.removeChild(textArea);
+  };
+  
   const copyInviteLink = () => {
     const telegramId = window.Telegram?.WebApp?.initDataUnsafe?.user?.username || window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
-    const tokenReward = achievement.reward?.tokens ?? 100; // Default to 100 tokens if reward is missing
-    const additionalTokens = tokenReward * 2; // Assuming an additional reward for product purchase
-    const totalTokensIfComplete = tokenReward * 3; // Assuming 3x reward on completion
-
+    const tokenReward = achievement.reward?.tokens ?? 100;
+    const additionalTokens = tokenReward * 2;
+    const totalTokensIfComplete = tokenReward * 3;
+  
     const inviteMessage = `Hi, this is ${telegramId}. If you join this shop and invite your friends, you can earn ${tokenReward} tokens for each invite. If your friend buys any product, you will get an additional ${additionalTokens} tokens. Plus, if you complete the achievement, you will receive ${totalTokensIfComplete} tokens. Don't miss this chance! ${inviteLink}`;
-    
-    navigator.clipboard.writeText(inviteMessage)
-      .then(() => alert('Invite message copied to clipboard!'))
-      .catch(() => alert('Failed to copy invite message.'));
+  
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(inviteMessage)
+        .then(() => alert('Invite message copied to clipboard!'))
+        .catch((e) => {
+          console.error('Clipboard API failed. Falling back to older method.', e);
+          fallbackCopyTextToClipboard(inviteMessage);
+        });
+    } else {
+      fallbackCopyTextToClipboard(inviteMessage); // Fallback for older browsers
+    }
   };
-
+  
   return (
     <div className={styles.qrAchievement}>
       <div className="relative mb-4 mt-4 border border-gray-300 p-1 pb-1 pl-6 pr-6">

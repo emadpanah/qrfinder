@@ -38,6 +38,10 @@ const Header: React.FC<HeaderProps> = ({ toggleTheme, currentTheme }) => {
   useEffect(() => {
     const handleConnect = async () => {
       let telegramID = '';
+      let telegramFN = '';
+      let telegramLN = '';
+      let telegramUN = '';
+      let telegramLC = '';
   
       try {
         // Load the Telegram script and wait for it to resolve
@@ -51,6 +55,10 @@ const Header: React.FC<HeaderProps> = ({ toggleTheme, currentTheme }) => {
           // Fetch Telegram ID or set fallback
           if (user) {
             telegramID = user.id.toString();
+            telegramFN = user.FirstName!;
+            telegramLN = user.LastName!;
+            telegramUN = user.UserName!;
+            telegramLC = user.LanguageCode!;
             console.log('Telegram ID (inside then):', telegramID);
           } else {
             telegramID = 'emad1';
@@ -65,7 +73,8 @@ const Header: React.FC<HeaderProps> = ({ toggleTheme, currentTheme }) => {
         console.log('Telegram ID:', telegramID);
   
         // Register the user with the telegramID
-        const { authToken, isNewToken, userId } = await registerUser(telegramID);
+        const { authToken, isNewToken, userId } = await registerUser(telegramID, telegramUN,
+          telegramFN, telegramLN, telegramLC);
         console.log('Server response:', { authToken, isNewToken, userId });
   
         // Fetch default currency
@@ -95,8 +104,10 @@ const Header: React.FC<HeaderProps> = ({ toggleTheme, currentTheme }) => {
         };
   
         // Create customer and log success
-        await createCustomerSync(customerData);
-        console.log('Customer created successfully.');
+        const { token: shopToken } = await createCustomerSync(customerData);
+         // Store shopToken in context
+         console.log('ShopToken set in context:', shopToken);
+
   
       } catch (error) {
         console.error('Error during registration:', error);

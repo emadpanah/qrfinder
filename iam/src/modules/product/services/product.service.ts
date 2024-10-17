@@ -83,15 +83,34 @@ async getProducts(): Promise<string> {
     });
   }
 
+  async waitForShopToken(userId: Types.ObjectId, retries = 5, delay = 1000): Promise<string> {
+    while (retries > 0) {
+      const shopToken = await this.iamService.getShopToken(userId);
+
+      if (shopToken) {
+        return shopToken; // If shopToken is available, return it
+      }
+
+      console.log(`No shopToken found, retrying... Attempts left: ${retries}`);
+
+      retries--;
+      await new Promise(resolve => setTimeout(resolve, delay)); // Wait before retrying
+    }
+
+    throw new Error('Failed to retrieve shopToken after multiple attempts.');
+  }
+
   // Function to fetch all products
   async getAllProducts(userId: Types.ObjectId): Promise<any> {
-    const shopToken = await this.iamService.getShopToken(userId);
+    const shopToken = await this.waitForShopToken(userId); // Call the method to wait for the shopToken
+
+    
 
     if (!shopToken) {
       throw new Error('No shopToken found for this user');
     }
 
-    //console.log("shoptoken : ", shopToken);
+    console.log("shopToken:", shopToken);
 
     // Step 2: Call the external shop API to get all products
     try {

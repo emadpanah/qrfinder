@@ -14,6 +14,10 @@ export class IamRepository {
     await collection.insertOne({
       _id: i,
       telegramID: dto.telegramID,
+      telegramUserName: dto.telegramUserName,
+      telegramFirstName: dto.telegramFirstName,
+      telegramLastName: dto.telegramLastName,
+      telegramLanCode: dto.telegramLanCode,
       createdDate: Date.now(),
     });
     const user = await collection.findOne({ _id: i });

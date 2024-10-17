@@ -64,17 +64,17 @@ const QRAppPageContent: React.FC = () => {
   const searchParams = useSearchParams();
   const { accountData, userId, updateBalance } = useUser();
 
-  // useEffect(() => {
-  //   const getCampaigns = async () => {
-  //     try {
-  //       const campaignsData = await fetchActiveCampaigns();
-  //       setCampaigns(campaignsData);
-  //     } catch (error) {
-  //       console.error('Error fetching campaigns:', error);
-  //     }
-  //   };
-  //   getCampaigns();
-  // }, []);
+  useEffect(() => {
+    const getCampaigns = async () => {
+      try {
+        const campaignsData = await fetchActiveCampaigns();
+        setCampaigns(campaignsData);
+      } catch (error) {
+        console.error('Error fetching campaigns:', error);
+      }
+    };
+    getCampaigns();
+  }, []);
 
   // useEffect(() => {
   //   const achievementId = searchParams.get('a');
@@ -184,11 +184,10 @@ const QRAppPageContent: React.FC = () => {
 
     // New logic for handling shop code type
     if (hasValidParamsShop) {
-      console.log(userId);
+      console.log("userId - ", userId);
       if (userId) {
         console.log('Loading products from shop section');
-        const id = new Types.ObjectId(userId);
-        getAllProducts(id)
+        getAllProducts(userId)
           .then((realProducts) => {
             setProducts(realProducts); // Once resolved, set the products
             setActiveSection(ActiveSection.Shop); // Switch to shop section
@@ -280,7 +279,7 @@ const QRAppPageContent: React.FC = () => {
         //setActiveSection(ActiveSection.Shop); // Switch to shop section
       }
     }
-  }, [searchParams, userId]);
+  }, [ , userId]);
 
   const handleCampaignClick = async (campaignId: string) => {
     try {

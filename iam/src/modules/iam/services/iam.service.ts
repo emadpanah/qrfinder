@@ -53,7 +53,7 @@ export class IamService {
       console.log('findUserByTelegramID - ', dto.telegramID);
       // Check if the user already exists
       const user = await this.iamRepository.findUserByTelegramID(
-        dto.telegramID,
+        dto.telegramID
       );
       if (user) {
         // User exists, check if there is a valid token
@@ -109,6 +109,8 @@ export class IamService {
     });
 
     const { token: shopToken } = response.data;
+
+    console.log("shopToken : -- : ", shopToken);
 
     // Store shopToken in the login record
     await this.userLoginRepository.updateLoginWithShopToken(userId, shopToken);
