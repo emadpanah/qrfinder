@@ -60,8 +60,8 @@ const InviteAchievement: React.FC<InviteAchievementProps> = ({ achievement }) =>
     fetchData();
   }, [userId, achievement.campaignId, targetInvitations, updateBalance]);
 
-  // Use Telegram WebApp API to share invite link
-  const shareInviteLink = () => {
+  // Copy invite link to clipboard
+  const copyInviteLink = () => {
     const telegramId = window.Telegram?.WebApp?.initDataUnsafe?.user?.username || window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
     const tokenReward = achievement.reward?.tokens ?? 100;
     const additionalTokens = tokenReward * 2;
@@ -69,15 +69,35 @@ const InviteAchievement: React.FC<InviteAchievementProps> = ({ achievement }) =>
 
     const inviteMessage = `Hi, this is ${telegramId}. If you join this shop and invite your friends, you can earn ${tokenReward} tokens for each invite. If your friend buys any product, you will get an additional ${additionalTokens} tokens. Plus, if you complete the achievement, you will receive ${totalTokensIfComplete} tokens. Don't miss this chance! ${inviteLink}`;
 
-    if (window.Telegram?.WebApp?.openTelegramLink) {
-      // Open Telegram link for sharing
-      window.Telegram.WebApp.openExternalLink({
-        url: inviteLink || '',
-        text: inviteMessage,
-      });
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(inviteMessage)
+        .then(() => alert('Invite message copied to clipboard!'))
+        .catch((e) => {
+          console.error('Clipboard API failed. Falling back to older method.', e);
+          fallbackCopyTextToClipboard(inviteMessage);
+        });
     } else {
-      alert("Telegram WebApp is not available for sharing.");
+      fallbackCopyTextToClipboard(inviteMessage); // Fallback for older browsers
     }
+  };
+
+  // Fallback function for older browsers
+  const fallbackCopyTextToClipboard = (text: string) => {
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+
+    try {
+      document.execCommand('copy');
+      alert('Invite message copied to clipboard!');
+    } catch (err) {
+      console.error('Fallback: Oops, unable to copy', err);
+      alert('Failed to copy invite message. Please copy it manually.');
+    }
+
+    document.body.removeChild(textArea);
   };
 
   return (
@@ -102,7 +122,7 @@ const InviteAchievement: React.FC<InviteAchievementProps> = ({ achievement }) =>
             </p>
             <div className="flex justify-center items-center">
               <input type="text" value={inviteLink} readOnly className="border px-2 py-1" />
-              <button onClick={shareInviteLink} className="ml-2 bg-blue-500 text-white px-4 py-2 rounded">Share via Telegram</button>
+              <button onClick={copyInviteLink} className="ml-2 bg-blue-500 text-white px-4 py-2 rounded">Copy Invite Link</button>
             </div>
           </div>
         )}
