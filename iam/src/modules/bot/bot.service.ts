@@ -33,24 +33,60 @@ export class BotService implements OnModuleInit {
       }
     });
 
-    // Handle /start command
-    this.bot.onText(/\/start/, (msg) => {
+    // Handle /start command with parameters (like referral)
+    this.bot.onText(/\/start(.*)/, (msg, match) => {
       const chatId = msg.chat.id;
-      this.bot.sendMessage(chatId, 'If you want to be rich lunch the app', {
-        reply_markup: {
-          inline_keyboard: [
-            //[{ text: 'Launch ICO Site', web_app: { url: 'https://4bridges.ch/en/porsche-cayman-token/' } }],
-            [{ text: 'Launch App', web_app: { url: 'https://t.farschain.com' } }]
-          ]
+      const params = match[1]?.trim();
+    
+      if (params) {
+        // Parse the parameters passed to the bot
+        const decodedParams = decodeURIComponent(params);
+        const paramObj = this.parseStartParams(decodedParams);
+    
+        if (paramObj.achievementId && paramObj.parentId) {
+          // Include chatId in the referral link
+          const referralLink = `${process.env.TELEGRAM_BOT_URL_MAGHAZI}/qrApp?a=${paramObj.achievementId}&p=${paramObj.parentId}&t=a&chatId=${chatId}`;
+          
+          this.bot.sendMessage(chatId, 'Launching the app with your referral link:', {
+            reply_markup: {
+              inline_keyboard: [
+                [{ text: 'Launch App', web_app: { url: referralLink } }]
+              ]
+            }
+          });
+        } else {
+          // Default /start behavior without parameters
+          this.bot.sendMessage(chatId, 'Welcome! Use the app to earn rewards.');
         }
-      });
+      } else {
+        // Default /start behavior without parameters
+        this.bot.sendMessage(chatId, 'Welcome! Use the app to earn rewards.');
+      }
     });
+  }
+
+  // Helper method to parse the start parameters
+  private parseStartParams(params: string): { achievementId?: string; parentId?: string } {
+    const paramObj: { achievementId?: string; parentId?: string } = {};
+
+    // Split parameters and parse each key-value pair
+    const paramPairs = params.split('&');
+    paramPairs.forEach((pair) => {
+      const [key, value] = pair.split('=');
+      if (key === 'achievementId') {
+        paramObj.achievementId = value;
+      }
+      if (key === 'parentId') {
+        paramObj.parentId = value;
+      }
+    });
+
+    return paramObj;
   }
 
   private async saveMessageToDatabase(msg: TelegramBot.Message) {
     try {
       // Implement your logic to save the message to the database using your repository layer
-      // Example:
       const savedMessage = await this.productService.saveMessage({
         chatId: msg.chat.id,
         userId: msg.from.id,

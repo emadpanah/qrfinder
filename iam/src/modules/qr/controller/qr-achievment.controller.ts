@@ -64,29 +64,37 @@ export class AchievementController {
 
   @Post('/create-selected')
   async createAchievementSelected(
-    @Body() body: { achievementId: string; userId: string; parentId?: string  }
+    @Body() body: { achievementId: string; userId: string; parentId?: string }
   ): Promise<AchievementSelectedInsertDto> {
     try {
       const achievementInsertDto: AchievementSelectedInsertDto = {
         achievementId: new Types.ObjectId(body.achievementId),
         userId: new Types.ObjectId(body.userId),
-        parentId: body.parentId == undefined ? null: new Types.ObjectId(body.parentId),
-        inviteLink:"",
-        addedDate: new Date().getTime() // Add the addedDate here
+        parentId: body.parentId == undefined ? null : new Types.ObjectId(body.parentId),
+        inviteLink: "",
+        addedDate: new Date().getTime(), // Add the addedDate here
       };
-
-      const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
-      // Adjust the frontend URL to include 'qrApp' path
-      const qrCodeLink = `${baseUrl}/qrApp?a=${body.achievementId}&p=${body.userId}&t=a`;
+  
+      // Use the TELEGRAM_BOT_URL_MAGHAZI from environment variables
+      const telegramBotUrl = process.env.TELEGRAM_BOT_URL_MAGHAZI || 'https://t.me/maghazi_bot';
+  
+      // Encode the parameters to pass them securely in the URL
+      const encodedParams = encodeURIComponent(
+        `achievementId=${body.achievementId}&parentId=${body.userId}&type=a`
+      );
+  
+      // Construct the bot invitation link with parameters
+      const qrCodeLink = `${telegramBotUrl}?start=${encodedParams}`;
       achievementInsertDto.inviteLink = qrCodeLink;
   
       const achievementSelected = await this.achievementService.createAchievementSelected(achievementInsertDto);
       return achievementSelected;
     } catch (error) {
       this.logger.error('Error creating achievement selected', error);
-      throw error;   
+      throw error;
     }
   }
+  
 
   @Post('/create-qrscan')
   async createQrScan(
