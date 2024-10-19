@@ -17,7 +17,6 @@ const InviteAchievement: React.FC<InviteAchievementProps> = ({ achievement }) =>
   const { accountData, userId, updateBalance } = useUser();
   const [isOwner, setIsOwner] = useState<boolean>(false);
   const [isAchievementComplete, setIsAchievementComplete] = useState(false);
-  const [inviteLink, setInviteLink] = useState<string | null>(null); // Store the invite link
 
   const remainingDays = calculateRemainingDays(achievement.expirationDate);
   const totalDays = calculateTotalDays(achievement.startDate, achievement.expirationDate);
@@ -42,7 +41,6 @@ const InviteAchievement: React.FC<InviteAchievementProps> = ({ achievement }) =>
         fetchAchievementSelectFullByUA(achievement._id, userId!)
           .then((selectedfull) => {
             setSelectedAchievementFull(selectedfull);
-            setInviteLink(selectedfull.inviteLink);
           })
           .catch((error) => {
             console.error("Error fetching achievement:", error);
@@ -60,6 +58,12 @@ const InviteAchievement: React.FC<InviteAchievementProps> = ({ achievement }) =>
     fetchData();
   }, [userId, achievement.campaignId, targetInvitations, updateBalance]);
 
+  // Create invite link dynamically
+  const createInviteLink = () => {
+    console.log("process.env.NEXT_PUBLIC_TELEGRAM_BOT_URL_MAGHAZI", process.env.NEXT_PUBLIC_TELEGRAM_BOT_URL_MAGHAZI);
+    return `${process.env.NEXT_PUBLIC_TELEGRAM_BOT_URL_MAGHAZI}?start=said=${selectedAchievementFull?._id}`;
+  };
+
   // Copy invite link to clipboard
   const copyInviteLink = () => {
     const telegramId = window.Telegram?.WebApp?.initDataUnsafe?.user?.username || window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
@@ -67,7 +71,7 @@ const InviteAchievement: React.FC<InviteAchievementProps> = ({ achievement }) =>
     const additionalTokens = tokenReward * 2;
     const totalTokensIfComplete = tokenReward * 3;
 
-    const inviteMessage = `Hi, this is ${telegramId}. If you join this shop and invite your friends, you can earn ${tokenReward} tokens for each invite. If your friend buys any product, you will get an additional ${additionalTokens} tokens. Plus, if you complete the achievement, you will receive ${totalTokensIfComplete} tokens. Don't miss this chance! ${inviteLink}`;
+    const inviteMessage = `Hi, this is ${telegramId}. If you join this shop and invite your friends, you can earn ${tokenReward} tokens for each invite. If your friend buys any product, you will get an additional ${additionalTokens} tokens. Plus, if you complete the achievement, you will receive ${totalTokensIfComplete} tokens. Don't miss this chance! ${createInviteLink()}`;
 
     if (navigator.clipboard) {
       navigator.clipboard.writeText(inviteMessage)
@@ -114,14 +118,14 @@ const InviteAchievement: React.FC<InviteAchievementProps> = ({ achievement }) =>
         </p>
 
         {/* Invite Message Section with title-like styling */}
-        {inviteLink && (
+        {selectedAchievementFull && (
           <div className={`${styles.inviteSection} mb-4 text-center border border-gray-300 p-4`}>
             <p className={`${styles.sectionTitle}`}>Your Invite Message</p>
             <p>
               Hi, this is {window.Telegram?.WebApp?.initDataUnsafe?.user?.id || 'Emad'}. If you join this shop and invite your friends, you can earn {achievement.reward?.tokens ?? 100} tokens for each invite. If your friend buys any product, you will get an additional {achievement.reward?.tokens ? achievement.reward.tokens * 2 : 200} tokens. Plus, if you complete the achievement, you will receive {achievement.reward?.tokens ? achievement.reward.tokens * 3 : 300} tokens. Don&apos;t miss this chance!
             </p>
             <div className="flex justify-center items-center">
-              <input type="text" value={inviteLink} readOnly className="border px-2 py-1" />
+              <input type="text" value={createInviteLink()} readOnly className="border px-2 py-1" />
               <button onClick={copyInviteLink} className="ml-2 bg-blue-500 text-white px-4 py-2 rounded">Copy Invite Link</button>
             </div>
           </div>

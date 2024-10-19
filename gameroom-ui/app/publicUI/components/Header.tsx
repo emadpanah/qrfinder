@@ -20,6 +20,7 @@ import { types } from 'util';
 import { Types } from 'mongoose';
 import { Transaction } from 'ethers';
 import loadTelegramScript from '@/app/utils/loadTelegramScript';
+//import { useSearchParams } from 'next/navigation';
 
 interface HeaderProps {
   toggleTheme: () => void;
@@ -30,6 +31,7 @@ const Header: React.FC<HeaderProps> = ({ toggleTheme, currentTheme }) => {
   const [theme, setTheme] = useState<string>('light');
   const { setUserId, setAccountData, userId } = useUser();
   const [network, setNetwork] = useState<string>('N/A');
+  //const searchParams = useSearchParams();
 
   useEffect(() => {
     setTheme(currentTheme);
@@ -55,11 +57,15 @@ const Header: React.FC<HeaderProps> = ({ toggleTheme, currentTheme }) => {
           // Fetch Telegram ID or set fallback
           if (user) {
             telegramID = user.id.toString();
-            telegramFN = user.FirstName!;
-            telegramLN = user.LastName!;
-            telegramUN = user.UserName!;
-            telegramLC = user.LanguageCode!;
+            telegramFN = user.first_name!;
+            telegramLN = user.last_name!;
+            telegramUN = user.username!;
+            telegramLC = user.language_code!;
             console.log('Telegram ID (inside then):', telegramID);
+            console.log('Telegram telegramFN (inside then):', telegramFN);
+            console.log('Telegram telegramLN (inside then):', telegramLN);
+            console.log('Telegram telegramUN (inside then):', telegramUN);
+
           } else {
             telegramID = 'emad1';
             console.log('Fallback Telegram ID:', telegramID);
@@ -71,6 +77,8 @@ const Header: React.FC<HeaderProps> = ({ toggleTheme, currentTheme }) => {
   
         // Proceed only after you have the telegramID
         console.log('Telegram ID:', telegramID);
+        // const chatId = searchParams.get('chatId');
+        // console.log('chatId:', chatId);
   
         // Register the user with the telegramID
         const { authToken, isNewToken, userId } = await registerUser(telegramID, telegramUN,
@@ -104,9 +112,8 @@ const Header: React.FC<HeaderProps> = ({ toggleTheme, currentTheme }) => {
         };
   
         // Create customer and log success
-        const { token: shopToken } = await createCustomerSync(customerData);
-         // Store shopToken in context
-         console.log('ShopToken set in context:', shopToken);
+      await createCustomerSync(customerData);
+
 
   
       } catch (error) {

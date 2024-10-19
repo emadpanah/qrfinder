@@ -60,130 +60,94 @@ const QRAppPageContent: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [basket, setBasket] = useState<Product[]>([]);
-
+  const [loading, setLoading] = useState(true); // Add this state for loading
+  const [parentId, setParentId] = useState<string>();
   const searchParams = useSearchParams();
   const { accountData, userId, updateBalance } = useUser();
 
-  useEffect(() => {
-    const getCampaigns = async () => {
-      try {
-        const campaignsData = await fetchActiveCampaigns();
-        setCampaigns(campaignsData);
-      } catch (error) {
-        console.error('Error fetching campaigns:', error);
-      }
-    };
-    getCampaigns();
-  }, []);
-
-  // useEffect(() => {
-  //   const achievementId = searchParams.get('a');
-  //   const type = searchParams.get('t');
-  //   const parentId = searchParams.get('p');
-  //   const isQrCodeType = type === 'q';
-  //   const hasValidParamsQr = !!achievementId && isQrCodeType;
-  //   const isAchieventInviteType = type === 'a';
-  //   const hasValidparaInvi = !!achievementId && isAchieventInviteType;
-  //   if (hasValidParamsQr) {
-  //     if (accountData.address && userId && parentId) {
-
-  //       console.log("User connected with address:", accountData.address);
-  //       selectAchievement(achievementId!, userId, "0").then((achievement) => {
-  //         setSelectedAchievementFull(achievement);
-  //         fetchAchievementById(achievement.achievementId).then((ach) => {
-  //           setSelectedAchievement(ach);
-  //           createQrScan(parentId.toString(), userId, 0, 0);
-  //           setActiveSection(ActiveSection.AchievementDetails);
-  //         }).catch((error) => {
-  //           console.error('Error fetching achievement:', error);
-  //         });
-  //       }).catch((error) => {
-  //         console.error('Error selecting achievement:', error);
-  //       });
-  //     }
-  //   }
-  //   if (hasValidparaInvi) {
-  //     alert("hasValidparaInvi address :"+ accountData.address+" userId : "+ userId);
-  //     if (accountData.address && userId) {
-  //       console.log("User connected with address:", accountData.address);
-  //       selectAchievement(achievementId!, userId, parentId ? parentId : '0').then((select) => {
-  //         setSelectedAchievementFull(select);
-  //         fetchAchievementById(achievementId!).then((achievement) => {
-  //           setSelectedAchievement(achievement);
-  //           setActiveSection(ActiveSection.AchievementDetails);
-  //         }).catch((error) => {
-  //           console.error('Error fetching achievement:', error);
-  //         });
-  //       }).catch((error) => {
-  //         console.error('Error selecting achievement:', error);
-  //       });
-  //     }
-  //   }
-  // }, [searchParams, accountData.address, userId]);
+  const getCampaigns = async () => {
+    try {
+      const campaignsData = await fetchActiveCampaigns();
+      setCampaigns(campaignsData);
+    } catch (error) {
+      console.error('Error fetching campaigns:', error);
+    }
+  };
 
   useEffect(() => {
     console.log('page.tsx-useEffect');
+    setLoading(true);
     const achievementId = searchParams.get('a');
     const type = searchParams.get('t');
     const parentId = searchParams.get('p');
+    const chatId = searchParams.get('chatId');
 
-    const isQrCodeType = type === 'q';
-    const hasValidParamsQr = !!achievementId && isQrCodeType;
+    console.log('a', achievementId);
+    console.log('t', type);
+    console.log('p', parentId);
+    console.log('chatId', chatId);
 
-    const isAchieventInviteType = type === 'a';
-    const hasValidparaInvi = !!achievementId && isAchieventInviteType;
+    // const isQrCodeType = type === 'q';
+    // const hasValidParamsQr = !!achievementId && isQrCodeType;
+
+    // const isAchieventInviteType = type === 'a';
+    // const hasValidparaInvi = !!achievementId && isAchieventInviteType;
 
     const isShopCodeType = type === 's'; // New shop type
-    const hasValidParamsShopRef = achievementId && isShopCodeType && parentId;
+    //const hasValidParamsShopRef = achievementId && isShopCodeType && parentId;
+    if(parentId)
+      setParentId(parentId);
+    //const hasValidParamsShop = !achievementId && !parentId && !type;
 
-    const hasValidParamsShop = !achievementId && !parentId && !type;
-
-    // Handle QR code achievement
-    if (hasValidParamsQr) {
-      if (userId && parentId) {
-        selectAchievement(achievementId!, userId, '0')
-          .then((achievement) => {
-            setSelectedAchievementFull(achievement);
-            fetchAchievementById(achievement.achievementId)
-              .then((ach) => {
-                setSelectedAchievement(ach);
-                createQrScan(parentId.toString(), userId, 0, 0);
-                setActiveSection(ActiveSection.AchievementDetails);
-              })
-              .catch((error) =>
-                console.error('Error fetching achievement:', error),
-              );
-          })
-          .catch((error) =>
-            console.error('Error selecting achievement:', error),
-          );
-      }
-    }
+    // // Handle QR code achievement
+    // if (hasValidParamsQr) {
+    //   if (userId && parentId) {
+    //     selectAchievement(achievementId!, userId, '0')
+    //       .then((achievement) => {
+    //         setSelectedAchievementFull(achievement);
+    //         fetchAchievementById(achievement.achievementId)
+    //           .then((ach) => {
+    //             setSelectedAchievement(ach);
+    //             createQrScan(parentId.toString(), userId, 0, 0);
+    //             setActiveSection(ActiveSection.AchievementDetails);
+    //             setLoading(false);
+    //           })
+    //           .catch((error) =>
+    //             console.error('Error fetching achievement:', error),
+    //           );
+    //       })
+    //       .catch((error) =>
+    //         console.error('Error selecting achievement:', error),
+    //       );
+    //   }
+    // }
 
     // Handle Invite achievement
-    if (hasValidparaInvi) {
-      if (userId) {
-        selectAchievement(achievementId!, userId, parentId ? parentId : '0')
-          .then((select) => {
-            setSelectedAchievementFull(select);
-            fetchAchievementById(achievementId!)
-              .then((achievement) => {
-                setSelectedAchievement(achievement);
-                setActiveSection(ActiveSection.AchievementDetails);
-              })
-              .catch((error) =>
-                console.error('Error fetching achievement:', error),
-              );
+    // if (hasValidparaInvi) {
+    //   if (userId) {
+    //     selectAchievement(achievementId!, userId, parentId ? parentId : '0')
+    //       .then((select) => {
+    //         setSelectedAchievementFull(select);
+    //         fetchAchievementById(achievementId!)
+    //           .then((achievement) => {
+    //             setSelectedAchievement(achievement);
+    //             setActiveSection(ActiveSection.AchievementDetails);
+    //             setLoading(false);
+    //           })
+    //           .catch((error) =>
+    //             console.error('Error fetching achievement:', error),
+    //           );
               
-          })
-          .catch((error) =>
-            console.error('Error selecting achievement:', error),
-          );
-      }
-    }
+    //       })
+    //       .catch((error) =>
+    //         console.error('Error selecting achievement:', error),
+    //       );
+    //   }
+    // }
 
     // New logic for handling shop code type
-    if (hasValidParamsShop) {
+    if (isShopCodeType) {
+      
       console.log("userId - ", userId);
       if (userId) {
         console.log('Loading products from shop section');
@@ -191,92 +155,8 @@ const QRAppPageContent: React.FC = () => {
           .then((realProducts) => {
             setProducts(realProducts); // Once resolved, set the products
             setActiveSection(ActiveSection.Shop); // Switch to shop section
+            setLoading(false);
           })
-        // console.log('Loading fake products for shop section');
-        // const fakeProducts = [
-        //   {
-        //     Base: {
-        //       Id: 'e91da164-6d86-43bb-bdbf-f670b9ca86b5',
-        //       MaxCountInCart: 10,
-        //       Sort: 1,
-        //       ReleaseDaysCount: 0,
-        //       HourOfRelease: 0,
-        //       MinuteOfRelease: 0,
-        //       JustInCart: false,
-        //       Title: 'ربات ترید SCALP BOT',
-        //       Slogan: 'سالیانه',
-        //       Description: 'This is a description for SCALP BOT Trading Robot.',
-        //       InternationalCodeValue: 'SCP12345',
-        //       AdditionalDescription:
-        //         'Additional features and details of SCALP BOT.',
-        //       AdditionalValue: 'Advanced AI-based trading',
-        //       ImagesIds: 'SCP_Image_ca0cb9dc-ff8a-401f-955d-72c536a9f765',
-        //       Quantity: 1,
-        //       IsLastQuantity: false,
-        //       UserName: 'admin',
-        //     },
-        //     IsAvailable: true,
-        //     SmallImage:
-        //       '/Public/b2fcffb7-4e06-4fa0-b2e2-c1a35a1750bf/image/items/SCP_Image_ca0cb9dc-ff8a-401f-955d-72c536a9f765_.jpeg',
-        //     Price: '25,797,000 تومان (سالیانه)',
-        //     MonthlyPrice: '2,199,000 تومان (ماهانه)',
-        //   },
-        //   {
-        //     Base: {
-        //       Id: '7a79c32b-2a0f-42ec-9ce4-cc9cdfee6292',
-        //       MaxCountInCart: 20,
-        //       Sort: 2,
-        //       ReleaseDaysCount: 0,
-        //       HourOfRelease: 0,
-        //       MinuteOfRelease: 0,
-        //       JustInCart: false,
-        //       Title: 'دوره مبتدی ترید با ربات ترید هوش مصنوعی',
-        //       Slogan: '',
-        //       Description: 'Beginner trading course with AI trading robot.',
-        //       InternationalCodeValue: 'TRADE001',
-        //       AdditionalDescription:
-        //         'Course details for beginner traders using AI robots.',
-        //       AdditionalValue: 'Complete package for beginners',
-        //       ImagesIds: 'SCP_Image_69ab9f7d-5f6a-4b6a-9cf9-690cf8173873',
-        //       Quantity: 1,
-        //       IsLastQuantity: false,
-        //       UserName: 'admin',
-        //     },
-        //     IsAvailable: true,
-        //     SmallImage:
-        //       '/Public/b2fcffb7-4e06-4fa0-b2e2-c1a35a1750bf/image/items/SCP_Image_69ab9f7d-5f6a-4b6a-9cf9-690cf8173873_.jpeg',
-        //     Price: '1,890,000 تومان',
-        //   },
-        //   {
-        //     Base: {
-        //       Id: 'b9554aa6-8065-46c8-93f4-a232b10c8c54',
-        //       MaxCountInCart: 15,
-        //       Sort: 3,
-        //       ReleaseDaysCount: 0,
-        //       HourOfRelease: 0,
-        //       MinuteOfRelease: 0,
-        //       JustInCart: false,
-        //       Title: 'ربات تریدر تلگرامی پرادو',
-        //       Slogan: 'سالیانه',
-        //       Description:
-        //         'Telegram Prado trading bot with various subscription options.',
-        //       InternationalCodeValue: 'PRADO001',
-        //       AdditionalDescription: 'Advanced Telegram trading with Prado.',
-        //       AdditionalValue: 'Multiple subscription packages available',
-        //       ImagesIds: 'SCP_Image_a09fe10a-29c5-424d-8a22-ac402a3b0f4b',
-        //       Quantity: 1,
-        //       IsLastQuantity: false,
-        //       UserName: 'admin',
-        //     },
-        //     IsAvailable: true,
-        //     SmallImage:
-        //       '/Public/b2fcffb7-4e06-4fa0-b2e2-c1a35a1750bf/image/items/SCP_Image_a09fe10a-29c5-424d-8a22-ac402a3b0f4b_.jpeg',
-        //     Price: '39,000,000 تومان (سالیانه)',
-        //     MonthlyPrice: '3,990,000 تومان (ماهانه)',
-        //   },
-        // ];
-        // setProducts(fakeProducts); // Set fake products
-        //setActiveSection(ActiveSection.Shop); // Switch to shop section
       }
     }
   }, [ , userId]);
@@ -353,6 +233,7 @@ const QRAppPageContent: React.FC = () => {
     ) {
       setActiveSection(ActiveSection.Shop);
     } else {
+      getCampaigns();
       setActiveSection(ActiveSection.Campaigns);
     }
   };
@@ -374,7 +255,7 @@ const QRAppPageContent: React.FC = () => {
     // Achievement ID to select
     console.log("eran : ");
     const achievementId = "670a82e0196204f8d4ff1fa3";
-    const parentId = searchParams.get('p'); // Getting the parentId from URL if available
+    // Getting the parentId from URL if available
   
     if (userId) {
       // Select the achievement with or without parentId depending on its availability
@@ -405,6 +286,13 @@ const QRAppPageContent: React.FC = () => {
   
 
   const renderActiveSection = () => {
+    if (loading) {
+      return (
+        <div className={styles.loadingOverlay}>
+          <div className={styles.loadingText}>Please wait . . .</div>
+        </div>
+      );
+    }
     console.log(`Rendering section: ${activeSection}`);
     switch (activeSection) {
       case ActiveSection.Campaigns:

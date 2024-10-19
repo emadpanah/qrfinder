@@ -726,3 +726,50 @@
   font-weight: 600;
   margin-bottom: 0.5rem;
 }
+
+/* Loading overlay */
+.loadingOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5); /* Dark semi-transparent background */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  opacity: 0;
+  animation: fadeInOut 2s forwards;
+}
+
+/* Loading text style */
+.loadingText {
+  color: #fff;
+  font-size: 2rem;
+  font-weight: bold;
+  animation: blinkText 1.5s infinite; /* Blinking effect for text */
+}
+
+/* Keyframe for blinking text */
+@keyframes blinkText {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+/* Keyframe for fade-in and fade-out */
+@keyframes fadeInOut {
+  0% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}

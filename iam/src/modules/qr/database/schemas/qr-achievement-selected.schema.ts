@@ -12,9 +12,6 @@ export class AchievementSelected {
   @Prop({ type: Types.ObjectId, ref: 'IAMUser', required: true })
   userId: Types.ObjectId;
 
-  @Prop({ required: true })
-  inviteLink: string;
-
   @Prop({ type: Types.ObjectId, ref: 'IAMUser', default: null })
   parentId: Types.ObjectId;  
 

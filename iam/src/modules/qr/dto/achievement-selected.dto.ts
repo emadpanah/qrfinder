@@ -32,11 +32,6 @@ export class AchievementSelectedDto {
   @IsNotEmpty()
   userId: Types.ObjectId;
 
-  @IsString()
-  @IsNotEmpty()
-  @Sanitize(htmlSanitizer)
-  inviteLink: string;
-
   
   @IsOptional()
   parentId: Types.ObjectId;
@@ -71,11 +66,6 @@ export class AchievementSelectedRefDto {
   
   @IsNotEmpty()
   userId: Types.ObjectId;
-
-  @IsString()
-  @IsNotEmpty()
-  @Sanitize(htmlSanitizer)
-  inviteLink: string;
 
   
   @IsOptional()
@@ -144,11 +134,6 @@ export class AchievementSelectedFullDto {
   @IsNotEmpty()
   userId: Types.ObjectId;
 
-  @IsString()
-  @IsNotEmpty()
-  @Sanitize(htmlSanitizer)
-  inviteLink: string;
-
   
   @IsOptional()
   parentId: Types.ObjectId;
@@ -171,10 +156,6 @@ export class AchievementSelectedInsertDto {
   @IsNotEmpty()
   userId: Types.ObjectId;
 
-  @IsString()
-  @IsNotEmpty()
-  @Sanitize(htmlSanitizer)
-  inviteLink: string;
 
   
   @IsOptional()

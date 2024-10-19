@@ -33,7 +33,7 @@ async function bootstrap() {
 //   name: 'GainToken',
 //   symbol: 'g',
 //   type: 'crypto',
-//   isDefault: true,
+//   isDefault: false,
 //   _id: new Types.ObjectId(),
 // };
 
@@ -53,9 +53,18 @@ async function bootstrap() {
 //   _id: new Types.ObjectId(),
 // };
 
+// const tomanCurrency: CurrencyDto = {
+//   name: 'Toman',
+//   symbol: 'toman',
+//   type: 'fiat',
+//   isDefault: true,
+//   _id: new Types.ObjectId(),
+// };
+
 // await currencyService.createCurrency(defaultCurrency);
 // await currencyService.createCurrency(tonCurrency);
 // await currencyService.createCurrency(ethereumCurrency);
+// await currencyService.createCurrency(tomanCurrency);
 
   // Create Shops
   const maghaziShop: ShopInsertDto = {

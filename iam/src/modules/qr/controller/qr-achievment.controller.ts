@@ -63,37 +63,27 @@ export class AchievementController {
   }
 
   @Post('/create-selected')
-  async createAchievementSelected(
-    @Body() body: { achievementId: string; userId: string; parentId?: string }
-  ): Promise<AchievementSelectedInsertDto> {
-    try {
-      const achievementInsertDto: AchievementSelectedInsertDto = {
-        achievementId: new Types.ObjectId(body.achievementId),
-        userId: new Types.ObjectId(body.userId),
-        parentId: body.parentId == undefined ? null : new Types.ObjectId(body.parentId),
-        inviteLink: "",
-        addedDate: new Date().getTime(), // Add the addedDate here
-      };
-  
-      // Use the TELEGRAM_BOT_URL_MAGHAZI from environment variables
-      const telegramBotUrl = process.env.TELEGRAM_BOT_URL_MAGHAZI || 'https://t.me/maghazi_bot';
-  
-      // Encode the parameters to pass them securely in the URL
-      const encodedParams = encodeURIComponent(
-        `achievementId=${body.achievementId}&parentId=${body.userId}&type=a`
-      );
-  
-      // Construct the bot invitation link with parameters
-      const qrCodeLink = `${telegramBotUrl}?start=${encodedParams}`;
-      achievementInsertDto.inviteLink = qrCodeLink;
-  
-      const achievementSelected = await this.achievementService.createAchievementSelected(achievementInsertDto);
-      return achievementSelected;
-    } catch (error) {
-      this.logger.error('Error creating achievement selected', error);
-      throw error;
-    }
+async createAchievementSelected(
+  @Body() body: { achievementId: string; userId: string; parentId?: string }
+): Promise<AchievementSelectedInsertDto> {
+  try {
+    const achievementInsertDto: AchievementSelectedInsertDto = {
+      achievementId: new Types.ObjectId(body.achievementId),
+      userId: new Types.ObjectId(body.userId),
+      parentId: body.parentId == undefined ? null : new Types.ObjectId(body.parentId),
+      addedDate: new Date().getTime(), // Add the addedDate here
+    };
+
+    // Create achievement selected record
+    const achievementSelected = await this.achievementService.createAchievementSelected(achievementInsertDto);
+
+    return achievementSelected;  // No need to generate or store the link
+  } catch (error) {
+    this.logger.error('Error creating achievement selected', error);
+    throw error;
   }
+}
+
   
 
   @Post('/create-qrscan')
@@ -185,14 +175,13 @@ export class AchievementController {
         achievementId: new Types.ObjectId(achievementId),
         userId: new Types.ObjectId(userId),
         parentId: new Types.ObjectId(parentId), // Add parentId
-        inviteLink:'',
         addedDate: new Date().getTime() // Add the addedDate here
       });
 
-      const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
-      // Adjust the frontend URL to include 'qrApp' path
-      const qrCodeLink = `${baseUrl}/qrApp?a=${achievementId}&p=${userId}&t=q`;
-      achievementSelected.inviteLink = qrCodeLink;
+      // const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
+      // // Adjust the frontend URL to include 'qrApp' path
+      // const qrCodeLink = `${baseUrl}/qrApp?a=${achievementId}&p=${userId}&t=q`;
+      // achievementSelected.inviteLink = qrCodeLink;
 
       const achievementSelectedd = await this.achievementService.createAchievementSelected(achievementSelected);
       return achievementSelectedd;
