@@ -27,6 +27,10 @@ const InviteAchievement: React.FC<InviteAchievementProps> = ({ achievement }) =>
   const daysProgressPercentage = (passedDays / totalDays) * 100;
   const invitationsProgressPercentage = (invitedUsersCount / targetInvitations) * 100;
   const remainingInvitations = targetInvitations - invitedUsersCount;
+  const telegramId = window.Telegram?.WebApp?.initDataUnsafe?.user?.username || window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
+  const inviteMessage = `Hi, this is ${telegramId}. If you join this shop and invite your friends, you can earn ${achievement.reward.tokens} tokens for each invite. Don't miss this chance!`;
+  const inviteMessageCopy = `Hi, this is ${telegramId}. If you join this shop and invite your friends, you can earn ${achievement.reward.tokens} tokens for each invite. Don't miss this chance! ${process.env.NEXT_PUBLIC_TELEGRAM_BOT_URL_MAGHAZI}?start=said=${selectedAchievementFull?._id}`;
+  
 
   useEffect(() => {
     const fetchData = async () => {
@@ -66,22 +70,15 @@ const InviteAchievement: React.FC<InviteAchievementProps> = ({ achievement }) =>
 
   // Copy invite link to clipboard
   const copyInviteLink = () => {
-    const telegramId = window.Telegram?.WebApp?.initDataUnsafe?.user?.username || window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
-    const tokenReward = achievement.reward?.tokens ?? 100;
-    const additionalTokens = tokenReward * 2;
-    const totalTokensIfComplete = tokenReward * 3;
-
-    const inviteMessage = `Hi, this is ${telegramId}. If you join this shop and invite your friends, you can earn ${tokenReward} tokens for each invite. If your friend buys any product, you will get an additional ${additionalTokens} tokens. Plus, if you complete the achievement, you will receive ${totalTokensIfComplete} tokens. Don't miss this chance! ${createInviteLink()}`;
-
     if (navigator.clipboard) {
-      navigator.clipboard.writeText(inviteMessage)
+      navigator.clipboard.writeText(inviteMessageCopy)
         .then(() => alert('Invite message copied to clipboard!'))
         .catch((e) => {
           console.error('Clipboard API failed. Falling back to older method.', e);
-          fallbackCopyTextToClipboard(inviteMessage);
+          fallbackCopyTextToClipboard(inviteMessageCopy);
         });
     } else {
-      fallbackCopyTextToClipboard(inviteMessage); // Fallback for older browsers
+      fallbackCopyTextToClipboard(inviteMessageCopy); // Fallback for older browsers
     }
   };
 
@@ -122,7 +119,7 @@ const InviteAchievement: React.FC<InviteAchievementProps> = ({ achievement }) =>
           <div className={`${styles.inviteSection} mb-4 text-center border border-gray-300 p-4`}>
             <p className={`${styles.sectionTitle}`}>Your Invite Message</p>
             <p>
-              Hi, this is {window.Telegram?.WebApp?.initDataUnsafe?.user?.id || 'Emad'}. If you join this shop and invite your friends, you can earn {achievement.reward?.tokens ?? 100} tokens for each invite. If your friend buys any product, you will get an additional {achievement.reward?.tokens ? achievement.reward.tokens * 2 : 200} tokens. Plus, if you complete the achievement, you will receive {achievement.reward?.tokens ? achievement.reward.tokens * 3 : 300} tokens. Don&apos;t miss this chance!
+           {inviteMessage}
             </p>
             <div className="flex justify-center items-center">
               <input type="text" value={createInviteLink()} readOnly className="border px-2 py-1" />
@@ -176,7 +173,7 @@ const InviteAchievement: React.FC<InviteAchievementProps> = ({ achievement }) =>
                 selectedAchievementsRef.map((ref) => (
                   <tr key={ref._id.toString()}>
                     <td className="border px-4 py-2">{ref.name}</td>
-                    <td className="border px-4 py-2">{ref.userId.toString()}</td>
+                    <td className="border px-4 py-2">{ref.telegramUserName}</td>
                     <td className="border px-4 py-2">{new Date(ref.addedDate).toLocaleDateString()}</td>
                   </tr>
                 ))

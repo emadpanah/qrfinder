@@ -131,6 +131,7 @@ export interface AchievementSelectedRef {
   inviteLink: string;
   parentId: Types.ObjectId;
   addedDate: number;
+  telegramUserName: string;
 }
 
 export interface CartItem {

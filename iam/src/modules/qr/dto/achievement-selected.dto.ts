@@ -67,6 +67,9 @@ export class AchievementSelectedRefDto {
   @IsNotEmpty()
   userId: Types.ObjectId;
 
+  @IsOptional()
+  telegramUserName: string;
+
   
   @IsOptional()
   parentId: Types.ObjectId;

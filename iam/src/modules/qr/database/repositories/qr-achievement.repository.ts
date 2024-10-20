@@ -407,6 +407,17 @@ async findAchievementSelectedFullByUserAndCampId(userId: Types.ObjectId, campaig
       $match: { 'achievementDetails.campaignId': campaignId }
     },
     {
+      $lookup: {
+        from: '_iamusers',  // The collection where user details are stored
+        localField: 'userId',  // The field in _qrachievementselected to match
+        foreignField: '_id',   // The field in _iamusers to match
+        as: 'userDetails'      // The output array with matched user details
+      }
+    },
+    {
+      $unwind: '$userDetails' // Unwind to work with single user object
+    },
+    {
       $project: {
         _id: 1,
         achievementId: 1,
@@ -414,14 +425,15 @@ async findAchievementSelectedFullByUserAndCampId(userId: Types.ObjectId, campaig
         inviteLink: 1,
         parentId: 1,
         addedDate: 1,
-        name: '$achievementDetails.name'
+        name: '$achievementDetails.name',
+        telegramUserName: '$userDetails.telegramUserName'
       }
     }
   ];
 
   const fullDtos = await selectedCollection.aggregate(pipeline).toArray();
   
-  return fullDtos as AchievementSelectedFullDto[];
+  return fullDtos as AchievementSelectedRefDto[];
 }
 
   async findAchievementsByCampaignId(campaignId: Types.ObjectId): Promise<AchievementDto[]> {

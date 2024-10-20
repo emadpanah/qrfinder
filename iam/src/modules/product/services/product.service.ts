@@ -83,7 +83,7 @@ async getProducts(): Promise<string> {
     });
   }
 
-  async waitForShopToken(userId: Types.ObjectId, retries = 5, delay = 1000): Promise<string> {
+  async waitForShopToken(userId: Types.ObjectId, retries = 10, delay = 3000): Promise<string> {
     while (retries > 0) {
       const shopToken = await this.iamService.getShopToken(userId);
 

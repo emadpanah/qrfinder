@@ -8,13 +8,25 @@ export class BalanceRepository {
   constructor(@InjectConnection('service') private connection: Connection) {}
 
   async addTransaction(dto: BalanceDto): Promise<any> {
-    const collection = this.connection.collection('_iambalances');
-    await collection.insertOne(dto);
-    const transaction = await collection.findOne({ _id: dto._id });
-    if (!transaction) {
-      throw new Error('Balance insert not completed.');
+    try {
+      console.log("BalanceDto---------------", dto);
+      const collection = this.connection.collection('_iambalances');
+  
+      // Insert transaction
+      await collection.insertOne(dto);
+  
+      // Find the inserted transaction
+      const transaction = await collection.findOne({ _id: dto._id });
+  
+      if (!transaction) {
+        throw new Error('Balance insert not completed.');
+      }
+  
+      return transaction;
+    } catch (error) {
+      console.error('Error inserting transaction:', error); // Log the error for debugging
+      throw new Error('Failed to add transaction.'); // Re-throw the error with a user-friendly message
     }
-    return transaction;
   }
 
   async findUserBalance(userId: Types.ObjectId, currency: Types.ObjectId): Promise<number> {

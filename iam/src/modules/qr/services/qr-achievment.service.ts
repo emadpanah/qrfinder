@@ -45,8 +45,9 @@ export class AchievementService {
         if (!result) {
           throw new Error('Achievement selected insert not completed.');
         }
-  
-        console.log("AchievementSelected- achiId - ", result.achievementId);
+        else{
+
+          console.log("AchievementSelected- achiId - ", result.achievementId);
         // Get the achievement details
         const achisel = await this.achievementRepository.findAchievementSelectedByUserAndAchiId(dto.userId, result.achievementId);
         if (!achisel) {
@@ -60,32 +61,6 @@ export class AchievementService {
           throw new Error('Currency not found.');
         }
   
-        // Calculate half of the reward tokens for the new user
-        const rewardHalf = Math.floor(achisel.reward.tokens / 2);
-        console.log("rewardHalf ----------------------------", rewardHalf);
-        // Handle balance update for the new user (invitee)
-        const currentBalanceUser = await this.balanceRepository.findUserBalance(
-          new Types.ObjectId(dto.userId), 
-          new Types.ObjectId(curr._id)
-        );
-        console.log("currentBalanceUser ----------------------------", currentBalanceUser);
-        const newBalanceUser = currentBalanceUser + rewardHalf;
-  
-        // Create a balance transaction for the new user with half the reward
-        const userBalanceTransaction: BalanceDto = {
-          userId: new Types.ObjectId(dto.userId),
-          transactionType: 'achievementsreward',
-          amount: rewardHalf,
-          currency: curr._id,
-          transactionEntityId: dto.achievementId.toString(),
-          balanceAfterTransaction: newBalanceUser,
-          _id: new Types.ObjectId(),
-          timestamp: Date.now(),
-        };
-        console.log("addTransaction start ----------------------------");
-        await this.balanceRepository.addTransaction(userBalanceTransaction);
-        console.log("addTransaction end ----------------------------");
-       
         // If parentId exists, update the parent's balance with the whole reward
         if (dto.parentId) {
           const currentBalanceParent = await this.balanceRepository.findUserBalance(
@@ -100,18 +75,22 @@ export class AchievementService {
             transactionType: 'achievementsreward',
             amount: achisel.reward.tokens,  // Full reward goes to the parent
             currency: curr._id,
-            transactionEntityId: dto.achievementId.toString(),
+            transactionEntityId: dto.userId.toString(),
             balanceAfterTransaction: newBalanceParent,
             _id: new Types.ObjectId(),
-            timestamp: Date.now(),
+            timestamp: new Date().getTime(),
           };
           console.log("addTransaction parent start ----------------------------");
           await this.balanceRepository.addTransaction(parentBalanceTransaction);
           console.log("addTransaction parent end ----------------------------");
         }
-  
+      
         // Return the inserted achievement selection
         return result;
+        
+      }
+
+        
       } catch (error) {
         if (error.code === 11000) {
           // Handle duplicate entry error (already selected achievement)

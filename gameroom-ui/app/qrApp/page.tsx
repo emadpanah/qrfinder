@@ -227,16 +227,19 @@ const QRAppPageContent: React.FC = () => {
   };
 
   const handleBackButtonClick = () => {
-    if (
-      activeSection === ActiveSection.CampaignDetails ||
-      activeSection === ActiveSection.AchievementDetails
-    ) {
+    if (activeSection === ActiveSection.CampaignDetails || activeSection === ActiveSection.AchievementDetails) {
+      // Go back to Shop if currently in CampaignDetails or AchievementDetails
+      setActiveSection(ActiveSection.Shop);
+    } else if (activeSection === ActiveSection.Campaigns) {
+      // Go back to Shop if currently in Campaigns
       setActiveSection(ActiveSection.Shop);
     } else {
+      // Default behavior
       getCampaigns();
       setActiveSection(ActiveSection.Campaigns);
     }
   };
+  
   const handleInsertCampaignClick = () => {
     setActiveSection(ActiveSection.InsertCampaign);
   };

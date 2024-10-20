@@ -36,7 +36,7 @@ export class BotService implements OnModuleInit {
             
             if (achievementSelected) {
               const achievementId = achievementSelected.achievementId;
-              const parentId = achievementSelected.parentId;
+              const parentId = achievementSelected.userId;
 
               // Generate referral link dynamically
               const referralLink = `${process.env.CORS_ORIGIN}/qrApp?a=${achievementId}&p=${parentId}&t=s&chatId=${chatId}`;
