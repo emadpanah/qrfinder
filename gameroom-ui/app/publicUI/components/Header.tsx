@@ -20,7 +20,7 @@ import { types } from 'util';
 import { Types } from 'mongoose';
 import { Transaction } from 'ethers';
 import loadTelegramScript from '@/app/utils/loadTelegramScript';
-//import { useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 
 interface HeaderProps {
   toggleTheme: () => void;
@@ -31,7 +31,7 @@ const Header: React.FC<HeaderProps> = ({ toggleTheme, currentTheme }) => {
   const [theme, setTheme] = useState<string>('light');
   const { setUserId, setAccountData, userId } = useUser();
   const [network, setNetwork] = useState<string>('N/A');
-  //const searchParams = useSearchParams();
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     setTheme(currentTheme);
@@ -44,16 +44,16 @@ const Header: React.FC<HeaderProps> = ({ toggleTheme, currentTheme }) => {
       let telegramLN = '';
       let telegramUN = '';
       let telegramLC = '';
-  
+
       try {
         // Load the Telegram script and wait for it to resolve
         await loadTelegramScript();
-  
+
         // Check if the Telegram WebApp object is available
         if (window.Telegram) {
           window.Telegram.WebApp.ready(); // Ensure WebApp is ready
           const user = window.Telegram.WebApp.initDataUnsafe?.user;
-  
+
           // Fetch Telegram ID or set fallback
           if (user) {
             telegramID = user.id.toString();
@@ -65,7 +65,6 @@ const Header: React.FC<HeaderProps> = ({ toggleTheme, currentTheme }) => {
             console.log('Telegram telegramFN (inside then):', telegramFN);
             console.log('Telegram telegramLN (inside then):', telegramLN);
             console.log('Telegram telegramUN (inside then):', telegramUN);
-
           } else {
             telegramID = 'emad1';
             console.log('Fallback Telegram ID:', telegramID);
@@ -74,31 +73,37 @@ const Header: React.FC<HeaderProps> = ({ toggleTheme, currentTheme }) => {
           console.error('Telegram WebApp is not available');
           return;
         }
-  
+
         // Proceed only after you have the telegramID
         console.log('Telegram ID:', telegramID);
-        // const chatId = searchParams.get('chatId');
-        // console.log('chatId:', chatId);
-  
+        const chatId = searchParams.get('chatId');
+        console.log('chatId header detection :', chatId);
+
         // Register the user with the telegramID
-        const { authToken, isNewToken, userId } = await registerUser(telegramID, telegramUN,
-          telegramFN, telegramLN, telegramLC);
+        const { authToken, isNewToken, userId } = await registerUser(
+          telegramID,
+          telegramUN,
+          telegramFN,
+          telegramLN,
+          telegramLC,
+          chatId!,
+        );
         console.log('Server response:', { authToken, isNewToken, userId });
-  
+
         // Fetch default currency
         const defaultCurr = await fetchDefaultCurrency();
         console.log('defaultCurr :', defaultCurr._id);
-  
+
         // Fetch user balance
         const gbalance = await fetchBalance(userId, defaultCurr._id);
         console.log('gbalance :', gbalance);
-  
+
         // Register shop user and update context
         setUserId(userId); // Set user ID in context
         setAccountData({
           gbalance: gbalance,
         });
-  
+
         // Prepare customer data
         const customerData = {
           name: '-',
@@ -110,20 +115,16 @@ const Header: React.FC<HeaderProps> = ({ toggleTheme, currentTheme }) => {
           birthDate: '-',
           userId: userId,
         };
-  
+
         // Create customer and log success
-      await createCustomerSync(customerData);
-
-
-  
+        await createCustomerSync(customerData);
       } catch (error) {
         console.error('Error during registration:', error);
       }
     };
-  
+
     handleConnect(); // Call the async function
   }, [setUserId, setAccountData]);
-  
 
   return (
     <header
