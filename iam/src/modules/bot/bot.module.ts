@@ -7,6 +7,7 @@ import { BalanceRepository } from '../iam/database/repositories/balance.reposito
 import { BalanceService } from '../iam/services/iam-balance.service';
 import { CurrencyRepository } from '../iam/database/repositories/currency.repository';
 import { AchievementRepository } from '../qr/database/repositories/qr-achievement.repository';
+import { BotAIService } from './bot.ai.service';
 
 @Module({
   imports: [ProductModule],
@@ -16,7 +17,8 @@ import { AchievementRepository } from '../qr/database/repositories/qr-achievemen
     BalanceService,
     CurrencyRepository,
     AchievementService, 
-    AchievementRepository
+    AchievementRepository,
+    BotAIService
     //ChatGptBotService
     ],
 })

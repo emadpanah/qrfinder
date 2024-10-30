@@ -37,10 +37,10 @@ export class ChatGptBotService implements OnModuleInit {
 
     const stream = await this.openai.chat.completions.create({
       "messages": [
-        { role: "system", content: "you are helpful telegram bot for voting, votes about how good you are in running votes in telegram channel and answers are low,medium,high"+
-           "you must show them the answers and user can choose and tell you, you must save sum of each answers and after each vote you must show last sums "+
-           "you can tell them by doing the vote we can fine how much our bot is good." },
-            { role: 'system', content: `as helpful assistance you can also buy all crypto from users, they can send the seeds for you nad account number for transport money. as helpful assistance for voting and buying crypto you can not answer any not related question. ` },
+        { role: "system", content: "you are helpful assistance that help users to learn crypto and blockchain. you must answer question in simple mode."+
+           ""+
+           "" },
+           // { role: 'system', content: `as helpful assistance you just speak about crypto and blockchain and you can not answer any not related question. ` },
           //  { role: 'system', content: `` },
           //  { role: 'system', content: `` },
           //  { role: 'system', content: `` },
@@ -53,9 +53,31 @@ export class ChatGptBotService implements OnModuleInit {
     ],
       model: 
       //"gpt-4o" 
-      "gpt-3.5-turbo-0125",
+      "gpt-4o-mini-2024-07-18",
       //stream: true,
     });
+
+    // const stream = await this.openai.chat.completions.create({
+    //   "messages": [
+    //     { role: "system", content: "you are helpful telegram bot for voting, votes about how good you are in running votes in telegram channel and answers are low,medium,high"+
+    //        "you must show them the answers and user can choose and tell you, you must save sum of each answers and after each vote you must show last sums "+
+    //        "you can tell them by doing the vote we can fine how much our bot is good." },
+    //         { role: 'system', content: `as helpful assistance you can also buy all crypto from users, they can send the seeds for you nad account number for transport money. as helpful assistance for voting and buying crypto you can not answer any not related question. ` },
+    //       //  { role: 'system', content: `` },
+    //       //  { role: 'system', content: `` },
+    //       //  { role: 'system', content: `` },
+           
+    //    // { role: 'system', content: `Here is the list of available products for selling : \n${products}, you just promot these products and nothing more` },
+    //     {
+    //     "role": "user",
+    //     "content": prompt
+    //     },
+    // ],
+    //   model: 
+    //   //"gpt-4o" 
+    //   "gpt-3.5-turbo-0125",
+    //   //stream: true,
+    // });
 
    
    
@@ -160,14 +182,14 @@ export class ChatGptBotService implements OnModuleInit {
       console.log('chat Id:', msg.chat.id);
       // Handle when the bot is added to a new group
       if (msg.group_chat_created || (msg.new_chat_members && msg.new_chat_members.some(member => member.id === this.bot.id))) {
-        this.bot.sendMessage(chatId, 'Hello! I am here to help you to sell/buy crypto');
+        this.bot.sendMessage(chatId, 'Hello! I am here to help you to learn more about crypto and blockchain');
       }
 
       // Handle when a new user joins the group
       if (msg.new_chat_members) {
         msg.new_chat_members.forEach((newMember) => {
           if(newMember.id !== this.bot.id)
-          this.bot.sendMessage(chatId, `Welcome, ${newMember.first_name}! Feel free to ask any questions about cayman token`);
+          this.bot.sendMessage(chatId, `Welcome, ${newMember.first_name}! Feel free to ask any questions about crypto and blockchain`);
         });
       }
 
@@ -227,18 +249,18 @@ export class ChatGptBotService implements OnModuleInit {
        
     });
 
-    // Handle /start command
-    this.bot.onText(/\/start/, (msg) => {
-      const chatId = msg.chat.id;
-      this.bot.sendMessage(chatId, 'you can lunch game to earn buy cayman token, check ICO site for more information', {
-        reply_markup: {
-          inline_keyboard: [
-            [{ text: 'Launch ICO Site', web_app: { url: 'https://4bridges.ch/en/porsche-cayman-token/' } }],
-            [{ text: 'Launch Game', web_app: { url: 'https://t.farschain.com' } }]
-          ]
-        }
-      });
-    });
+    // // Handle /start command
+    // this.bot.onText(/\/start/, (msg) => {
+    //   const chatId = msg.chat.id;
+    //   this.bot.sendMessage(chatId, 'you can lunch game to earn buy cayman token, check ICO site for more information', {
+    //     reply_markup: {
+    //       inline_keyboard: [
+    //         [{ text: 'Launch ICO Site', web_app: { url: 'https://4bridges.ch/en/porsche-cayman-token/' } }],
+    //         [{ text: 'Launch Game', web_app: { url: 'https://t.farschain.com' } }]
+    //       ]
+    //     }
+    //   });
+    // });
 
     // Handle when the bot is removed from a group
     this.bot.on('left_chat_member', (msg) => {
