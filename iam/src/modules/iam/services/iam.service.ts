@@ -24,7 +24,6 @@ export class IamService {
     private readonly userLoginRepository: UserLoginRepository,
     private readonly authService: AuthService,
   ) {
-
     this.shopInstance = axios.create({
       baseURL: process.env.SHOP_API_DOMAIN,
       headers: {
@@ -52,11 +51,19 @@ export class IamService {
 
       console.log('findUserByTelegramID - ', dto.telegramID);
       // Check if the user already exists
-      const user = await this.iamRepository.findUserByTelegramID(
-        dto.telegramID
-      );
+      let user = await this.iamRepository.findUserByTelegramID(dto.telegramID);
       if (user) {
         // User exists, check if there is a valid token
+        if (
+          user.chatId != dto.chatId ||
+          user.telegramUserName != dto.telegramUserName
+        ) {
+          await this.iamRepository
+            .updateUser(user.telegramID, dto.chatId, dto.telegramUserName)
+            .then((newuser) => {
+              user = newuser;
+            });
+        }
         const existingLoginInfo =
           await this.userLoginRepository.findLatestLoginByUserId(user._id);
         console.log('latestlogin - ', existingLoginInfo);
@@ -100,17 +107,25 @@ export class IamService {
     }
   }
 
-  async createCustomerSync(shopId: string, bodyData: object, userId: Types.ObjectId): Promise<void> {
-    const response = await this.shopInstance.post('/api/CreateCustomerSync', {
-      ...bodyData,
-      apiKey: process.env.SHOP_API_SECRET,
-    }, {
-      headers: { 'x-shop-token': shopId }
-    });
+  async createCustomerSync(
+    shopId: string,
+    bodyData: object,
+    userId: Types.ObjectId,
+  ): Promise<void> {
+    const response = await this.shopInstance.post(
+      '/api/CreateCustomerSync',
+      {
+        ...bodyData,
+        apiKey: process.env.SHOP_API_SECRET,
+      },
+      {
+        headers: { 'x-shop-token': shopId },
+      },
+    );
 
     const { token: shopToken } = response.data;
 
-    console.log("shopToken : -- : ", shopToken);
+    console.log('shopToken : -- : ', shopToken);
 
     // Store shopToken in the login record
     await this.userLoginRepository.updateLoginWithShopToken(userId, shopToken);
@@ -122,7 +137,8 @@ export class IamService {
 
   async getShopToken(userId: Types.ObjectId): Promise<string | null> {
     const objectIdUserId = new Types.ObjectId(userId); // Convert string userId to ObjectId
-    const latestLogin = await this.userLoginRepository.findLatestLoginByUserId(objectIdUserId);
+    const latestLogin =
+      await this.userLoginRepository.findLatestLoginByUserId(objectIdUserId);
     if (latestLogin && latestLogin.shopToken) {
       return latestLogin.shopToken; // Return shopToken if available
     }

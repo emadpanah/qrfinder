@@ -10,6 +10,9 @@ export class IAMUser {
   telegramID: string;
 
   @Prop({ required: false })
+  chatId: string;
+
+  @Prop({ required: false })
   telegramFirstName: string;
 
   @Prop({ required: false })

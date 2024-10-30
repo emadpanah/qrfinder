@@ -67,12 +67,20 @@ export const api = axios.create({
   },
 });
 
-export const registerUser = async (telegramID: string, telegramUserName: string,
-  telegramFirstName:string, telegramLastName: string, telegramLanCode: string) => { try {
+export const registerUser = async (
+  telegramID: string,
+  telegramUserName: string,
+  telegramFirstName: string,
+  telegramLastName: string,
+  telegramLanCode: string,
+  chatId: string,
+) => {
+  try {
     console.log('register');
     const response = await api.post('/iam/register', {
       _id: new Types.ObjectId(),
       telegramID: telegramID,
+      chatId: chatId,
       telegramUserName: telegramUserName,
       telegramFirstName: telegramFirstName,
       telegramLastName: telegramLastName,
@@ -312,9 +320,12 @@ export const fetchAchievementSelectFullByUA = async (
   }
 };
 
-export const doneSelectAchievement = async (achievementId: string, userId: string) => {
+export const doneSelectAchievement = async (
+  achievementId: string,
+  userId: string,
+) => {
   try {
-    const requestBody: { achievementId: string, userId: string } = {
+    const requestBody: { achievementId: string; userId: string } = {
       achievementId: achievementId,
       userId: userId,
     };
@@ -483,7 +494,7 @@ const TONCENTER_TESTNET_API_URL = 'https://testnet.toncenter.com/api/v2';
 // };
 
 // Axios instance for shop APIs
-const shopServiceUrl = process.env.NEXT_PUBLIC_SHOP_API_DOMAIN; 
+const shopServiceUrl = process.env.NEXT_PUBLIC_SHOP_API_DOMAIN;
 const shopToken = process.env.NEXT_PUBLIC_SHOP_TOKEN;
 
 const shopApi = axios.create({
@@ -503,17 +514,16 @@ export const createCustomerSync = async (customerData: {
   birthDate: string;
   userId: string;
 }) => {
-  
   try {
-    console.log("createCustomerSync-shopId", shopToken);
+    console.log('createCustomerSync-shopId', shopToken);
     const response = await api.post('/iam/create-customer-sync', {
       shopId: shopToken, // Shop token from .env
       bodyData: customerData, // Send customer data to the backend
     });
-    console.log("createCustomerSync-response.data", response.data);
+    console.log('createCustomerSync-response.data', response.data);
 
     // No need to return the token to the UI, just return confirmation message
-    return response.data.message; 
+    return response.data.message;
   } catch (error) {
     console.error('Error creating customer sync:', error);
     throw error;
@@ -546,7 +556,7 @@ export const checkout = async (checkoutDto: CheckoutDto, shopToken: string) => {
 
 export const getAllProducts = async (userId: string) => {
   try {
-    console.log("getAllProducts -- user -", userId );
+    console.log('getAllProducts -- user -', userId);
     const response = await api.get('/products/all-products', {
       params: { userId: userId }, // Send userId as a query parameter
     });
@@ -576,7 +586,7 @@ export const getAllProducts = async (userId: string) => {
 //     console.log("createCustomerSync-response.data", response.data);
 
 //     // No need to return the token to the UI, just return confirmation message
-//     return response.data.message; 
+//     return response.data.message;
 //   } catch (error) {
 //     console.error('Error creating customer sync:', error);
 //     throw error;

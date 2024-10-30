@@ -34,6 +34,9 @@ export class UserDto {
   @IsString()
   telegramID: string;
 
+  @IsString()
+  chatId: string;
+
   @IsNumber()
   @IsNotEmpty()
   createdDate: number;
@@ -46,6 +49,9 @@ export class UserInsertDto {
 
   @IsString()
   telegramID: string;
+
+  @IsString()
+  chatId: string;
 
   @IsString()
   @IsOptional()

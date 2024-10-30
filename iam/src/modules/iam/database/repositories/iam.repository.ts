@@ -14,6 +14,7 @@ export class IamRepository {
     await collection.insertOne({
       _id: i,
       telegramID: dto.telegramID,
+      chatId: dto.chatId,
       telegramUserName: dto.telegramUserName,
       telegramFirstName: dto.telegramFirstName,
       telegramLastName: dto.telegramLastName,
@@ -24,6 +25,28 @@ export class IamRepository {
     if (!user) {
       // Handle the case where the agent is not found
       throw new Error('User insert not completed.');
+    }
+    // Return the inserted document
+    return user;
+  }
+
+  async updateUser(
+    telegramID: string,
+    chatId: string,
+    username: string,
+  ): Promise<any> {
+    const collection = this.connection.collection('_iamusers');
+    await collection.updateOne(
+      { telegramID: telegramID },
+      {
+        chatId: chatId,
+        telegramUserName: username,
+      },
+    );
+    const user = await collection.findOne({ telegramID: telegramID });
+    if (!user) {
+      // Handle the case where the agent is not found
+      throw new Error('User update not completed.');
     }
     // Return the inserted document
     return user;
