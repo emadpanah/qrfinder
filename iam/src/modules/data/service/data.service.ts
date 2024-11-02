@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { FngRepository } from './database/repositories/fng.repository';
+import { DataRepository } from '../database/repositories/data.repository';
 
 @Injectable()
 export class DataService {
-  constructor(private readonly fngRepository: FngRepository) {}
+  constructor(private readonly fngRepository: DataRepository) {}
 
   // Retrieve the last 15 days of FNG data and perform analysis
   async getLast15DaysFngData(): Promise<any> {
@@ -22,7 +22,9 @@ export class DataService {
   private calculateMovingAverage(data: number[], period: number): number[] {
     const movingAverages = [];
     for (let i = period - 1; i < data.length; i++) {
-      const sum = data.slice(i - period + 1, i + 1).reduce((acc, val) => acc + val, 0);
+      const sum = data
+        .slice(i - period + 1, i + 1)
+        .reduce((acc, val) => acc + val, 0);
       movingAverages.push(sum / period);
     }
     return movingAverages;

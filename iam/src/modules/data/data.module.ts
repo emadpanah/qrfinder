@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { FngService } from '../data/fng.service';
-import { DataService } from '../data/data.service';
+import { FngService } from './service/fng.service';
+import { DataService } from './service/data.service';
 import { FngData, FngDataSchema } from '../data/database/schema/fng.schema';
-import { FngRepository } from '../data/database/repositories/fng.repository';
+import { FngRepository } from './database/repositories/data.repository';
 
 @Module({
   imports: [

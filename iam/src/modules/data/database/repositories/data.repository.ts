@@ -4,8 +4,10 @@ import { Model } from 'mongoose';
 import { FngData, FngDataDocument } from '../schema/fng.schema';
 
 @Injectable()
-export class FngRepository {
-  constructor(@InjectModel(FngData.name) private fngModel: Model<FngDataDocument>) {}
+export class DataRepository {
+  constructor(
+    @InjectModel(FngData.name) private fngModel: Model<FngDataDocument>,
+  ) {}
 
   // Save a new FNG data point in MongoDB
   async create(fngData: Partial<FngData>): Promise<FngData> {
@@ -16,7 +18,10 @@ export class FngRepository {
   // Retrieve data points for the last 15 days
   async findLast15Days(): Promise<FngData[]> {
     const fifteenDaysAgo = Date.now() - 15 * 24 * 60 * 60 * 1000;
-    return this.fngModel.find({ timestamp: { $gte: Math.floor(fifteenDaysAgo / 1000) } }).sort({ timestamp: 1 }).exec();
+    return this.fngModel
+      .find({ timestamp: { $gte: Math.floor(fifteenDaysAgo / 1000) } })
+      .sort({ timestamp: 1 })
+      .exec();
   }
 
   // Check if a data point with a specific timestamp already exists

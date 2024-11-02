@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { FngRepository } from './database/repositories/fng.repository';
+import { DataRepository } from '../database/repositories/data.repository';
 import { lastValueFrom } from 'rxjs';
-import { FearAndGreedDto } from '../data/database/dto/fear-greed.dto';
+import { FearAndGreedDto } from '../database/dto/fear-greed.dto';
 
 @Injectable()
 export class FngService {
@@ -11,14 +11,14 @@ export class FngService {
 
   constructor(
     private readonly httpService: HttpService,
-    private readonly fngRepository: FngRepository
+    private readonly fngRepository: DataRepository,
   ) {}
 
   @Cron(CronExpression.EVERY_5_MINUTES)
   async fetchAndStoreFngData() {
     try {
       const response = await lastValueFrom(
-        this.httpService.get<FearAndGreedDto>(this.API_URL)
+        this.httpService.get<FearAndGreedDto>(this.API_URL),
       );
 
       const fngData = response.data.data[0];
@@ -26,7 +26,9 @@ export class FngService {
       // Check if data with this timestamp already exists
       const exists = await this.fngRepository.exists(fngData.timestamp);
       if (exists) {
-        console.log(`Data for timestamp ${fngData.timestamp} already exists. Skipping.`);
+        console.log(
+          `Data for timestamp ${fngData.timestamp} already exists. Skipping.`,
+        );
         return;
       }
 
