@@ -11,6 +11,8 @@ import { ProductModule } from './modules/product/product.module';
 import { QRModule } from './modules/qr/qr.module';  
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { rateThrottlerGuard } from './modules/qr/guards/rateGuard';
+import { DataModule } from './modules/data/data.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
@@ -30,10 +32,12 @@ import { rateThrottlerGuard } from './modules/qr/guards/rateGuard';
       }),
       inject: [ConfigService],
     }),
+    ScheduleModule.forRoot(),
     IamModule,
     BotModule,
     ProductModule,
     QRModule,
+    DataModule
   ],
   controllers: [],
   providers: [{ provide: APP_INTERCEPTOR, useClass: HttpLoggerInterceptor },  {

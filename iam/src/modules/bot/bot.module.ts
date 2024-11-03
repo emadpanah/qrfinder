@@ -18,7 +18,7 @@ import { BotAIService } from './bot.ai.service';
     CurrencyRepository,
     AchievementService, 
     AchievementRepository,
-    BotAIService
+    //BotAIService
     //ChatGptBotService
     ],
 })

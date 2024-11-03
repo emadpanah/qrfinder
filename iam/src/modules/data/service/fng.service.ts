@@ -1,34 +1,36 @@
 import { Injectable } from '@nestjs/common';
-import { HttpService } from '@nestjs/axios';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { DataRepository } from '../database/repositories/data.repository';
-import { lastValueFrom } from 'rxjs';
+import axios, { AxiosInstance } from 'axios';
 import { FearAndGreedDto } from '../database/dto/fear-greed.dto';
 
 @Injectable()
 export class FngService {
-  private readonly API_URL = 'https://api.alternative.me/fng/?limit=1';
+  private axiosInstance: AxiosInstance;
 
-  constructor(
-    private readonly httpService: HttpService,
-    private readonly fngRepository: DataRepository,
-  ) {}
+  constructor(private readonly fngRepository: DataRepository) {
+    console.log('FngService initialized');
+    this.axiosInstance = axios.create({
+      baseURL: 'https://api.alternative.me',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+  }
 
-  @Cron(CronExpression.EVERY_5_MINUTES)
+  // Fetch and store FNG data every minute
+  @Cron('* * * * *')
+  //@Cron('*/10 * * * * *') // This runs every 10 seconds
   async fetchAndStoreFngData() {
     try {
-      const response = await lastValueFrom(
-        this.httpService.get<FearAndGreedDto>(this.API_URL),
-      );
-
+      // Fetch data from the Fear and Greed Index API
+      const response = await this.axiosInstance.get<FearAndGreedDto>('/fng/?limit=1');
       const fngData = response.data.data[0];
 
-      // Check if data with this timestamp already exists
+      // Check if data with this timestamp already exists to avoid duplicates
       const exists = await this.fngRepository.exists(fngData.timestamp);
       if (exists) {
-        console.log(
-          `Data for timestamp ${fngData.timestamp} already exists. Skipping.`,
-        );
+        console.log(`Data for timestamp ${fngData.timestamp}, ${fngData.value} already exists. Skipping.`);
         return;
       }
 
@@ -41,7 +43,7 @@ export class FngService {
 
       console.log(`Stored FNG data for timestamp ${fngData.timestamp}`);
     } catch (error) {
-      console.error('Error fetching FNG data:', error);
+      console.error('Error fetching FNG data:', error.message);
     }
   }
 }
