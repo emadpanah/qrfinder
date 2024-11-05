@@ -1,8 +1,8 @@
 import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
 import * as TelegramBot from 'node-telegram-bot-api';
 import { OpenAI } from 'openai';
-import { ProductService } from '../product/services/product.service'; // Import ProductService
-import { ProductDto } from '../product/dto/product.dto'; // Import ProductDto
+import { ProductService } from '../product/services/product.service';
+import { DataRepository } from '../data/database/repositories/data.repository'; // Import DataRepository
 import { isEmpty } from 'validator';
 
 @Injectable()
@@ -16,15 +16,13 @@ export class BotAIService implements OnModuleInit {
   private conversationHistory: { role: string; content: string }[] = [];
 
   private prompts = [
-    "سلام! آیا می‌تونید به من کمک کنید تا با توجه به هدف‌ها و سطح ریسک‌پذیری‌ام، یک گزینه مناسب برای سرمایه‌گذاری پیدا کنم؟ بازارهای فارکس و کریپتو چطور هستند و کدام یک بیشتر با شرایط من سازگاره؟",
-    "می‌خواهم در یکی از بازارهای مالی فارکس یا کریپتو سرمایه‌گذاری کنم. با توجه به سطح ریسک و میزان زمانی که برای نظارت بر سرمایه‌گذاری دارم، شما کدام یک رو پیشنهاد می‌کنید؟ مزایا و معایب هر کدام چیه؟",
-    "چطور می‌تونم در هر دو بازار فارکس و کریپتو سرمایه‌گذاری کنم تا یک پرتفوی متعادل داشته باشم؟ چه مقدار از سرمایه‌ام را به هر بازار اختصاص بدم و استراتژی شما برای مدیریت این نوع سرمایه‌گذاری چیه؟",
-    "من علاقه دارم به بازار کریپتو وارد بشم اما نگران نوسانات شدیدش هستم. چه نوع استراتژی و ارزهایی را برای کاهش ریسک پیشنهاد می‌کنید؟",
-    "چه ارزهای دیجیتالی در حال حاضر پتانسیل رشد خوبی دارند و می‌تونند انتخاب مناسبی برای سرمایه‌گذاری در سال جاری باشند؟ لطفاً دلایل اصلی این انتخاب‌ها رو هم توضیح بدید.",
-    "به دنبال یک گزینه کم‌ریسک برای سرمایه‌گذاری هستم که بتونم در درازمدت یک درآمد پایدار داشته باشم. چه پیشنهادهایی دارید؟"
+    // Existing prompts...
   ];
 
-  constructor(private readonly productService: ProductService) {
+  constructor(
+    private readonly productService: ProductService,
+    private readonly fngRepository: DataRepository // Inject DataRepository
+  ) {
     this.bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, { polling: true });
   }
 
@@ -50,6 +48,25 @@ export class BotAIService implements OnModuleInit {
     }
   }
 
+  async getFngData(): Promise<string> {
+    // Fetch the latest FNG data from the database
+    const fngData = await this.fngRepository.findLast15Days();
+    if (!fngData.length) {
+      return 'اطلاعات جدیدی از شاخص ترس و طمع در دسترس نیست.';
+    }
+
+    // Get the latest data
+    const latestFngData = fngData[fngData.length - 1];
+    return `شاخص ترس و طمع فعلی: ${latestFngData.value} (${latestFngData.value_classification}) در تاریخ ${new Date(latestFngData.timestamp * 1000).toLocaleString('fa-IR')}`;
+  }
+
+  async getFngResponseWithChatGpt(): Promise<string> {
+    const fngDataSummary = await this.getFngData();
+    const prompt = `شاخص ترس و طمع فعلی: ${fngDataSummary}. با توجه به این شاخص، چه توصیه‌ای برای سرمایه‌گذاری دارید؟`;
+    
+    return this.getChatGptResponse(prompt);
+  }
+
   async onModuleInit() {
     const me = await this.bot.getMe();
     this.botUsername = me.username;
@@ -57,11 +74,20 @@ export class BotAIService implements OnModuleInit {
 
     this.bot.on('message', async (msg) => {
       const chatId = msg.chat.id;
+      const text = msg.text?.toLowerCase();
 
+      // Detect "/fng" command or keywords related to FNG
+      if (text === '/fng' || text.includes('fear and greed') || text.includes('شاخص ترس و طمع')) {
+        const chatGptResponse = await this.getFngResponseWithChatGpt();
+        await this.bot.sendMessage(chatId, chatGptResponse);
+        return;
+      }
+
+      // Handle help command
       if (msg.text === '/help') {
         const inlineKeyboard = this.prompts.map((prompt, index) => [{
           text: prompt.length > 150 
-            ? `${prompt.slice(0, 147)}...` // Show in two lines if the text is long
+            ? `${prompt.slice(0, 147)}...` 
             : prompt,
           callback_data: `prompt_${index}`
         }]);
@@ -74,6 +100,7 @@ export class BotAIService implements OnModuleInit {
         return;
       }
 
+      // General message handling
       if (msg.text) {
         this.logger.log('Received text message:', msg.text);
         let responseText = await this.getChatGptResponse(msg.text);
@@ -84,6 +111,7 @@ export class BotAIService implements OnModuleInit {
       }
     });
 
+    // Callback query handler
     this.bot.on('callback_query', async (callbackQuery) => {
       const chatId = callbackQuery.message.chat.id;
       const data = callbackQuery.data;

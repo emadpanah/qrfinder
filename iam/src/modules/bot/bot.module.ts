@@ -8,9 +8,10 @@ import { BalanceService } from '../iam/services/iam-balance.service';
 import { CurrencyRepository } from '../iam/database/repositories/currency.repository';
 import { AchievementRepository } from '../qr/database/repositories/qr-achievement.repository';
 import { BotAIService } from './bot.ai.service';
+import { DataModule } from '../data/data.module';
 
 @Module({
-  imports: [ProductModule],
+  imports: [ProductModule, DataModule],
   providers: [//BotService, 
     AchievementService,
     BalanceRepository,
@@ -18,8 +19,9 @@ import { BotAIService } from './bot.ai.service';
     CurrencyRepository,
     AchievementService, 
     AchievementRepository,
-    //BotAIService
+    BotAIService
     //ChatGptBotService
     ],
+    exports: [BotAIService],
 })
 export class BotModule {}

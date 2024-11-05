@@ -1,15 +1,18 @@
+// src/modules/data/service/data.service.ts
 import { Injectable } from '@nestjs/common';
 import { DataRepository } from '../database/repositories/data.repository';
+import { FngData } from '../database/schema/fng.schema';
+import { TradingViewAlertDto } from '../database/dto/traidingview-alert.dto';
 
 @Injectable()
 export class DataService {
-  constructor(private readonly fngRepository: DataRepository) {}
+  constructor(private readonly dataRepository: DataRepository) {}
 
   // Retrieve the last 15 days of FNG data and perform analysis
   async getLast15DaysFngData(): Promise<any> {
-    const fngData = await this.fngRepository.findLast15Days();
+    const fngData = await this.dataRepository.findLast15Days();
 
-    // Calculate moving average for example
+    // Calculate moving average as an example
     const values = fngData.map((data) => parseInt(data.value, 10));
     const movingAverage = this.calculateMovingAverage(values, 12); // Example hourly moving average
 
@@ -19,6 +22,21 @@ export class DataService {
     };
   }
 
+  // Save new ticker data received from TradingView
+  async saveTickerData(tickerData: TradingViewAlertDto): Promise<void> {
+    // Convert `time` field to a numeric timestamp
+    const timestamp = new Date(tickerData.time).getTime();
+
+    await this.dataRepository.createTickerData({
+      symbol: tickerData.symbol,
+      exchange: tickerData.exchange,
+      price: tickerData.price,
+      timestamp,
+    });
+    console.log('Ticker data saved successfully');
+  }
+
+  // Calculate a moving average for data analysis
   private calculateMovingAverage(data: number[], period: number): number[] {
     const movingAverages = [];
     for (let i = period - 1; i < data.length; i++) {

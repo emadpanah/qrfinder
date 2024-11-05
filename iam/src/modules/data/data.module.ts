@@ -5,13 +5,15 @@ import { FngService } from './service/fng.service';
 import { DataService } from './service/data.service';
 import { FngData, FngDataSchema } from '../data/database/schema/fng.schema';
 import { DataRepository } from './database/repositories/data.repository';
+import { ProductService } from '../product/services/product.service';
+import { DataController } from './controllers/data.controller';
 
 @Module({
   imports: [
-    //HttpModule, // Add HttpModule here
     MongooseModule.forFeature([{ name: FngData.name, schema: FngDataSchema }], 'service'),
   ],
-  providers: [FngService, DataService, DataRepository],
-  exports: [DataService],
+  providers: [FngService, DataService, DataRepository ],
+  controllers: [DataController],
+  exports: [DataService, DataRepository],
 })
 export class DataModule {}

@@ -1,3 +1,4 @@
+// src/modules/data/database/repositories/data.repository.ts
 import { Injectable } from '@nestjs/common';
 import { InjectConnection } from '@nestjs/mongoose';
 import { Connection } from 'mongoose';
@@ -5,21 +6,28 @@ import { FngData } from '../schema/fng.schema';
 
 @Injectable()
 export class DataRepository {
-  private readonly collectionName = '_fngdata';
+  private readonly fngCollectionName = '_fngdata';
+  private readonly tickerCollectionName = '_tickerdata';
 
   constructor(@InjectConnection('service') private readonly connection: Connection) {}
 
-  // Save a new FNG data point in MongoDB
+  // Save FNG data point in MongoDB
   async create(fngData: Partial<FngData>): Promise<FngData> {
-    const collection = this.connection.collection(this.collectionName);
+    const collection = this.connection.collection(this.fngCollectionName);
     await collection.insertOne(fngData);
     return fngData as FngData;
   }
 
-  // Retrieve data points for the last 15 days
+  // Save ticker data received from TradingView
+  async createTickerData(tickerData: Partial<{ symbol: string; exchange: string; price: number; timestamp: number }>): Promise<void> {
+    const collection = this.connection.collection(this.tickerCollectionName);
+    await collection.insertOne(tickerData);
+  }
+
+  // Retrieve FNG data points for the last 15 days
   async findLast15Days(): Promise<FngData[]> {
     const fifteenDaysAgo = Date.now() - 15 * 24 * 60 * 60 * 1000;
-    const collection = this.connection.collection(this.collectionName);
+    const collection = this.connection.collection(this.fngCollectionName);
 
     const results = await collection
       .find({ timestamp: { $gte: Math.floor(fifteenDaysAgo / 1000) } })
@@ -38,7 +46,7 @@ export class DataRepository {
 
   // Check if a data point with a specific timestamp already exists
   async exists(timestamp: number): Promise<boolean> {
-    const collection = this.connection.collection(this.collectionName);
+    const collection = this.connection.collection(this.fngCollectionName);
     const count = await collection.countDocuments({ timestamp });
     return count > 0;
   }
