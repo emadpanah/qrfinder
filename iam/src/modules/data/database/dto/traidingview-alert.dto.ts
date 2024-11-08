@@ -5,6 +5,6 @@ export class TradingViewAlertDto {
     symbol: string;
     exchange: string;
     price: number;
-    timestamp: number;
+    time: number;
   }
   

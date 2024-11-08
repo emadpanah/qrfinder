@@ -68,9 +68,9 @@ export class DataRepository {
       .toArray();
 
       if (result.length > 0) {
-        const { symbol, price, timestamp, exchange, _id } = result[0];
+        const { symbol, price, time, exchange, _id } = result[0];
         // Return as TradingViewAlertDto, excluding _id
-        return { symbol, price, timestamp, exchange };
+        return { symbol, price, time, exchange };
       }
 
     return null;
@@ -87,7 +87,7 @@ export class DataRepository {
       .toArray();
 
     // Map results to TradingViewAlertDto, excluding _id
-  return results.map(({ symbol, price, timestamp, exchange }) => ({ symbol, price, timestamp, exchange }));
+  return results.map(({ symbol, price, time, exchange }) => ({ symbol, price, time, exchange }));
   }
   
 

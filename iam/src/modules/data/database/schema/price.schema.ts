@@ -14,7 +14,7 @@ export class PriceData {
   price: number;
 
   @Prop({ required: true })
-  timestamp: number; // Change time to timestamp and store as a number
+  time: number; // Change time to timestamp and store as a number
 }
 
 export type PriceDataDocument = PriceData & Document;
