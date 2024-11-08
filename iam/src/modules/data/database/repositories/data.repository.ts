@@ -1,13 +1,15 @@
 // src/modules/data/database/repositories/data.repository.ts
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectConnection } from '@nestjs/mongoose';
 import { Connection } from 'mongoose';
 import { FngData } from '../schema/fng.schema';
+import { TradingViewAlertDto } from '../dto/traidingview-alert.dto';
 
 @Injectable()
 export class DataRepository {
   private readonly fngCollectionName = '_fngdata';
   private readonly tickerCollectionName = '_tickerdata';
+  private readonly logger = new Logger(DataRepository.name);
 
   constructor(@InjectConnection('service') private readonly connection: Connection) {}
 
@@ -24,28 +26,73 @@ export class DataRepository {
     await collection.insertOne(tickerData);
   }
 
-  // Retrieve FNG data points for the last 15 days
-  async findLast15Days(): Promise<FngData[]> {
-    const fifteenDaysAgo = Date.now() - 15 * 24 * 60 * 60 * 1000;
-    const collection = this.connection.collection(this.fngCollectionName);
 
-    const results = await collection
-      .find({ timestamp: { $gte: Math.floor(fifteenDaysAgo / 1000) } })
-      .sort({ timestamp: 1 })
+  async findFngByDate(targetDate: number): Promise<FngData | null> {
+    const collection = this.connection.collection(this.fngCollectionName);
+  
+    // Convert the targetDate to a timestamp (at midnight UTC of that day)
+    //const targetTimestamp = Math.floor(new Date(`${targetDate}T00:00:00Z`).getTime() / 1000);
+  
+    this.logger.log(`Fetching FNG data for closest date on or before: ${targetDate} (timestamp <= ${targetDate})`);
+  
+    // Find the closest record on or before the target date by sorting in descending order
+    const result = await collection
+      .find({ timestamp: { $lte: targetDate } })
+      .sort({ timestamp: -1 }) // Sort in descending order to get the closest earlier date
+      .limit(1) // Limit to the closest record found
+      .toArray();
+  
+    if (result.length > 0) {
+      const fngRecord = result[0];
+      this.logger.debug(`Found FNG data for closest date to ${targetDate}: ${JSON.stringify(fngRecord)}`);
+      return {
+        value: fngRecord.value ?? '0',
+        value_classification: fngRecord.value_classification ?? 'Neutral',
+        timestamp: fngRecord.timestamp ?? 0,
+        metadata: fngRecord.metadata ?? {},
+      } as FngData;
+    } else {
+      this.logger.warn(`No FNG data found on or before ${targetDate}.`);
+      return null;
+    }
+  }
+  
+    // Get latest price by symbol in USDT
+  async getLatestPriceBySymbol(symbol: string): Promise<TradingViewAlertDto | null> {
+    const collection = this.connection.collection(this.tickerCollectionName);
+
+    const result = await collection
+      .find({ symbol })
+      .sort({ timestamp: -1 })
+      .limit(1)
       .toArray();
 
-    // Convert the results to unknown first, then map them to FngData
-    return (results as unknown as Array<Partial<FngData>>).map((result) => ({
-      name: result.name ?? 'Unknown', // Provide default values if necessary
-      value: result.value ?? '0',
-      value_classification: result.value_classification ?? 'Neutral',
-      timestamp: result.timestamp ?? 0,
-      metadata: result.metadata ?? {},
-    })) as FngData[];
+      if (result.length > 0) {
+        const { symbol, price, timestamp, exchange, _id } = result[0];
+        // Return as TradingViewAlertDto, excluding _id
+        return { symbol, price, timestamp, exchange };
+      }
+
+    return null;
   }
 
+  // Get top N cryptos by price in USDT
+  async getTopCryptosByPrice(limit: number): Promise<TradingViewAlertDto[]> {
+    const collection = this.connection.collection(this.tickerCollectionName);
+
+    const results = await collection
+      .find({ symbol: /USDT$/ })
+      .sort({ price: -1 })
+      .limit(limit)
+      .toArray();
+
+    // Map results to TradingViewAlertDto, excluding _id
+  return results.map(({ symbol, price, timestamp, exchange }) => ({ symbol, price, timestamp, exchange }));
+  }
+  
+
   // Check if a data point with a specific timestamp already exists
-  async exists(timestamp: number): Promise<boolean> {
+  async existsFng(timestamp: number): Promise<boolean> {
     const collection = this.connection.collection(this.fngCollectionName);
     const count = await collection.countDocuments({ timestamp });
     return count > 0;

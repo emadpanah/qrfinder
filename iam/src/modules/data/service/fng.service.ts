@@ -27,8 +27,11 @@ export class FngService {
       const response = await this.axiosInstance.get<FearAndGreedDto>('/fng/?limit=1');
       const fngData = response.data.data[0];
 
+       // Convert timestamp to a number if it’s a string
+    const timestamp = typeof fngData.timestamp === 'string' ? parseInt(fngData.timestamp, 10) : fngData.timestamp;
+
       // Check if data with this timestamp already exists to avoid duplicates
-      const exists = await this.fngRepository.exists(fngData.timestamp);
+      const exists = await this.fngRepository.existsFng(timestamp);
       if (exists) {
         console.log(`Data for timestamp ${fngData.timestamp}, ${fngData.value} already exists. Skipping.`);
         return;
@@ -38,7 +41,7 @@ export class FngService {
       await this.fngRepository.create({
         value: fngData.value,
         value_classification: fngData.value_classification,
-        timestamp: fngData.timestamp,
+        timestamp: timestamp,
       });
 
       console.log(`Stored FNG data for timestamp ${fngData.timestamp}`);

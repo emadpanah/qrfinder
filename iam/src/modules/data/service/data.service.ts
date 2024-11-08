@@ -8,24 +8,12 @@ import { TradingViewAlertDto } from '../database/dto/traidingview-alert.dto';
 export class DataService {
   constructor(private readonly dataRepository: DataRepository) {}
 
-  // Retrieve the last 15 days of FNG data and perform analysis
-  async getLast15DaysFngData(): Promise<any> {
-    const fngData = await this.dataRepository.findLast15Days();
-
-    // Calculate moving average as an example
-    const values = fngData.map((data) => parseInt(data.value, 10));
-    const movingAverage = this.calculateMovingAverage(values, 12); // Example hourly moving average
-
-    return {
-      raw_data: fngData,
-      moving_average: movingAverage,
-    };
-  }
+  
 
   // Save new ticker data received from TradingView
   async saveTickerData(tickerData: TradingViewAlertDto): Promise<void> {
     // Convert `time` field to a numeric timestamp
-    const timestamp = new Date(tickerData.time).getTime();
+    const timestamp = new Date(tickerData.timestamp).getTime();
 
     await this.dataRepository.createTickerData({
       symbol: tickerData.symbol,

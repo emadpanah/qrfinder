@@ -5,6 +5,9 @@ import { ProductService } from '../product/services/product.service';
 import { DataRepository } from '../data/database/repositories/data.repository'; // Import DataRepository
 import { isEmpty } from 'validator';
 
+
+
+
 @Injectable()
 export class BotAIService implements OnModuleInit {
   private readonly bot: TelegramBot;
@@ -13,7 +16,7 @@ export class BotAIService implements OnModuleInit {
   private openai = new OpenAI({ apiKey: this.apiKey });
   private botUsername: string;
 
-  private conversationHistory: { role: string; content: string }[] = [];
+  private conversationHistory: { role: string; content: string; name?: string }[] = [];
 
   private prompts = [
     // Existing prompts...
@@ -21,51 +24,247 @@ export class BotAIService implements OnModuleInit {
 
   constructor(
     private readonly productService: ProductService,
-    private readonly fngRepository: DataRepository // Inject DataRepository
+    private readonly dataRepository: DataRepository // Inject DataRepository
   ) {
     this.bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, { polling: true });
   }
 
+  
   async getChatGptResponse(prompt: string): Promise<string> {
-    this.conversationHistory.push({ role: 'user', content: prompt });
 
+    const today = new Date().toLocaleDateString('en-US', {
+      month: 'long', day: 'numeric', year: 'numeric'
+  });
+  
+  // Include the current date in the initial message
+  const updatedPrompt = `Today's date is ${today}. ${prompt}`;
+    this.conversationHistory.push({ role: 'user', content: updatedPrompt });
+  
+    const functions = [
+      {
+        name: 'getFngForDate',
+        description: 'Fetches the Fear and Greed Index data for a specific date.',
+        parameters: {
+          type: 'object',
+          properties: {
+            timestamp: {
+              type: 'string',
+              description: 'The date for which to retrieve the FNG index, in YYYY-MM-DD format.',
+            },
+          },
+          required: ['timestamp'],
+        },
+      },
+      {
+        name: 'getCryptoPrice',
+        description: 'Fetches the latest price for a specific cryptocurrency symbol.',
+        parameters: {
+          type: 'object',
+          properties: {
+            symbol: {
+              type: 'string',
+              description: 'The symbol of the cryptocurrency, e.g., BTCUSDT.',
+            },
+          },
+          required: ['symbol'],
+        },
+      },
+      {
+        name: 'getCryptoPrices',
+        description: 'Fetches the latest prices for multiple cryptocurrency symbols.',
+        parameters: {
+          type: 'object',
+          properties: {
+            symbols: {
+              type: 'array',
+              items: { type: 'string' },
+              description: 'The list of cryptocurrency symbols, e.g., ["BTCUSDT", "ETHUSDT"].',
+            },
+          },
+          required: ['symbols'],
+        },
+      },
+      {
+        name: 'getTopCryptosByPrice',
+        description: 'Fetches the top N cryptocurrencies by market price.',
+        parameters: {
+          type: 'object',
+          properties: {
+            limit: {
+              type: 'integer',
+              description: 'The number of top cryptocurrencies to fetch.',
+            },
+          },
+          required: ['limit'],
+        },
+      },
+    ];
+  
     try {
       const stream = await this.openai.chat.completions.create({
         messages: [
-          { role: "system", content: "شما به عنوان یک مشاور سرمایه‌گذاری با تخصص در بازارهای فارکس و کریپتو عمل می‌کنید. لطفاً فقط در این دو حوزه به من پیشنهادات و راهنمایی‌های سرمایه‌گذاری ارائه دهید و به سایر حوزه‌ها اشاره نکنید." },
-          { role: "user", content: prompt }
+          { role: "system", content: "You are an investment advisor specializing in Forex and crypto markets." },
+          { role: "user", content: updatedPrompt }
         ],
-        model: "gpt-4o-mini-2024-07-18"
+        model: "gpt-4o-mini-2024-07-18",
+        functions: functions,
       });
+  
+      const message = stream.choices[0].message;
+  
+      // Check if ChatGPT suggested a function call
+      if (message.function_call) {
+        // const functionName = message.function_call.name;
+        // const parameters = JSON.parse(message.function_call.arguments || '{}');
+  
+        // // Log the parsed parameters for debugging
+        
+  
+        // // Check if the function exists on the service
+        // if (typeof this[functionName] === 'function') {
 
-      const responseMessage = stream.choices[0].message.content.trim();
-      this.conversationHistory.push({ role: 'assistant', content: responseMessage });
-      this.logger.log(`Response from ChatGPT: ${responseMessage}`);
-      return responseMessage;
+        //    // Convert the date string to a Unix timestamp
+  
+        //    //const timestamp =  Math.floor(Date.now() / 1000);
+        //   const timestamp = new Date(parameters.timestamp).getTime() / 1000;
+        //   const functionResponse = await this[functionName](timestamp);
+        //   this.conversationHistory.push({ role: 'function', name: functionName, content: functionResponse });
+        //   return functionResponse;
+
+        
+        // } else {
+        //   this.logger.error(`Function ${functionName} is not defined.`);
+        //   return 'Requested function is not available.';
+        // }
+
+        const functionName = message.function_call.name;
+      const parameters = JSON.parse(message.function_call.arguments || '{}');
+
+      this.logger.log(`Parsed function call: ${functionName} with parameters: ${JSON.stringify(parameters)}`);
+
+      if (functionName === 'getFngForDate' && parameters.timestamp) {
+        const tamp = new Date(parameters.timestamp).getTime() / 1000;
+        const functionResponse = await this.getFngForDate(tamp);
+        this.conversationHistory.push({ role: 'function', name: functionName, content: functionResponse });
+        return functionResponse;
+      }
+
+      if (functionName === 'getCryptoPrice' && parameters.symbol) {
+        const functionResponse = await this.getCryptoPrice(parameters.symbol);
+        this.conversationHistory.push({ role: 'function', name: functionName, content: functionResponse });
+        return functionResponse;
+      }
+
+      if (functionName === 'getTopCryptosByPrice' && parameters.limit) {
+        const functionResponse = await this.getTopCryptosByPrice(parameters.limit);
+        this.conversationHistory.push({ role: 'function', name: functionName, content: functionResponse });
+        return functionResponse;
+      }
+
+      if (functionName === 'getCryptoPrices' && parameters.symbols) {
+        const functionResponse = await this.getCryptoPrices(parameters.symbols);
+        this.conversationHistory.push({ role: 'function', name: functionName, content: functionResponse });
+        return functionResponse;
+      }
+
+
+      } else {
+        const responseMessage = message.content?.trim();
+  
+        if (responseMessage) {
+          this.conversationHistory.push({ role: 'assistant', content: responseMessage });
+          this.logger.log(`Response from ChatGPT: ${responseMessage}`);
+          return responseMessage;
+        } else {
+          this.logger.error('Received an empty response from ChatGPT', { stream });
+          return 'Sorry, I didn’t receive a valid response from ChatGPT. Please try again.';
+        }
+      }
     } catch (error) {
       console.error('Error fetching response from ChatGPT:', error);
       return 'Error fetching response from ChatGPT.';
     }
   }
-
-  async getFngData(): Promise<string> {
-    // Fetch the latest FNG data from the database
-    const fngData = await this.fngRepository.findLast15Days();
-    if (!fngData.length) {
-      return 'اطلاعات جدیدی از شاخص ترس و طمع در دسترس نیست.';
-    }
-
-    // Get the latest data
-    const latestFngData = fngData[fngData.length - 1];
-    return `شاخص ترس و طمع فعلی: ${latestFngData.value} (${latestFngData.value_classification}) در تاریخ ${new Date(latestFngData.timestamp * 1000).toLocaleString('fa-IR')}`;
+  
+  // Fetch prices for multiple symbols
+async getCryptoPrices(symbols: string[]): Promise<string> {
+  if (!symbols || symbols.length === 0) {
+    return "Please provide at least one cryptocurrency symbol.";
   }
 
-  async getFngResponseWithChatGpt(): Promise<string> {
-    const fngDataSummary = await this.getFngData();
-    const prompt = `شاخص ترس و طمع فعلی: ${fngDataSummary}. با توجه به این شاخص، چه توصیه‌ای برای سرمایه‌گذاری دارید؟`;
+  console.log("symbols -- ", symbols);
+  // Fetch the latest price for each symbol
+  const prices = await Promise.all(
+    symbols.map(async (symbol) => {
+      const latestPrice = await this.dataRepository.getLatestPriceBySymbol(symbol);
+      if (latestPrice) {
+        return `${latestPrice.symbol}: ${latestPrice.price} USDT`;
+      } else {
+        return `${symbol}: Price not available.`;
+      }
+    })
+  );
+
+  // Combine all responses into a single message
+  return prices.join('\n');
+}
+
+  async getFngForDate(date?: number): Promise<string> {
+
+    // Convert the date to a timestamp or use date logic to match "today", "yesterday", etc.
+    const targetDate = new Date(date).setHours(0, 0, 0, 0) / 1000; // Adjust for your timestamp format
     
-    return this.getChatGptResponse(prompt);
+    // Retrieve the relevant FNG data based on the target date
+    const fngData = await this.dataRepository.findFngByDate(date); // Fetch by date
+    
+    if (fngData) {
+      const formattedDate = new Date(fngData.timestamp * 1000).toLocaleDateString('fa-IR');
+      return `The FNG index for ${formattedDate} was ${fngData.value} (${fngData.value_classification}).`;
+    } else {
+      return `No FNG data found for ${date}.`;
+    }
   }
+  
+  async getCryptoPrice(symbol: string): Promise<string> {
+    // Map common names to symbols
+    const symbolMapping: { [key: string]: string } = {
+      bitcoin: 'BTCUSDT',
+      ethereum: 'ETHUSDT',
+      ripple: 'XRPUSDT',
+      binancecoin: 'BNBUSDT',
+      cardano: 'ADAUSDT',
+      solana: 'SOLUSDT',
+      dogecoin: 'DOGEUSDT',
+      polkadot: 'DOTUSDT',
+      tron: 'TRXUSDT',
+      shiba: 'SHIBUSDT',
+      litecoin: 'LTCUSDT',
+      uniswap: 'UNIUSDT',
+      chainlink: 'LINKUSDT',
+      toncoin: 'TONUSDT',
+      floki: 'FLOKIUSDT',
+      pepe: 'PEPEUSDT',
+      cosmos: 'ATOMUSDT',
+      dai: 'DAIUSDT',
+      wrappedbitcoin: 'WBTCUSDT',
+      usdcoin: 'USDC',
+      //1mbabydoge: '1MBABYDOGEUSDT'
+      // Add more mappings as needed based on other entries in your collection
+    };
+    const mappedSymbol = symbolMapping[symbol.toLowerCase()] || symbol;
+
+    const priceData = await this.dataRepository.getLatestPriceBySymbol(mappedSymbol);
+    return priceData ? `The latest price of ${mappedSymbol} is ${priceData.price} USDT` : `No data found for symbol ${symbol}`;
+  }
+
+  async getTopCryptosByPrice(limit: number): Promise<string> {
+    const topCryptos = await this.dataRepository.getTopCryptosByPrice(limit);
+    return topCryptos.length > 0
+      ? topCryptos.map((crypto, index) => `${index + 1}. ${crypto.symbol}: ${crypto.price} USDT`).join('\n')
+      : 'No data available for top cryptocurrencies.';
+  }
+
+ 
 
   async onModuleInit() {
     const me = await this.bot.getMe();
@@ -76,12 +275,12 @@ export class BotAIService implements OnModuleInit {
       const chatId = msg.chat.id;
       const text = msg.text?.toLowerCase();
 
-      // Detect "/fng" command or keywords related to FNG
-      if (text === '/fng' || text.includes('fear and greed') || text.includes('شاخص ترس و طمع')) {
-        const chatGptResponse = await this.getFngResponseWithChatGpt();
-        await this.bot.sendMessage(chatId, chatGptResponse);
-        return;
-      }
+      // // Detect "/fng" command or keywords related to FNG
+      // if (text === '/fng' || text.includes('fear and greed') || text.includes('شاخص ترس و طمع')) {
+      //   const chatGptResponse = await this.getFngResponseWithChatGpt();
+      //   await this.bot.sendMessage(chatId, chatGptResponse);
+      //   return;
+      // }
 
       // Handle help command
       if (msg.text === '/help') {
