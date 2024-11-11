@@ -4,6 +4,7 @@ import { InjectConnection } from '@nestjs/mongoose';
 import { Connection } from 'mongoose';
 import { FngData } from '../schema/fng.schema';
 import { TradingViewAlertDto } from '../dto/traidingview-alert.dto';
+import { PriceData } from '../schema/price.schema';
 
 @Injectable()
 export class DataRepository {
@@ -21,7 +22,7 @@ export class DataRepository {
   }
 
   // Save ticker data received from TradingView
-  async createTickerData(tickerData: Partial<{ symbol: string; exchange: string; price: number; timestamp: number }>): Promise<void> {
+  async createTickerData(tickerData: Partial<PriceData>): Promise<void> {
     const collection = this.connection.collection(this.tickerCollectionName);
     await collection.insertOne(tickerData);
   }
@@ -80,15 +81,31 @@ export class DataRepository {
   async getTopCryptosByPrice(limit: number): Promise<TradingViewAlertDto[]> {
     const collection = this.connection.collection(this.tickerCollectionName);
 
-    const results = await collection
-      .find({ symbol: /USDT$/ })
-      .sort({ price: -1 })
-      .limit(limit)
-      .toArray();
+    const results = await collection.aggregate([
+      { $match: { symbol: /USDT$/ } },  // Match symbols ending in USDT
+      { $sort: { price: -1, timestamp: -1 } }, // Sort by price descending, then by latest timestamp
+      { $group: {
+          _id: "$symbol",
+          symbol: { $first: "$symbol" },
+          exchange: { $first: "$exchange" },
+          price: { $first: "$price" },
+          timestamp: { $first: "$timestamp" }
+        }
+      },
+      { $sort: { price: -1 } }, // Sort by price in descending order after grouping
+      { $limit: limit }, // Limit to the top `limit` cryptos by price
+      { $sort: { price: -1 } } // Ensure the final output is sorted by price descending
+    ]).toArray();
 
-    // Map results to TradingViewAlertDto, excluding _id
-  return results.map(({ symbol, price, time, exchange }) => ({ symbol, price, time, exchange }));
-  }
+    // Map results to TradingViewAlertDto
+    return results.map(({ symbol, price, time, exchange }) => ({
+      symbol,
+      price,
+      time,
+      exchange,
+    }));
+}
+
   
 
   // Check if a data point with a specific timestamp already exists

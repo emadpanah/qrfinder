@@ -14,12 +14,12 @@ export class DataService {
   async saveTickerData(tickerData: TradingViewAlertDto): Promise<void> {
     // Convert `time` field to a numeric timestamp
     const timestamp = new Date(tickerData.time).getTime() / 1000;
-
+    
     await this.dataRepository.createTickerData({
       symbol: tickerData.symbol,
       exchange: tickerData.exchange,
-      price: tickerData.price,
-      timestamp: timestamp,
+      price:  parseFloat(tickerData.price.toString()) ,
+      time: timestamp,
     });
     console.log('Ticker data saved successfully');
   }

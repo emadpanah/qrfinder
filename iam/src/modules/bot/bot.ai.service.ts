@@ -103,7 +103,12 @@ export class BotAIService implements OnModuleInit {
     try {
       const stream = await this.openai.chat.completions.create({
         messages: [
-          { role: "system", content: "You are an investment advisor specializing in Forex and crypto markets." },
+          { role: "system", content: "You are personal asistance for crypto and blockchain,"+
+            " if user ask question in persian you must answer in persian and if user ask in english you answer english."+
+            " as personal asistance you are very helpful and intractive with customer."+
+            "if user ask question in persian but with english characters that called"+
+            " finglish you answer customer with persian language. as you have fng and crypto prices with function calling,"+
+            " if user ask about crypto or market analyze you can get last fng and 10 top crypto prices and send them with analyze to user" },
           { role: "user", content: updatedPrompt }
         ],
         model: "gpt-4o-mini-2024-07-18",
