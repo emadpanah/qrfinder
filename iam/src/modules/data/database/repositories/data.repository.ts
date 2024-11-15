@@ -5,11 +5,15 @@ import { Connection } from 'mongoose';
 import { FngData } from '../schema/fng.schema';
 import { TradingViewAlertDto } from '../dto/traidingview-alert.dto';
 import { PriceData } from '../schema/price.schema';
+import { RSIData } from '../schema/rsi.schema';
+import { MACDData } from '../schema/macd.schema';
 
 @Injectable()
 export class DataRepository {
   private readonly fngCollectionName = '_fngdata';
   private readonly tickerCollectionName = '_tickerdata';
+  private readonly rsiCollectionName = '_rsidata';
+  private readonly macdCollectionName = '_macddata';
   private readonly logger = new Logger(DataRepository.name);
 
   constructor(@InjectConnection('service') private readonly connection: Connection) {}
@@ -59,44 +63,95 @@ export class DataRepository {
   }
   
     // Get latest price by symbol in USDT
-  async getLatestPriceBySymbol(symbol: string): Promise<TradingViewAlertDto | null> {
-    const collection = this.connection.collection(this.tickerCollectionName);
+    async getLatestPriceBySymbol(symbol: string, date: number): Promise<TradingViewAlertDto | null> {
+      const collection = this.connection.collection(this.tickerCollectionName);
+    
+      // Convert `date` to a timestamp if needed
+      const targetTimestamp = new Date(date).getTime() / 1000;  // Assuming `date` is passed as a UNIX timestamp in seconds
 
-    const result = await collection
-      .find({ symbol })
-      .sort({ timestamp: -1 })
-      .limit(1)
-      .toArray();
-
+      const result = await collection
+        .find({
+          symbol,
+          time: { $gte: targetTimestamp } // Filter by date, only records on or before the given date
+        })
+        .sort({ time: -1 }) // Sort by timestamp in descending order to get the latest record before or on the date
+        .limit(1)
+        .toArray();
+    
       if (result.length > 0) {
         const { symbol, price, time, exchange, _id } = result[0];
         // Return as TradingViewAlertDto, excluding _id
         return { symbol, price, time, exchange };
       }
+    
+      return null;
+    }
+    
+
+   // Get RSI for a specific date and symbol
+   async getRSIBySymbolAndDate(symbol: string, date: string): Promise<RSIData | null> {
+    const collection = this.connection.collection(this.rsiCollectionName);
+
+    const targetTimestamp = new Date(date).getTime() / 1000; // Convert date to UNIX timestamp
+
+    const result = await collection
+      .find({ symbol, time: { $gte: targetTimestamp } })
+      .sort({ time: -1 })
+      .limit(1)
+      .toArray();
+
+    if (result.length > 0) {
+      const { symbol, RSI, time, _id } = result[0];
+      return { symbol, RSI, time }; // Returning only relevant fields
+    }
 
     return null;
   }
 
-  // Get top N cryptos by price in USDT
-  async getTopCryptosByPrice(limit: number): Promise<TradingViewAlertDto[]> {
-    const collection = this.connection.collection(this.tickerCollectionName);
+  // Get MACD for a specific date and symbol
+  async getMACDBySymbolAndDate(symbol: string, date: string): Promise<MACDData | null> {
+    const collection = this.connection.collection(this.macdCollectionName);
 
+    const targetTimestamp = new Date(date).getTime() / 1000; // Convert date to UNIX timestamp
+
+    const result = await collection
+      .find({ symbol, time: { $gte: targetTimestamp } })
+      .sort({ time: -1 })
+      .limit(1)
+      .toArray();
+
+    if (result.length > 0) {
+      const { symbol, MACD, Signal, Histogram, time, _id } = result[0];
+      return { symbol, MACD, Signal, Histogram, time }; // Returning only relevant fields
+    }
+
+    return null;
+  }
+
+  async getTopCryptosByPrice(limit: number, date: number): Promise<TradingViewAlertDto[]> {
+    const collection = this.connection.collection(this.tickerCollectionName);
+  
     const results = await collection.aggregate([
-      { $match: { symbol: /USDT$/ } },  // Match symbols ending in USDT
-      { $sort: { price: -1, timestamp: -1 } }, // Sort by price descending, then by latest timestamp
-      { $group: {
+      {
+        $match: {
+          symbol: /USDT$/, // Match symbols ending in USDT
+          time: { $lte: date } // Filter by date, only records on or before the specified date
+        }
+      },
+      { $sort: { time: -1 } }, // Sort by time descending to get the latest record for each date
+      {
+        $group: {
           _id: "$symbol",
           symbol: { $first: "$symbol" },
           exchange: { $first: "$exchange" },
           price: { $first: "$price" },
-          timestamp: { $first: "$timestamp" }
+          time: { $first: "$time" }
         }
       },
       { $sort: { price: -1 } }, // Sort by price in descending order after grouping
-      { $limit: limit }, // Limit to the top `limit` cryptos by price
-      { $sort: { price: -1 } } // Ensure the final output is sorted by price descending
+      { $limit: limit } // Limit to the top `limit` cryptos by price
     ]).toArray();
-
+  
     // Map results to TradingViewAlertDto
     return results.map(({ symbol, price, time, exchange }) => ({
       symbol,
@@ -104,7 +159,38 @@ export class DataRepository {
       time,
       exchange,
     }));
-}
+  }
+  
+  
+
+  // Get top N cryptos by price in USDT
+//   async getTopCryptosByPrice(limit: number, date: number): Promise<TradingViewAlertDto[]> {
+//     const collection = this.connection.collection(this.tickerCollectionName);
+
+//     const results = await collection.aggregate([
+//       { $match: { symbol: /USDT$/ } },  // Match symbols ending in USDT
+//       { $sort: { price: -1, time: -1 } }, // Sort by price descending, then by latest timestamp
+//       { $group: {
+//           _id: "$symbol",
+//           symbol: { $first: "$symbol" },
+//           exchange: { $first: "$exchange" },
+//           price: { $first: "$price" },
+//           time: { $first: "$time" }
+//         }
+//       },
+//       { $sort: { price: -1 } }, // Sort by price in descending order after grouping
+//       { $limit: limit }, // Limit to the top `limit` cryptos by price
+//       { $sort: { price: -1 } } // Ensure the final output is sorted by price descending
+//     ]).toArray();
+
+//     // Map results to TradingViewAlertDto
+//     return results.map(({ symbol, price, time, exchange }) => ({
+//       symbol,
+//       price,
+//       time,
+//       exchange,
+//     }));
+// }
 
   
 
@@ -114,4 +200,15 @@ export class DataRepository {
     const count = await collection.countDocuments({ timestamp });
     return count > 0;
   }
+
+  async createRSIData(rsiData: Partial<RSIData>): Promise<void> {
+    const collection = this.connection.collection(this.rsiCollectionName);
+    await collection.insertOne(rsiData);
+  }
+
+  async createMACDData(macdData: Partial<MACDData>): Promise<void> {
+    const collection = this.connection.collection(this.macdCollectionName);
+    await collection.insertOne(macdData);
+  }
+
 }

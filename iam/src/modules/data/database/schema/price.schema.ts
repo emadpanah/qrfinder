@@ -2,7 +2,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 
-@Schema({ timestamps: true, collection: '_pricedata'  })
+@Schema({ timestamps: true, collection: '_tickerdata'  })
 export class PriceData {
   @Prop({ required: true })
   symbol: string;

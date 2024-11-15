@@ -38,9 +38,54 @@ export class BotAIService implements OnModuleInit {
   
   // Include the current date in the initial message
   const updatedPrompt = `Today's date is ${today}. ${prompt}`;
+  console.log(updatedPrompt);
     this.conversationHistory.push({ role: 'user', content: updatedPrompt });
   
     const functions = [
+      {
+        name: 'getRSIForDate',
+        description: 'Fetches the RSI data for a specific symbol on a specific date.',
+        parameters: {
+          type: 'object',
+          properties: {
+            symbol: {
+              type: 'string',
+              description: 'The symbol of the cryptocurrency, e.g., BTCUSDT.',
+            },
+            date: {
+              type: 'string',
+              description: 'The date for which to retrieve the RSI data, in YYYY-MM-DD format.',
+            },
+            language: {
+              type: 'string',
+              description: 'The language of the user query, e.g., "en" for English, "fa" for Persian, etc.',
+            },
+          },
+          required: ['symbol', 'date', 'language'],
+        },
+      },
+      {
+        name: 'getMACDForDate',
+        description: 'Fetches the MACD data for a specific symbol on a specific date.',
+        parameters: {
+          type: 'object',
+          properties: {
+            symbol: {
+              type: 'string',
+              description: 'The symbol of the cryptocurrency, e.g., BTCUSDT.',
+            },
+            date: {
+              type: 'string',
+              description: 'The date for which to retrieve the MACD data, in YYYY-MM-DD format.',
+            },
+            language: {
+              type: 'string',
+              description: 'The language of the user query, e.g., "en" for English, "fa" for Persian, etc.',
+            },
+          },
+          required: ['symbol', 'date', 'language'],
+        },
+      },
       {
         name: 'getFngForDate',
         description: 'Fetches the Fear and Greed Index data for a specific date.',
@@ -51,8 +96,12 @@ export class BotAIService implements OnModuleInit {
               type: 'string',
               description: 'The date for which to retrieve the FNG index, in YYYY-MM-DD format.',
             },
+            language: {
+              type: 'string',
+              description: 'The language of the user query, e.g., "en" for English, "fa" for Persian, etc.',
+            },
           },
-          required: ['timestamp'],
+          required: ['timestamp', 'language'],
         },
       },
       {
@@ -65,8 +114,16 @@ export class BotAIService implements OnModuleInit {
               type: 'string',
               description: 'The symbol of the cryptocurrency, e.g., BTCUSDT.',
             },
+            date: {
+              type: 'string',
+              description: 'The date for which to retrieve the price, in YYYY-MM-DD format.',
+            },
+            language: {
+              type: 'string',
+              description: 'The language of the user query, e.g., "en" for English, "fa" for Persian, etc.',
+            },
           },
-          required: ['symbol'],
+          required: ['symbol', 'date', 'language'],
         },
       },
       {
@@ -80,8 +137,16 @@ export class BotAIService implements OnModuleInit {
               items: { type: 'string' },
               description: 'The list of cryptocurrency symbols, e.g., ["BTCUSDT", "ETHUSDT"].',
             },
+            date: {
+              type: 'string',
+              description: 'The date for which to retrieve the prices, in YYYY-MM-DD format.',
+            },
+            language: {
+              type: 'string',
+              description: 'The language of the user query, e.g., "en" for English, "fa" for Persian, etc.',
+            },
           },
-          required: ['symbols'],
+          required: ['symbols', 'date', 'language'],
         },
       },
       {
@@ -94,8 +159,16 @@ export class BotAIService implements OnModuleInit {
               type: 'integer',
               description: 'The number of top cryptocurrencies to fetch.',
             },
+            date: {
+              type: 'string',
+              description: 'The date for which to retrieve the prices, in YYYY-MM-DD format.',
+            },
+            language: {
+              type: 'string',
+              description: 'The language of the user query, e.g., "en" for English, "fa" for Persian, etc.',
+            },
           },
-          required: ['limit'],
+          required: ['limit', 'language'],
         },
       },
     ];
@@ -107,8 +180,8 @@ export class BotAIService implements OnModuleInit {
             " if user ask question in persian you must answer in persian and if user ask in english you answer english."+
             " as personal asistance you are very helpful and intractive with customer."+
             "if user ask question in persian but with english characters that called"+
-            " finglish you answer customer with persian language. as you have fng and crypto prices with function calling,"+
-            " if user ask about crypto or market analyze you can get last fng and 10 top crypto prices and send them with analyze to user" },
+            " finglish you answer customer with persian language."+
+            "" },
           { role: "user", content: updatedPrompt }
         ],
         model: "gpt-4o-mini-2024-07-18",
@@ -147,35 +220,101 @@ export class BotAIService implements OnModuleInit {
 
       this.logger.log(`Parsed function call: ${functionName} with parameters: ${JSON.stringify(parameters)}`);
 
-      if (functionName === 'getFngForDate' && parameters.timestamp) {
-        const tamp = new Date(parameters.timestamp).getTime() / 1000;
-        const functionResponse = await this.getFngForDate(tamp);
-        this.conversationHistory.push({ role: 'function', name: functionName, content: functionResponse });
-        return functionResponse;
+      let functionResponse;
+
+      switch (functionName) {
+        case 'getRSIForDate':
+          functionResponse = await this.getRSIForDate(parameters.symbol, parameters.date);
+          return this.getDynamicInterpretation(functionResponse, 'RSI', parameters.symbol, parameters.date, parameters.language);
+
+        case 'getMACDForDate':
+          functionResponse = await this.getMACDForDate(parameters.symbol, parameters.date);
+          return this.getDynamicInterpretation(functionResponse, 'MACD', parameters.symbol, parameters.date, parameters.language);
+
+        case 'getFngForDate':
+          const timestamp = new Date(parameters.timestamp).getTime() / 1000;
+          functionResponse = await this.getFngForDate(timestamp);
+          return this.getDynamicInterpretation(functionResponse, 'FNG',"", parameters.timestamp, parameters.language);
+
+        case 'getCryptoPrice':
+          const dateTimestamp = new Date(parameters.date).getTime() / 1000;
+          functionResponse = await this.getCryptoPrice(parameters.symbol, dateTimestamp);
+          return this.getDynamicInterpretation(functionResponse, 'Crypto Price', parameters.symbol, parameters.date, parameters.language);
+
+
+          case 'getTopCryptosByPrice': {
+              functionResponse = await this.getTopCryptosByPrice(parameters.limit, parameters.date);
+              this.conversationHistory.push({ role: 'function', name: functionName, content: functionResponse });
+              return functionResponse; 
+            }
+
+            //we need to handel multiple comparing 
+          case 'getCryptoPrices': {
+              functionResponse = await this.getCryptoPrices(parameters.symbols, parameters.date);
+              this.conversationHistory.push({ role: 'function', name: functionName, content: functionResponse });
+              return functionResponse;
+            }
+          default:
+              return 'Requested function is not available.';
       }
 
-      if (functionName === 'getCryptoPrice' && parameters.symbol) {
-        const functionResponse = await this.getCryptoPrice(parameters.symbol);
-        this.conversationHistory.push({ role: 'function', name: functionName, content: functionResponse });
-        return functionResponse;
-      }
-
-      if (functionName === 'getTopCryptosByPrice' && parameters.limit) {
-        const functionResponse = await this.getTopCryptosByPrice(parameters.limit);
-        this.conversationHistory.push({ role: 'function', name: functionName, content: functionResponse });
-        return functionResponse;
-      }
-
-      if (functionName === 'getCryptoPrices' && parameters.symbols) {
-        const functionResponse = await this.getCryptoPrices(parameters.symbols);
-        this.conversationHistory.push({ role: 'function', name: functionName, content: functionResponse });
-        return functionResponse;
-      }
-
-
-      } else {
-        const responseMessage = message.content?.trim();
+      // if (functionName === 'getRSIForDate') {
+      //   const { symbol, date } = parameters;
+      //   const functionResponse = await this.getRSIForDate(symbol, date);
+      //   this.conversationHistory.push({ role: 'function', name: functionName, content: functionResponse });
+      //   return functionResponse;
+      // }
   
+      // if (functionName === 'getMACDForDate') {
+      //   const { symbol, date } = parameters;
+      //   const functionResponse = await this.getMACDForDate(symbol, date);
+      //   this.conversationHistory.push({ role: 'function', name: functionName, content: functionResponse });
+      //   return functionResponse;
+      // }
+
+
+      // if (functionName === 'getFngForDate' && parameters.timestamp) {
+      //   const tamp = new Date(parameters.timestamp).getTime() / 1000;
+      //   const functionResponse = await this.getFngForDate(tamp);
+      //   this.conversationHistory.push({ role: 'function', name: functionName, content: functionResponse });
+      //   return functionResponse;
+      // }
+
+      // if (functionName === 'getCryptoPrice' && parameters.symbol) {
+      //   const functionResponse = await this.getCryptoPrice(parameters.symbol, parameters.date);
+      //   this.conversationHistory.push({ role: 'function', name: functionName, content: functionResponse });
+      //   return functionResponse;
+      // }
+
+      // if (functionName === 'getTopCryptosByPrice' && parameters.limit) {
+      //   const functionResponse = await this.getTopCryptosByPrice(parameters.limit, parameters.date);
+      //   this.conversationHistory.push({ role: 'function', name: functionName, content: functionResponse });
+      //   return functionResponse;
+      // }
+
+      // if (functionName === 'getCryptoPrices' && parameters.symbols) {
+      //   const functionResponse = await this.getCryptoPrices(parameters.symbols, parameters.date);
+      //   this.conversationHistory.push({ role: 'function', name: functionName, content: functionResponse });
+      //   return functionResponse;
+      // }
+
+
+      // } else {
+        // const responseMessage = message.content?.trim();
+  
+        // if (responseMessage) {
+        //   this.conversationHistory.push({ role: 'assistant', content: responseMessage });
+        //   this.logger.log(`Response from ChatGPT: ${responseMessage}`);
+        //   return responseMessage;
+        // } else {
+        //   this.logger.error('Received an empty response from ChatGPT', { stream });
+        //   return 'Sorry, I didn’t receive a valid response from ChatGPT. Please try again.';
+        // }
+      }
+      else
+      {
+        const responseMessage = message.content?.trim();
+
         if (responseMessage) {
           this.conversationHistory.push({ role: 'assistant', content: responseMessage });
           this.logger.log(`Response from ChatGPT: ${responseMessage}`);
@@ -190,9 +329,39 @@ export class BotAIService implements OnModuleInit {
       return 'Error fetching response from ChatGPT.';
     }
   }
+
+  async getDynamicInterpretation(data: any, topic: string, symbol: string, date: string, language: string): Promise<string> {
+    const additionalPrompt = `
+      Provide an discription of the following ${topic} data for ${symbol} on ${date}:
+      ${JSON.stringify(data)}
+      Please include an explanation of what this ${topic} data implies in terms of market conditions and trading strategy.
+       Answer in ${language}.
+    `;
+  
+    try {
+      const response = await this.openai.chat.completions.create({
+        messages: [
+          { role: "system", content: "You are a crypto assistant that provides insights based on given data and context. " +
+            "You must respond in the language specified by the user. If the user specifies Persian, respond in Persian. " +
+            "For English or other languages, respond accordingly."
+           },
+          { role: "user", content: additionalPrompt }
+        ],
+        model: "gpt-4o-mini-2024-07-18",
+      });
+  
+      const detailedInterpretation = response.choices[0].message.content.trim();
+      this.conversationHistory.push({ role: 'assistant', content: detailedInterpretation });
+      return detailedInterpretation;
+    } catch (error) {
+      console.error('Error fetching dynamic interpretation from ChatGPT:', error);
+      return `Here is the raw ${topic} data: ${JSON.stringify(data)}`;
+    }
+  }
+  
   
   // Fetch prices for multiple symbols
-async getCryptoPrices(symbols: string[]): Promise<string> {
+async getCryptoPrices(symbols: string[], date: number): Promise<string> {
   if (!symbols || symbols.length === 0) {
     return "Please provide at least one cryptocurrency symbol.";
   }
@@ -201,7 +370,7 @@ async getCryptoPrices(symbols: string[]): Promise<string> {
   // Fetch the latest price for each symbol
   const prices = await Promise.all(
     symbols.map(async (symbol) => {
-      const latestPrice = await this.dataRepository.getLatestPriceBySymbol(symbol);
+      const latestPrice = await this.dataRepository.getLatestPriceBySymbol(symbol, date);
       if (latestPrice) {
         return `${latestPrice.symbol}: ${latestPrice.price} USDT`;
       } else {
@@ -230,7 +399,7 @@ async getCryptoPrices(symbols: string[]): Promise<string> {
     }
   }
   
-  async getCryptoPrice(symbol: string): Promise<string> {
+  async getCryptoPrice(symbol: string, date: number): Promise<string> {
     // Map common names to symbols
     const symbolMapping: { [key: string]: string } = {
       bitcoin: 'BTCUSDT',
@@ -258,18 +427,32 @@ async getCryptoPrices(symbols: string[]): Promise<string> {
     };
     const mappedSymbol = symbolMapping[symbol.toLowerCase()] || symbol;
 
-    const priceData = await this.dataRepository.getLatestPriceBySymbol(mappedSymbol);
+    const priceData = await this.dataRepository.getLatestPriceBySymbol(mappedSymbol, date);
     return priceData ? `The latest price of ${mappedSymbol} is ${priceData.price} USDT` : `No data found for symbol ${symbol}`;
   }
 
-  async getTopCryptosByPrice(limit: number): Promise<string> {
-    const topCryptos = await this.dataRepository.getTopCryptosByPrice(limit);
+  async getTopCryptosByPrice(limit: number, date: number): Promise<string> {
+    const targetDate = new Date(date).setHours(0, 0, 0, 0) / 1000; // Adjust for your timestamp format
+    const topCryptos = await this.dataRepository.getTopCryptosByPrice(limit, targetDate);
     return topCryptos.length > 0
       ? topCryptos.map((crypto, index) => `${index + 1}. ${crypto.symbol}: ${crypto.price} USDT`).join('\n')
       : 'No data available for top cryptocurrencies.';
   }
 
- 
+  async getRSIForDate(symbol: string, date: string) {
+    const functionResponse = await this.dataRepository.getRSIBySymbolAndDate(symbol, date);
+    return functionResponse
+      ? `The RSI for ${symbol} on ${date} was ${functionResponse.RSI}.`
+      : `No RSI data found for ${symbol} on ${date}.`;
+  }
+  
+  async getMACDForDate(symbol: string, date: string) {
+    const functionResponse = await this.dataRepository.getMACDBySymbolAndDate(symbol, date);
+    if (functionResponse) {
+      return `The MACD data for ${symbol} on ${date}:\n- MACD: ${functionResponse.MACD}\n- Signal: ${functionResponse.Signal}\n- Histogram: ${functionResponse.Histogram}.`;
+    } else {
+      return `No MACD data found for ${symbol} on ${date}.`;
+    } }
 
   async onModuleInit() {
     const me = await this.bot.getMe();

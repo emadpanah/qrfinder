@@ -3,6 +3,10 @@ import { Injectable } from '@nestjs/common';
 import { DataRepository } from '../database/repositories/data.repository';
 import { FngData } from '../database/schema/fng.schema';
 import { TradingViewAlertDto } from '../database/dto/traidingview-alert.dto';
+import { MACDDto } from '../database/dto/macd.dto';
+import { RSIDto } from '../database/dto/rsi.dto';
+import { RSIData } from '../database/schema/rsi.schema';
+import { MACDData } from '../database/schema/macd.schema';
 
 @Injectable()
 export class DataService {
@@ -21,18 +25,29 @@ export class DataService {
       price:  parseFloat(tickerData.price.toString()) ,
       time: timestamp,
     });
-    console.log('Ticker data saved successfully');
+    //console.log('Ticker data saved successfully');
   }
 
-  // Calculate a moving average for data analysis
-  private calculateMovingAverage(data: number[], period: number): number[] {
-    const movingAverages = [];
-    for (let i = period - 1; i < data.length; i++) {
-      const sum = data
-        .slice(i - period + 1, i + 1)
-        .reduce((acc, val) => acc + val, 0);
-      movingAverages.push(sum / period);
-    }
-    return movingAverages;
+  async saveRSIData(rsiData: RSIDto): Promise<void> {
+    const timestamp = new Date(rsiData.time).getTime() / 1000;
+    const formattedData = {
+      symbol: rsiData.symbol,
+      RSI: rsiData.RSI,
+      time: timestamp,
+    };
+    await this.dataRepository.createRSIData(formattedData);
   }
+
+  async saveMACDData(macdData: MACDDto): Promise<void> {
+    const timestamp = new Date(macdData.time).getTime() / 1000;
+    const formattedData = {
+      symbol: macdData.symbol,
+      MACD: macdData.MACD,
+      Signal: macdData.Signal,
+      Histogram: macdData.Histogram,
+      time: timestamp,
+    };
+    await this.dataRepository.createMACDData(formattedData);
+  }
+
 }
