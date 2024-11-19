@@ -4,6 +4,7 @@ import { OpenAI } from 'openai';
 import { ProductService } from '../product/services/product.service';
 import { DataRepository } from '../data/database/repositories/data.repository'; // Import DataRepository
 import { isEmpty } from 'validator';
+import { DominanceDto } from '../data/database/dto/dominance.dto';
 
 
 
@@ -64,6 +65,29 @@ export class BotAIService implements OnModuleInit {
           required: ['symbol', 'date', 'language'],
         },
       },
+      {
+        name: 'getDominanceForSymbol',
+        description: 'Fetches the dominance data for a specific symbol on a specific date.',
+        parameters: {
+          type: 'object',
+          properties: {
+            symbol: {
+              type: 'string',
+              description: 'The cryptocurrency symbol (e.g., BTCUSDT).',
+            },
+            date: {
+              type: 'string',
+              description: 'The date for which to retrieve dominance data, in YYYY-MM-DD format.',
+            },
+            language: {
+              type: 'string',
+              description: 'The language of the user query, e.g., "en" for English, "fa" for Persian, etc.',
+            },
+          },
+          required: ['symbol', 'date', 'language'],
+        },
+      },
+
       {
         name: 'getMACDForDate',
         description: 'Fetches the MACD data for a specific symbol on a specific date.',
@@ -176,12 +200,13 @@ export class BotAIService implements OnModuleInit {
     try {
       const stream = await this.openai.chat.completions.create({
         messages: [
-          { role: "system", content: "You are personal asistance for crypto and blockchain,"+
+          { role: "system", content: 
+            "You are personal asistance for crypto and blockchain,"+
             " if user ask question in persian you must answer in persian and if user ask in english you answer english."+
             " as personal asistance you are very helpful and intractive with customer."+
             "if user ask question in persian but with english characters that called"+
             " finglish you answer customer with persian language."+
-            "" },
+            + "" },
           { role: "user", content: updatedPrompt }
         ],
         model: "gpt-4o-mini-2024-07-18",
@@ -222,7 +247,11 @@ export class BotAIService implements OnModuleInit {
 
       let functionResponse;
 
-      switch (functionName) {
+      switch (functionName) { 
+         case 'getDominanceForSymbol':
+            const dominanceData = await this.getDominanceForSymbol(parameters.symbol, parameters.date); 
+            return this.getDynamicInterpretation(dominanceData, 'Dominance', parameters.symbol, parameters.date, parameters.language);
+
         case 'getRSIForDate':
           functionResponse = await this.getRSIForDate(parameters.symbol, parameters.date);
           return this.getDynamicInterpretation(functionResponse, 'RSI', parameters.symbol, parameters.date, parameters.language);
@@ -328,6 +357,15 @@ export class BotAIService implements OnModuleInit {
       console.error('Error fetching response from ChatGPT:', error);
       return 'Error fetching response from ChatGPT.';
     }
+  }
+
+  async getDominanceForSymbol(symbol: string, date: string): Promise<DominanceDto> {
+    const timestamp = new Date(date).getTime() / 1000;
+    const dominanceData = await this.dataRepository.getDominanceBySymbolAndDate(symbol, timestamp);
+    if (!dominanceData) {
+      throw new Error(`No dominance data found for ${symbol} on ${date}.`);
+    }
+    return dominanceData;
   }
 
   async getDynamicInterpretation(data: any, topic: string, symbol: string, date: string, language: string): Promise<string> {

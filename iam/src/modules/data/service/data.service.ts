@@ -7,6 +7,8 @@ import { MACDDto } from '../database/dto/macd.dto';
 import { RSIDto } from '../database/dto/rsi.dto';
 import { RSIData } from '../database/schema/rsi.schema';
 import { MACDData } from '../database/schema/macd.schema';
+import { DominanceDto } from '../database/dto/dominance.dto';
+import { ST1Dto } from '../database/dto/st1.dto';
 
 @Injectable()
 export class DataService {
@@ -48,6 +50,46 @@ export class DataService {
       time: timestamp,
     };
     await this.dataRepository.createMACDData(formattedData);
+  }
+
+  async saveDominanceData(dominanceData: DominanceDto): Promise<void> {
+    const timestamp = new Date(dominanceData.time).getTime() / 1000;
+    const formattedData = {
+      symbol: dominanceData.symbol,
+      dominance: dominanceData.dominance,
+      time: timestamp,
+    };
+    await this.dataRepository.createDominanceData(formattedData);
+    //console.log('dominance data saved successfully');
+  }
+
+  async saveST1Data(st1Data: ST1Dto): Promise<void> {
+    const timestamp = new Date(st1Data.time).getTime() / 1000;
+    const formattedData = {
+      symbol: st1Data.symbol,
+      price : st1Data.price,
+      singnal: st1Data.signal,
+      time: timestamp,
+      exchange: st1Data.exchange,
+      stop: st1Data.stop,
+      target: st1Data.target,
+      isDone: st1Data.isDone
+    };
+    await this.dataRepository.createST1Data(formattedData);
+  }
+
+  async getLastST1BySymbol(symbol: string): Promise<ST1Dto | null> {
+    return this.dataRepository.getLastST1BySymbol(symbol);
+  }
+
+  async updateST1IsDone(id: string, isDone: boolean): Promise<void> {
+    await this.dataRepository.updateST1IsDone(id, isDone);
+  }
+  
+
+  async getDominanceData(symbol: string, date: number): Promise<DominanceDto | null> {
+    const timestamp = new Date(date).getTime() / 1000;
+    return await this.dataRepository.getDominanceBySymbolAndDate(symbol, timestamp);
   }
 
 }

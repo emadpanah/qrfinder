@@ -7,6 +7,9 @@ import { TradingViewAlertDto } from '../dto/traidingview-alert.dto';
 import { PriceData } from '../schema/price.schema';
 import { RSIData } from '../schema/rsi.schema';
 import { MACDData } from '../schema/macd.schema';
+import { DominanceData } from '../schema/dominance.schema';
+import { ST1Data } from '../schema/st1.schema';
+import { ObjectId } from 'mongodb';
 
 @Injectable()
 export class DataRepository {
@@ -14,6 +17,8 @@ export class DataRepository {
   private readonly tickerCollectionName = '_tickerdata';
   private readonly rsiCollectionName = '_rsidata';
   private readonly macdCollectionName = '_macddata';
+  private readonly st1CollectionName = '_st1data';
+  private readonly dominanceCollectionName = '_dominancedata';
   private readonly logger = new Logger(DataRepository.name);
 
   constructor(@InjectConnection('service') private readonly connection: Connection) {}
@@ -85,6 +90,34 @@ export class DataRepository {
       }
     
       return null;
+    }
+    
+
+    async createST1Data(st1Data: Partial<ST1Data>): Promise<void> {
+      const collection = this.connection.collection(this.st1CollectionName);
+      await collection.insertOne(st1Data);
+    }
+
+    async getLastST1BySymbol(symbol: string): Promise<ST1Data | null> {
+      const collection = this.connection.collection(this.st1CollectionName);
+      const result = await collection
+        .find({ symbol })
+        .sort({ time: -1 }) // Sort by time descending to get the most recent signal
+        .limit(1)
+        .toArray();
+        
+        if (result.length > 0) {
+          const { signal, exchange, symbol, price, time, target, stop, isDone, _id } = result[0];
+          return { signal, exchange, symbol, price, time, target, stop, isDone }; // Map only the required fields
+        }
+      
+        return null;
+    }
+    
+    async updateST1IsDone(id: string, isDone: boolean): Promise<void> {
+      const collection = this.connection.collection(this.st1CollectionName);
+      const objectId = new ObjectId(id);
+      await collection.updateOne({ _id: objectId }, { $set: { isDone } });
     }
     
 
@@ -161,36 +194,27 @@ export class DataRepository {
     }));
   }
   
-  
+  async createDominanceData(dominanceData: Partial<DominanceData>): Promise<void> {
+    const collection = this.connection.collection(this.dominanceCollectionName);
+    await collection.insertOne(dominanceData);
+  }
 
-  // Get top N cryptos by price in USDT
-//   async getTopCryptosByPrice(limit: number, date: number): Promise<TradingViewAlertDto[]> {
-//     const collection = this.connection.collection(this.tickerCollectionName);
+  async getDominanceBySymbolAndDate(symbol: string, date: number): Promise<DominanceData | null> {
+    const collection = this.connection.collection(this.dominanceCollectionName);
 
-//     const results = await collection.aggregate([
-//       { $match: { symbol: /USDT$/ } },  // Match symbols ending in USDT
-//       { $sort: { price: -1, time: -1 } }, // Sort by price descending, then by latest timestamp
-//       { $group: {
-//           _id: "$symbol",
-//           symbol: { $first: "$symbol" },
-//           exchange: { $first: "$exchange" },
-//           price: { $first: "$price" },
-//           time: { $first: "$time" }
-//         }
-//       },
-//       { $sort: { price: -1 } }, // Sort by price in descending order after grouping
-//       { $limit: limit }, // Limit to the top `limit` cryptos by price
-//       { $sort: { price: -1 } } // Ensure the final output is sorted by price descending
-//     ]).toArray();
+    const result = await collection
+      .find({ symbol, time: { $lte: date } }) // Filter by date and symbol
+      .sort({ time: -1 }) // Get the latest record before or on the specified date
+      .limit(1)
+      .toArray();
 
-//     // Map results to TradingViewAlertDto
-//     return results.map(({ symbol, price, time, exchange }) => ({
-//       symbol,
-//       price,
-//       time,
-//       exchange,
-//     }));
-// }
+    if (result.length > 0) {
+      const { symbol, dominance, time } = result[0];
+      return { symbol, dominance, time } as DominanceData;
+    }
+
+    return null;
+  }
 
   
 
