@@ -1,5 +1,5 @@
 // src/modules/data/controller/data.controller.ts
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query } from '@nestjs/common';
 import { TradingViewAlertDto } from '../database/dto/traidingview-alert.dto';
 import { DataService } from '../service/data.service';
 import { RSIDto } from '../database/dto/rsi.dto';
@@ -7,11 +7,12 @@ import { MACDDto } from '../database/dto/macd.dto';
 import { DominanceDto } from '../database/dto/dominance.dto';
 import { ST1Dto } from '../database/dto/st1.dto';
 import * as TelegramBot from 'node-telegram-bot-api';
+import { LunarCrushService } from '../service/lunar.service';
 
 @Controller('data')
 export class DataController {
   private readonly telegramBot: TelegramBot;
-  constructor(private readonly dataService: DataService) {
+  constructor(private readonly dataService: DataService,private readonly lunarservice: LunarCrushService) {
 
     this.telegramBot = new TelegramBot(process.env.TELEGRAM_BOT_Signal_Token, { polling: false });
 
@@ -65,15 +66,15 @@ async st1Ticker(@Body() st1Data: ST1Dto) {
  }
 
   // Fetch the last signal for the same symbol
-  const lastSignal = await this.dataService.getLastST1BySymbol(st1Data.symbol);
+  // const lastSignal = await this.dataService.getLastST1BySymbol(st1Data.symbol);
 
-  if (lastSignal) {
-    const isTargetReached =
-      (lastSignal.signal === 'Buy' && price >= lastSignal.target) ||
-      (lastSignal.signal === 'Sell' && price <= lastSignal.target);
+  // if (lastSignal) {
+  //   const isTargetReached =
+  //     (lastSignal.signal === 'Buy' && price >= lastSignal.target) ||
+  //     (lastSignal.signal === 'Sell' && price <= lastSignal.target);
 
-      await this.dataService.updateST1IsDone(lastSignal._id.toString(), isTargetReached);
-  }
+  //     await this.dataService.updateST1IsDone(lastSignal._id.toString(), isTargetReached);
+  // }
   
   return { message: 'ST1 data received and saved successfully' };
 
@@ -112,7 +113,19 @@ private formatTelegramMessage(data: ST1Dto): string {
     return { message: 'Dominance data received and saved successfully' };
   }
 
-  
+  @Get('lunar-category-sort')
+  async getByCategoryAndSort(
+    @Query('category') category: string,
+    @Query('sort') sort: string,
+    @Query('limit') limit: number = 100,
+  ) {
+    return this.lunarservice.getByCategoryAndSort(category, sort, limit);
+  }
+
+  @Get('lunar-sort')
+  async getBySort(@Query('sort') sort: string, @Query('limit') limit: number = 100) {
+    return this.lunarservice.getBySort(sort, limit);
+  }
 
 
 }

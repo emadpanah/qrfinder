@@ -10,6 +10,8 @@ import { MACDData } from '../schema/macd.schema';
 import { DominanceData } from '../schema/dominance.schema';
 import { ST1Data } from '../schema/st1.schema';
 import { ObjectId } from 'mongodb';
+import { LunarCrushData } from '../schema/lunarcrush.schema';
+import { LunarCrushPublicCoinDto } from '../dto/lunarcrush.dto';
 
 @Injectable()
 export class DataRepository {
@@ -19,6 +21,7 @@ export class DataRepository {
   private readonly macdCollectionName = '_macddata';
   private readonly st1CollectionName = '_st1data';
   private readonly dominanceCollectionName = '_dominancedata';
+  private readonly lunarPubCoinCollectionName = '_lunarpublicoindata';
   private readonly logger = new Logger(DataRepository.name);
 
   constructor(@InjectConnection('service') private readonly connection: Connection) {}
@@ -141,6 +144,42 @@ export class DataRepository {
     return null;
   }
 
+  async getTopCryptosByVolatility(limit: number): Promise<any[]> {
+    const collection = this.connection.collection(this.lunarPubCoinCollectionName);
+  
+    const results = await collection
+      .find({ fetched_sort: 'volatility' }) // Filter by fetched_sort: galaxy_score
+      .sort({ fetched_at: -1, volatility: -1 }) // Sort by latest fetched_at first, then by galaxy_score in descending order
+      .limit(limit)
+      .toArray();
+  
+    return results.map(({ _id, ...rest }) => rest); // Exclude the _id field
+  }
+
+   async getTopCryptosByGalaxyScore(limit: number): Promise<any[]> {
+    const collection = this.connection.collection(this.lunarPubCoinCollectionName);
+
+    const results = await collection
+      .find({ fetched_sort: 'galaxy_score' }) // Filter by fetched_sort: galaxy_score
+      .sort({ fetched_at: -1, galaxy_score: -1 }) // Sort by latest fetched_at first, then by galaxy_score in descending order
+      .limit(limit)
+      .toArray();
+
+    return results.map(({ _id, ...rest }) => rest); // Exclude the _id field
+  }
+  
+  async getTopCryptosByAltRank(limit: number): Promise<any[]> {
+    const collection = this.connection.collection(this.lunarPubCoinCollectionName);
+
+    const results = await collection
+      .find({ fetched_sort: 'alt_rank' }) // Filter by fetched_sort: alt_rank
+      .sort({ fetched_at: -1, alt_rank: -1 }) // Sort by latest fetched_at first, then by alt_rank in descending order
+      .limit(limit)
+      .toArray();
+
+    return results.map(({ _id, ...rest }) => rest); // Exclude the _id field
+  }
+
   // Get MACD for a specific date and symbol
   async getMACDBySymbolAndDate(symbol: string, date: string): Promise<MACDData | null> {
     const collection = this.connection.collection(this.macdCollectionName);
@@ -194,6 +233,39 @@ export class DataRepository {
     }));
   }
   
+  async getTopCoinsBySort(sort: string, limit: number): Promise<LunarCrushPublicCoinDto[]> {
+    const collection = this.connection.collection(this.lunarPubCoinCollectionName);
+  
+    const results = await collection
+      .find({ fetched_sort: sort }) // Match the specified sort
+      .sort({ [sort]: -1, fetched_at: -1 }) // Sort by the sort field and the latest fetch time
+      .limit(limit) // Limit the number of results
+      .toArray();
+  
+    // Map results to exclude `_id` and ensure type consistency
+    return results.map((doc) => {
+      const { _id, ...rest } = doc;
+      return rest as LunarCrushPublicCoinDto;
+    });
+  }
+  
+  async getTopCoinsByCategoryAndSort(category: string, sort: string, limit: number): Promise<LunarCrushPublicCoinDto[]> {
+    const collection = this.connection.collection(this.lunarPubCoinCollectionName);
+  
+    const results = await collection
+      .find({ categories: category, fetched_sort: sort }) // Match the category and sort
+      .sort({ [sort]: -1, fetched_at: -1 }) // Sort by the sort field and the latest fetch time
+      .limit(limit) // Limit the number of results
+      .toArray();
+  
+    // Map results to exclude `_id` and ensure type consistency
+    return results.map((doc) => {
+      const { _id, ...rest } = doc;
+      return rest as LunarCrushPublicCoinDto;
+    });
+  }
+  
+
   async createDominanceData(dominanceData: Partial<DominanceData>): Promise<void> {
     const collection = this.connection.collection(this.dominanceCollectionName);
     await collection.insertOne(dominanceData);
@@ -233,6 +305,56 @@ export class DataRepository {
   async createMACDData(macdData: Partial<MACDData>): Promise<void> {
     const collection = this.connection.collection(this.macdCollectionName);
     await collection.insertOne(macdData);
+  }
+
+  async createLunarPubCoin(data: Partial<LunarCrushPublicCoinDto>): Promise<void> {
+    const collection = this.connection.collection(this.lunarPubCoinCollectionName);
+
+  // Upsert data to avoid duplicates for the same sort and symbol
+  await collection.updateOne(
+      { id: data.id, fetched_sort: data.fetched_sort },
+      {
+        $set: {
+          ...data,
+          fetched_sort: data.fetched_sort,
+          fetched_at: data.fetched_at, // Store the exact fetch time
+        },
+      },
+      { upsert: true }
+    );
+  }
+
+  async findLunarPubCoinByCategoryAndSort(category: string, sort: string, limit: number): Promise<LunarCrushPublicCoinDto[]> {
+    const collection = this.connection.collection(this.lunarPubCoinCollectionName);
+
+    const results = await collection
+    .find({ categories: category, fetched_sort: sort })
+    .sort({ fetched_at: -1 }) // Sort by latest fetch time
+    .limit(limit)
+    .toArray();
+
+  // Map results to exclude `_id` and ensure type consistency
+  return results.map((doc) => {
+    const { _id, ...rest } = doc;
+    return rest as LunarCrushPublicCoinDto;
+  });
+  }
+
+  async findLunarPubCoinBySort(sort: string, limit: number): Promise<LunarCrushPublicCoinDto[]> {
+    const collection = this.connection.collection(this.lunarPubCoinCollectionName);
+
+    const results = await collection
+    .find({ fetched_sort: sort })
+    .sort({ fetched_at: -1 }) // Sort by latest fetch time
+    .limit(limit)
+    .toArray();
+
+    // Map results to exclude `_id` and ensure type consistency
+    return results.map((doc) => {
+      const { _id, ...rest } = doc;
+      return rest as LunarCrushPublicCoinDto;
+    });
+
   }
 
 }
