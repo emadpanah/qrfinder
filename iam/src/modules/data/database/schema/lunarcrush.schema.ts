@@ -103,3 +103,4 @@ export class LunarCrushData {
 
 export type LunarCrushDocument = LunarCrushData & Document;
 export const LunarCrushDataSchema = SchemaFactory.createForClass(LunarCrushData);
+LunarCrushDataSchema.index({ categories: 1, fetched_sort: 1, fetched_at: -1 });

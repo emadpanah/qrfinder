@@ -43,27 +43,28 @@ export class BotAIService implements OnModuleInit {
 'ai','exchange-tokens','wallets','brc20','events','defi','layer-1','base-ecosystem','meme','dao',
 'layer-2','lending-borrowing','nft','gaming','gambling','depin','socialfi', 'stacks-ecosystem'];
 
-  private readonly validSorts =[
-  'price',
-    //'price_btc',
+  private readonly validSorts = [
+    //'price', 
+	//'price_btc',
     'volume_24h',
     'volatility',
     //'circulating_supply',
     //'max_supply',
     //'percent_change_1h',
-    //'percent_change_24h',
+    'percent_change_24h',
     //'percent_change_7d',
     'market_cap',
     //'market_cap_rank',
-    //'interactions_24h',
+    'interactions_24h',
     //'social_volume_24h',
-    //'social_dominance',
+    'social_dominance',
     'market_dominance',
     'galaxy_score',
-    'galaxy_score_previous',
+    //'galaxy_score_previous',
     'alt_rank',
-    'alt_rank_previous',
-    'sentiment'];
+    //'alt_rank_previous',
+    'sentiment',
+  ];
   // = [
   //   'price', 'price_btc', 'volume_24h', 'volatility', 'circulating_supply', 'max_supply',
   //   'percent_change_1h', 'percent_change_24h', 'percent_change_7d', 'market_cap',
@@ -122,76 +123,123 @@ export class BotAIService implements OnModuleInit {
           required: ['symbol', 'date', 'language'],
         },
       },
-      // {
-      //   name: 'getDominanceForSymbol',
-      //   description: 'Fetches the dominance data for a specific symbol on a specific date.',
-      //   parameters: {
-      //     type: 'object',
-      //     properties: {
-      //       symbol: {
-      //         type: 'string',
-      //         description: 'The cryptocurrency symbol (e.g., BTCUSDT).',
-      //       },
-      //       date: {
-      //         type: 'string',
-      //         description: 'The date for which to retrieve dominance data, in YYYY-MM-DD format.',
-      //       },
-      //       language: {
-      //         type: 'string',
-      //         description: 'The language of the user query, e.g., "en" for English, "fa" for Persian, etc.',
-      //       },
-      //     },
-      //     required: ['symbol', 'date', 'language'],
-      //   },
-      // },
-      // {
-      //   name: 'getTopCoinsByCategoryAndSort',
-      //   description: 'Fetches the top coins by category and sort from LunarCrush data.',
-      //   parameters: {
-      //     type: 'object',
-      //     properties: {
-      //       category: {
-      //         type: 'string',
-      //         description: 'The category of the coins, e.g., DeFi, Layer 1, MemeCoin.',
-      //       },
-      //       sort: {
-      //         type: 'string',
-      //         description: 'The sorting parameter, e.g., market_cap, price, volume_24h.',
-      //       },
-      //       limit: {
-      //         type: 'integer',
-      //         description: 'The number of top coins to fetch (default is 10).',
-      //       },
-      //       language: {
-      //         type: 'string',
-      //         description: 'The language of the user query, e.g., "en" for English, "fa" for Persian.',
-      //       },
-      //     },
-      //     required: ['category', 'sort', 'language'],
-      //   },
-      // },      
-      // {
-      //   name: 'getTopCoinsBySort',
-      //   description: 'Fetches the top coins by sort from LunarCrush data.',
-      //   parameters: {
-      //     type: 'object',
-      //     properties: {
-      //       sort: {
-      //         type: 'string',
-      //         description: 'The sorting parameter, e.g., market_cap, price, volume_24h.',
-      //       },
-      //       limit: {
-      //         type: 'integer',
-      //         description: 'The number of top coins to fetch (default is 10).',
-      //       },
-      //       language: {
-      //         type: 'string',
-      //         description: 'The language of the user query, e.g., "en" for English, "fa" for Persian.',
-      //       },
-      //     },
-      //     required: ['sort', 'language'],
-      //   },
-      // },  
+      {
+        name: 'getRSIForMultipleSymbolsOnDate',
+        description: 'Fetches the RSI data for multiple symbols on a specific date.',
+        parameters: {
+          type: 'object',
+          properties: {
+            symbols: {
+              type: 'array',
+              items: {
+                type: 'string',
+                description: 'A cryptocurrency symbol, e.g., BTCUSDT.'
+              },
+              description: 'An array of symbols for which RSI data is requested.'
+            },
+            date: {
+              type: 'string',
+              description: 'The date (YYYY-MM-DD) for which to retrieve the RSI data.',
+            },
+            language: {
+              type: 'string',
+              description: 'The language of the user query, e.g. "en" or "fa".'
+            }
+          },
+          required: ['symbols', 'date', 'language'],
+        },
+      },
+      {
+        name: 'getTopNRSICryptos',
+        description: 'Fetches the top N cryptocurrencies based on their RSI value for a specific date.',
+        parameters: {
+          type: 'object',
+          properties: {
+            n: {
+              type: 'number',
+              description: 'Number of top cryptocurrencies to return based on RSI.'
+            },
+            date: {
+              type: 'string',
+              description: 'The date (YYYY-MM-DD) for which to retrieve the top RSI cryptos.'
+            },
+            language: {
+              type: 'string',
+              description: 'The user query language, e.g. "en" or "fa".'
+            }
+          },
+          required: ['n', 'date', 'language'],
+        },
+      },{
+        name: 'getSortForSymbol',
+        description: 'Fetches the requested sort metric value and the categories for a given symbol from the LunarCrush data.',
+        parameters: {
+          type: 'object',
+          properties: {
+            symbol: {
+              type: 'string',
+              description: 'The symbol of the cryptocurrency, e.g., BTC, ETH, BTCUSDT.',
+            },
+            sort: {
+              type: 'string',
+              description: 'The sorting parameter. Must be one of the allowed sorts: volume_24h, volatility, percent_change_24h, market_cap, interactions_24h, social_dominance, market_dominance, galaxy_score, alt_rank, sentiment.',
+            },
+            language: {
+              type: 'string',
+              description: 'The language of the user query, e.g., "en" for English, "fa" for Persian.',
+            },
+          },
+          required: ['symbol', 'sort', 'language'],
+        },
+      },
+      {
+        name: 'getTopCryptosByCategoryAndSort',
+        description: 'Fetches the top cryptocurrencies filtered by category and sorted by a given parameter. Valid categories and sorts are predetermined.',
+        parameters: {
+          type: 'object',
+          properties: {
+            category: {
+              type: 'string',
+              description: 'The category of the coins. Must be one of the allowed categories: liquid-staking-tokens, runes, analytics, stablecoin, fan, bitcoin-ecosystem, sports, desci, real-estate, real-world-assets, ai, exchange-tokens, wallets, brc20, events, defi, layer-1, base-ecosystem, meme, dao, layer-2, lending-borrowing, nft, gaming, gambling, depin, socialfi, stacks-ecosystem.',
+            },
+            sort: {
+              type: 'string',
+              description: 'The sorting parameter. Must be one of the allowed sorts: volume_24h, volatility, percent_change_24h, market_cap, interactions_24h, social_dominance, market_dominance, galaxy_score, alt_rank, sentiment.',
+            },
+            limit: {
+              type: 'integer',
+              description: 'The number of top cryptocurrencies to fetch (default is 10).',
+            },
+            language: {
+              type: 'string',
+              description: 'The language of the user query, e.g., "en" for English, "fa" for Persian.',
+            },
+          },
+          required: ['category', 'sort', 'language'],
+        },
+      },      
+      {
+        name: 'getTopCryptosBySort',
+        description: 'Fetches the top cryptocurrencies sorted by a given parameter (e.g., volume_24h, volatility, percent_change_24h, market_cap, interactions_24h, social_dominance, market_dominance, galaxy_score, alt_rank, sentiment).',
+        parameters: {
+          type: 'object',
+          properties: {
+            sort: {
+              type: 'string',
+              description: 'The sorting parameter. Must be one of the allowed sorts: volume_24h, volatility, percent_change_24h, market_cap, interactions_24h, social_dominance, market_dominance, galaxy_score, alt_rank, sentiment.',
+            },
+            limit: {
+              type: 'integer',
+              description: 'The number of top cryptocurrencies to fetch (default is 10).',
+            },
+            language: {
+              type: 'string',
+              description: 'The language of the user query, e.g., "en" for English, "fa" for Persian.',
+            },
+          },
+          required: ['sort', 'language'],
+        },
+      },
       {
         name: 'getMACDForDate',
         description: 'Fetches the MACD data for a specific symbol on a specific date.',
@@ -212,6 +260,54 @@ export class BotAIService implements OnModuleInit {
             },
           },
           required: ['symbol', 'date', 'language'],
+        },
+      },
+      {
+        name: 'getMACDForMultipleSymbolsOnDate',
+        description: 'Fetches the MACD data for multiple symbols on a specific date.',
+        parameters: {
+          type: 'object',
+          properties: {
+            symbols: {
+              type: 'array',
+              items: {
+                type: 'string',
+                description: 'A cryptocurrency symbol, e.g. BTCUSDT.'
+              },
+              description: 'An array of symbols for which MACD data is requested.'
+            },
+            date: {
+              type: 'string',
+              description: 'The date (YYYY-MM-DD) for which to retrieve MACD data.'
+            },
+            language: {
+              type: 'string',
+              description: 'The user query language, e.g. "en" or "fa".'
+            }
+          },
+          required: ['symbols', 'date', 'language'],
+        },
+      },
+      {
+        name: 'getTopNMACDCryptos',
+        description: 'Fetches the top N cryptocurrencies based on their MACD value for a specific date.',
+        parameters: {
+          type: 'object',
+          properties: {
+            n: {
+              type: 'number',
+              description: 'Number of top cryptocurrencies to return based on MACD.'
+            },
+            date: {
+              type: 'string',
+              description: 'The date (YYYY-MM-DD) for which to retrieve the top MACD cryptos.'
+            },
+            language: {
+              type: 'string',
+              description: 'The user query language, e.g. "en" or "fa".'
+            }
+          },
+          required: ['n', 'date', 'language'],
         },
       },
       {
@@ -300,59 +396,79 @@ export class BotAIService implements OnModuleInit {
         },
       },
       {
-        name: 'getTopCryptosByVolatility',
-        description: 'Fetches the top N cryptocurrencies sorted by volatility.',
+        name: 'analyzeAndCreateSignals',
+        description: 'Analyzes RSI, MACD, and FNG data for up to 10 given symbols on a specified date and generates trading signals (e.g., Buy, Sell, Hold).',
         parameters: {
           type: 'object',
           properties: {
-            limit: {
-              type: 'integer',
-              description: 'The number of top cryptocurrencies to fetch.',
+            symbols: {
+              type: 'array',
+              items: { type: 'string' },
+              maxItems: 10,
+              description: 'A list of cryptocurrency symbols to analyze. For example: ["BTCUSDT", "ETHUSDT"]. Maximum is 10 symbols.',
             },
             language: {
               type: 'string',
-              description: 'The language of the user query, e.g., "en" for English, "fa" for Persian, etc.',
+              description: 'The language in which to provide the signals and explanations. For example: "en" for English, "fa" for Persian.',
             },
           },
-          required: ['limit', 'language'],
+          required: ['symbols', 'language'],
         },
-      },
-      {
-        name: 'getTopCryptosByGalaxyScore',
-        description: 'Fetches the top N cryptocurrencies sorted by social trent.',
-        parameters: {
-          type: 'object',
-          properties: {
-            limit: {
-              type: 'integer',
-              description: 'The number of top cryptocurrencies to fetch.',
-            },
-            language: {
-              type: 'string',
-              description: 'The language of the user query, e.g., "en" for English, "fa" for Persian, etc.',
-            },
-          },
-          required: ['limit', 'language'],
-        },
-      },
-      {
-        name: 'getTopCryptosByAltRank',
-        description: 'Fetches the top N altcoin cryptocurrencies',
-        parameters: {
-          type: 'object',
-          properties: {
-            limit: {
-              type: 'integer',
-              description: 'The number of top cryptocurrencies to fetch.',
-            },
-            language: {
-              type: 'string',
-              description: 'The language of the user query, e.g., "en" for English, "fa" for Persian, etc.',
-            },
-          },
-          required: ['limit', 'language'],
-        },
-      },
+      }
+      // {
+      //   name: 'getTopCryptosByVolatility',
+      //   description: 'Fetches the top N cryptocurrencies sorted by volatility.',
+      //   parameters: {
+      //     type: 'object',
+      //     properties: {
+      //       limit: {
+      //         type: 'integer',
+      //         description: 'The number of top cryptocurrencies to fetch.',
+      //       },
+      //       language: {
+      //         type: 'string',
+      //         description: 'The language of the user query, e.g., "en" for English, "fa" for Persian, etc.',
+      //       },
+      //     },
+      //     required: ['limit', 'language'],
+      //   },
+      // },
+      // {
+      //   name: 'getTopCryptosByGalaxyScore',
+      //   description: 'Fetches the top N cryptocurrencies sorted by social trent.',
+      //   parameters: {
+      //     type: 'object',
+      //     properties: {
+      //       limit: {
+      //         type: 'integer',
+      //         description: 'The number of top cryptocurrencies to fetch.',
+      //       },
+      //       language: {
+      //         type: 'string',
+      //         description: 'The language of the user query, e.g., "en" for English, "fa" for Persian, etc.',
+      //       },
+      //     },
+      //     required: ['limit', 'language'],
+      //   },
+      // },
+      // {
+      //   name: 'getTopCryptosByAltRank',
+      //   description: 'Fetches the top N cryptocurrencies sorted by alt rank.',
+      //   parameters: {
+      //     type: 'object',
+      //     properties: {
+      //       limit: {
+      //         type: 'integer',
+      //         description: 'The number of top cryptocurrencies to fetch.',
+      //       },
+      //       language: {
+      //         type: 'string',
+      //         description: 'The language of the user query, e.g., "en" for English, "fa" for Persian, etc.',
+      //       },
+      //     },
+      //     required: ['limit', 'language'],
+      //   },
+      // },
     ];
   
     //const systemMessage = this.generateSystemMessage();
@@ -415,49 +531,69 @@ export class BotAIService implements OnModuleInit {
       let functionResponse;
 
       switch (functionName) { 
-        //  case 'getDominanceForSymbol':
-        //     const dominanceData = await this.getDominanceForSymbol(parameters.symbol, parameters.date); 
-        //     return this.getDynamicInterpretation(dominanceData, 'Dominance', parameters.symbol, parameters.date, parameters.language);
-
-        // case 'getTopCoinsByCategoryAndSort': {
-        //   const { category, sort, limit = 10, language } = parameters;
-        //   const response = await this.getTopCoinsByCategoryAndSort(
-        //     category,
-        //     sort,
-        //     limit,
-        //     language
-        //   );
-        //   this.conversationHistory.push({ role: 'function', name: functionName, content: response });
-        //   return response;
-        // }
         
-        // case 'getTopCoinsBySort': {
-        //   const { sort, limit = 10, language } = parameters;
-        //   const response = await this.getTopCoinsBySort(sort, limit, language);
+
+        // case 'getTopCryptosByVolatility': {
+        //   const response = await this.getTopCryptosByVolatility(parameters.limit);
         //   this.conversationHistory.push({ role: 'function', name: functionName, content: response });
         //   return response;
         // }
 
-        case 'getTopCryptosByVolatility': {
-          const response = await this.getTopCryptosByVolatility(parameters.limit);
+        // case 'getTopCryptosByGalaxyScore': {
+        //   return await this.getTopCryptosByGalaxyScore(parameters.limit);
+        // }
+        // case 'getTopCryptosByAltRank': {
+        //   return await this.getTopCryptosByAltRank(parameters.limit);
+        // }
+
+        case 'getTopCryptosByCategoryAndSort': {
+          const { category, sort, limit = 10, language } = parameters;
+        
+          // Validate category
+          if (!this.validCategories.includes(category)) {
+            const errorMsg = `Invalid category: "${category}". Please choose from: ${this.validCategories.join(', ')}.`;
+            return errorMsg;
+          }
+        
+          // Validate sort
+          if (!this.validSorts.includes(sort)) {
+            const errorMsg = `Invalid sort parameter: "${sort}". Please choose from: ${this.validSorts.join(', ')}.`;
+            return errorMsg;
+          }
+        
+          const response = await this.getTopCoinsByCategoryAndAnySort(category, sort, limit, language);
           this.conversationHistory.push({ role: 'function', name: functionName, content: response });
           return response;
         }
 
-        case 'getTopCryptosByGalaxyScore': {
-          return await this.getTopCryptosByGalaxyScore(parameters.limit);
+        case 'getTopCryptosBySort': {
+          const { sort, limit = 10, language } = parameters;
+        
+          // Validate sort parameter
+          //volume_24h, volatility, percent_change_24h, market_cap, 
+          //interactions_24h, social_dominance, market_dominance,
+          // galaxy_score, alt_rank, sentiment
+        
+          if (!this.validSorts.includes(sort)) {
+            const errorMsg = `Invalid sort parameter: "${sort}". Please choose from: ${this.validSorts.join(', ')}.`;
+            return errorMsg;
+          }
+        
+          // Now retrieve data from the repository
+          const response = await this.getTopCryptosByAnySort(sort, limit, language);
+          this.conversationHistory.push({ role: 'function', name: functionName, content: response });
+          return response;
         }
-        case 'getTopCryptosByAltRank': {
-          return await this.getTopCryptosByAltRank(parameters.limit);
-        }
-    
+        
 
         case 'getRSIForDate':
-          functionResponse = await this.getRSIForDate(parameters.symbol, parameters.date);
+          const timestamp1 = new Date(parameters.date).getTime() / 1000;
+          functionResponse = await this.getRSIForDate(parameters.symbol, timestamp1);
           return this.getDynamicInterpretation(functionResponse, 'RSI', parameters.symbol, parameters.date, parameters.language);
 
         case 'getMACDForDate':
-          functionResponse = await this.getMACDForDate(parameters.symbol, parameters.date);
+          const timestamp2 = new Date(parameters.date).getTime() / 1000;
+          functionResponse = await this.getMACDForDate(parameters.symbol, timestamp2);
           return this.getDynamicInterpretation(functionResponse, 'MACD', parameters.symbol, parameters.date, parameters.language);
 
         case 'getFngForDate':
@@ -483,6 +619,63 @@ export class BotAIService implements OnModuleInit {
               this.conversationHistory.push({ role: 'function', name: functionName, content: functionResponse });
               return functionResponse;
             }
+
+            case 'getRSIForMultipleSymbolsOnDate': {
+              const timestamp = new Date(parameters.date).getTime() / 1000;
+              const { symbols, language } = parameters;
+              functionResponse = await this.getRSIForMultipleSymbolsOnDate(symbols, timestamp, language);
+              return functionResponse;
+            }
+  
+            case 'getTopNRSICryptos': {
+              const timestamp = new Date(parameters.date).getTime() / 1000;
+              const { n, language } = parameters;
+              functionResponse = await this.getTopNRSICryptos(n, timestamp, language);
+              return functionResponse;
+            }
+  
+            // New function calls for MACD (multiple and top N)
+            case 'getMACDForMultipleSymbolsOnDate': {
+              const timestamp = new Date(parameters.date).getTime() / 1000;
+              const { symbols, language } = parameters;
+              functionResponse = await this.getMACDForMultipleSymbolsOnDate(symbols, timestamp, language);
+              return functionResponse;
+            }
+  
+            case 'getTopNMACDCryptos': {
+              const { n, date, language } = parameters;
+              functionResponse = await this.getTopNMACDCryptos(n, date, language);
+              return functionResponse;
+            }
+  
+            case 'analyzeAndCreateSignals':
+            functionResponse = await this.analyzeAndCreateSignals(parameters.symbols,parameters.language);
+            this.conversationHistory.push({ role: 'function', name: functionName, content: functionResponse });
+            return functionResponse;
+
+            case 'getSortForSymbol': {
+              const { symbol, sort, language } = parameters;
+            
+              // Validate sort
+              if (!this.validSorts.includes(sort)) {
+                const errorMsg = `Invalid sort parameter: "${sort}". Please choose from: ${this.validSorts.join(', ')}.`;
+                return errorMsg;
+              }
+            
+              const { categories, sortValue } = await this.dataRepository.getSortValueForSymbol(symbol, sort);
+            
+              if (!categories && sortValue === null) {
+                return language === 'fa'
+                  ? `هیچ اطلاعاتی برای نماد ${symbol} با این پارامتر یافت نشد.`
+                  : `No data found for symbol ${symbol} with the requested sort parameter.`;
+              }
+            
+              return language === 'fa'
+                ? `دسته‌بندی برای ${symbol}: ${categories}\nمقدار ${sort} برای این نماد: ${sortValue}`
+                : `Category for ${symbol}: ${categories}\n${sort} value for this symbol: ${sortValue}`;
+            }
+            
+
           default:
               return 'Requested function is not available.';
       }
@@ -506,14 +699,113 @@ export class BotAIService implements OnModuleInit {
     }
   }
 
-  async getDominanceForSymbol(symbol: string, date: string): Promise<DominanceDto> {
-    const timestamp = new Date(date).getTime() / 1000;
-    const dominanceData = await this.dataRepository.getDominanceBySymbolAndDate(symbol, timestamp);
-    if (!dominanceData) {
-      throw new Error(`No dominance data found for ${symbol} on ${date}.`);
+  async analyzeAndCreateSignals(symbols: string[], language: string): Promise<string> {
+    // Limit symbols to 10
+    if (symbols.length > 10) {
+      return `Please provide 10 or fewer symbols. You provided ${symbols.length}.`;
     }
-    return dominanceData;
+   
+    const timestamp = new Date().getTime() / 1000;
+    //const timestamp = Math.floor(Date.now() / 1000);
+    const dateObj = new Date();
+    const date = dateObj.toISOString().split('T')[0]; // e.g., "2024-12-14"
+  
+    // Get global FNG sentiment for date
+    const fngData = await this.dataRepository.findFngByDate(timestamp);
+    let fngValueClass = fngData ? fngData.value_classification : "Neutral";
+  
+    // Map FNG classification to a sentiment score (just example)
+    const sentimentScore = this.mapFngToSentimentScore(fngValueClass);
+  
+    const results: Record<string, { signal: string, explanation: string }> = {};
+  
+    for (const symbol of symbols) {
+      const rsiData = await this.dataRepository.getRSIBySymbolAndDate(symbol, timestamp);
+      const macdData = await this.dataRepository.getMACDBySymbolAndDate(symbol, timestamp);
+  
+      if (!rsiData || !macdData) {
+        results[symbol] = {
+          signal: "No Data",
+          explanation: `No sufficient data (RSI or MACD) for ${symbol} on ${date}.`
+        };
+        continue;
+      }
+  
+      // Basic RSI-based signal
+      let rsiSignal: "buy"|"sell"|"hold" = "hold";
+      if (typeof rsiData.RSI === 'number') {
+        if (rsiData.RSI < 30) rsiSignal = "buy";
+        else if (rsiData.RSI > 70) rsiSignal = "sell";
+        else rsiSignal = "hold";
+      } else {
+        // If RSI is not a number (e.g. null or undefined), treat as no data
+        results[symbol] = {
+          signal: "No Data",
+          explanation: `RSI data is invalid for ${symbol} on ${date}.`
+        };
+        continue;
+      }
+  
+      // Basic MACD interpretation
+      let macdSignal: "bullish"|"bearish"|"neutral" = "neutral";
+      if (macdData.MACD > macdData.Signal) macdSignal = "bullish";
+      else if (macdData.MACD < macdData.Signal) macdSignal = "bearish";
+  
+      // Combine signals
+      let finalSignal = this.combineSignals(rsiSignal, macdSignal, sentimentScore);
+  
+      // Explanation
+      let explanation = `RSI is ${rsiData.RSI} suggesting ${rsiSignal}. MACD shows ${macdSignal}. ` +
+                        `FNG sentiment: ${fngValueClass}. Overall signal: ${finalSignal}.`;
+  
+      // Here you can do language-based formatting if needed
+      results[symbol] = {
+        signal: finalSignal,
+        explanation
+      };
+    }
+  
+    return JSON.stringify(results, null, 2);
   }
+  
+
+  mapFngToSentimentScore(classification: string): number {
+    // Example mapping
+    switch (classification.toLowerCase()) {
+      case 'extreme fear': return -2;
+      case 'fear': return -1;
+      case 'neutral': return 0;
+      case 'greed': return 1;
+      case 'extreme greed': return 2;
+      default: return 0;
+    }
+  }
+
+  combineSignals(rsiSignal: "buy"|"sell"|"hold", macdSignal: "bullish"|"bearish"|"neutral", sentiment: number): string {
+    // Simple logic:
+    // If RSI says buy and MACD is bullish, stronger buy. If sentiment is positive, "Strong Buy".
+    // If RSI says sell and MACD is bearish, stronger sell. If sentiment is negative, "Strong Sell".
+    // Otherwise hold or mild signals.
+
+    let baseSignal: string;
+
+    if (rsiSignal === "buy" && macdSignal === "bullish") {
+      baseSignal = "Buy";
+      if (sentiment > 0) baseSignal = "Strong Buy";
+    } else if (rsiSignal === "sell" && macdSignal === "bearish") {
+      baseSignal = "Sell";
+      if (sentiment < 0) baseSignal = "Strong Sell";
+    } else {
+      baseSignal = "Hold";
+      // If sentiment is extremely negative but signals are neutral, might say "Cautious Hold"
+      if (sentiment < 0 && rsiSignal === "hold" && macdSignal === "neutral") {
+        baseSignal = "Cautious Hold";
+      }
+    }
+
+    return baseSignal;
+  }
+
 
   async getDynamicInterpretation(data: any, topic: string, symbol: string, date: string, language: string): Promise<string> {
     const additionalPrompt = `
@@ -568,6 +860,7 @@ async getCryptoPrices(symbols: string[], date: number): Promise<string> {
   return prices.join('\n');
 }
 
+ 
   async getFngForDate(date?: number): Promise<string> {
 
     // Convert the date to a timestamp or use date logic to match "today", "yesterday", etc.
@@ -624,68 +917,85 @@ async getCryptoPrices(symbols: string[], date: number): Promise<string> {
       : 'No data available for top cryptocurrencies.';
   }
 
-  async getTopCryptosByVolatility(limit: number): Promise<string> {
-    const MAX_LIMIT = 50; // Maximum allowed limit for results
+  // async getTopCryptosByVolatility(limit: number): Promise<string> {
+  //   const MAX_LIMIT = 50; // Maximum allowed limit for results
   
-    // If the limit is 0 or greater than MAX_LIMIT, use MAX_LIMIT
-    const finalLimit = limit === 0 || limit > MAX_LIMIT ? MAX_LIMIT : 10;
+  //   // If the limit is 0 or greater than MAX_LIMIT, use MAX_LIMIT
+  //   const finalLimit = limit === 0 || limit > MAX_LIMIT ? MAX_LIMIT : 10;
   
-    const topCryptos = await this.dataRepository.getTopCryptosByVolatility(finalLimit);
+  //   const topCryptos = await this.dataRepository.getTopCryptosByVolatility(finalLimit);
   
-    if (topCryptos.length === 0) {
-      return 'No data available for top cryptocurrencies sorted by volatility.';
-    }
+  //   if (topCryptos.length === 0) {
+  //     return 'No data available for top cryptocurrencies sorted by volatility.';
+  //   }
   
-    // Append a message if the returned limit is MAX_LIMIT
-    const limitMessage =
-      finalLimit === MAX_LIMIT
-        ? ` (Returning the top ${MAX_LIMIT} most volatile cryptocurrencies.)`
-        : '';
+  //   // Append a message if the returned limit is MAX_LIMIT
+  //   const limitMessage =
+  //     finalLimit === MAX_LIMIT
+  //       ? ` (Returning the top ${MAX_LIMIT} most volatile cryptocurrencies.)`
+  //       : '';
   
-    return (
-      `Top ${finalLimit} cryptocurrencies by volatility${limitMessage}:\n` +
-      topCryptos
-        .map((crypto, index) => `${index + 1}. ${crypto.symbol} - volatility: ${crypto.volatility}, Price:  ${parseFloat(crypto.price).toFixed(6)} USDT`)
-        .join('\n')
-    );
-  }
+  //   return (
+  //     `Top ${finalLimit} cryptocurrencies by volatility${limitMessage}:\n` +
+  //     topCryptos
+  //       .map((crypto, index) => `${index + 1}. ${crypto.symbol} - volatility: ${crypto.volatility}, Price:  ${parseFloat(crypto.price).toFixed(6)} USDT`)
+  //       .join('\n')
+  //   );
+  // }
 
-    // Method to get the top cryptocurrencies by galaxy score
-    async getTopCryptosByGalaxyScore(limit: number): Promise<string> {
-      const MAX_LIMIT = 50; // Maximum allowed limit for results
+  //   // Method to get the top cryptocurrencies by galaxy score
+  //   async getTopCryptosByGalaxyScore(limit: number): Promise<string> {
+  //     const MAX_LIMIT = 50; // Maximum allowed limit for results
   
-    // If the limit is 0 or greater than MAX_LIMIT, use MAX_LIMIT
-    const finalLimit = limit === 0 || limit > MAX_LIMIT ? MAX_LIMIT : 10;
-      const topCryptos = await this.dataRepository.getTopCryptosByGalaxyScore(finalLimit);
-      if (topCryptos.length === 0) return 'No data available for top cryptocurrencies by galaxy score.';
+  //   // If the limit is 0 or greater than MAX_LIMIT, use MAX_LIMIT
+  //   const finalLimit = limit === 0 || limit > MAX_LIMIT ? MAX_LIMIT : 10;
+  //     const topCryptos = await this.dataRepository.getTopCryptosByGalaxyScore(finalLimit);
+  //     if (topCryptos.length === 0) return 'No data available for top cryptocurrencies by galaxy score.';
   
-      return (
-        `Top ${finalLimit} cryptocurrencies by social score:\n` +
-        topCryptos
-          .map(
-            (crypto, index) =>
-              `${index + 1}. ${crypto.symbol} - Social Score: ${crypto.galaxy_score}, Price:  ${parseFloat(crypto.price).toFixed(6)} USDT`
-          )
-          .join('\n')
-      );
+  //     return (
+  //       `Top ${finalLimit} cryptocurrencies by social score:\n` +
+  //       topCryptos
+  //         .map(
+  //           (crypto, index) =>
+  //             `${index + 1}. ${crypto.symbol} - Social Score: ${crypto.galaxy_score}, Price:  ${parseFloat(crypto.price).toFixed(6)} USDT`
+  //         )
+  //         .join('\n')
+  //     );
+  //   }
+  
+  //   // Method to get the top cryptocurrencies by alt rank
+  //   async getTopCryptosByAltRank(limit: number): Promise<string> {
+  //     const MAX_LIMIT = 50; // Maximum allowed limit for results
+  
+  //   // If the limit is 0 or greater than MAX_LIMIT, use MAX_LIMIT
+  //   const finalLimit = limit === 0 || limit > MAX_LIMIT ? MAX_LIMIT : 10;
+  //     const topCryptos = await this.dataRepository.getTopCryptosByAltRank(finalLimit);
+  //     if (topCryptos.length === 0) return 'No data available for top cryptocurrencies by alt rank.';
+  
+  
+  //     return `Top ${finalLimit} altcoin cryptocurrencies \n` + 
+  //            topCryptos.map((crypto, index) => `${index + 1}. ${crypto.symbol} - Rank Score: ${crypto.alt_rank}, Price:  ${parseFloat(crypto.price).toFixed(6)} USDT`).join('\n');
+  //   }
+  async getTopCryptosByAnySort(sort: string, limit: number, language: string): Promise<string> {
+    // Check that the limit is sensible
+    const MAX_LIMIT = 50;
+    const finalLimit = limit <= 0 || limit > MAX_LIMIT ? 10 : limit; 
+  
+    const coins = await this.dataRepository.getTopCoinsBySort(sort, finalLimit);
+    
+    if (!coins || coins.length === 0) {
+      return `No data available for sort "${sort}".`;
     }
   
-    // Method to get the top cryptocurrencies by alt rank
-    async getTopCryptosByAltRank(limit: number): Promise<string> {
-      const MAX_LIMIT = 50; // Maximum allowed limit for results
-  
-    // If the limit is 0 or greater than MAX_LIMIT, use MAX_LIMIT
-    const finalLimit = limit === 0 || limit > MAX_LIMIT ? MAX_LIMIT : 10;
-      const topCryptos = await this.dataRepository.getTopCryptosByAltRank(finalLimit);
-      if (topCryptos.length === 0) return 'No data available for top cryptocurrencies by alt rank.';
+    // Format the coins into a readable response
+    // You can later also prompt for `language` if you need to translate this output
+    return coins
+      .map((coin, index) => `${index + 1}. ${coin.symbol} (${coin.name}) - ${sort}: ${coin[sort as keyof typeof coin]}`)
+      .join('\n');
+  }
   
   
-      return `Top ${finalLimit} altcoin cryptocurrencies \n` + 
-             topCryptos.map((crypto, index) => `${index + 1}. ${crypto.symbol} - Rank Score: ${crypto.alt_rank}, Price:  ${parseFloat(crypto.price).toFixed(6)} USDT`).join('\n');
-    }
-  
-  
-  async getRSIForDate(symbol: string, date: string) {
+  async getRSIForDate(symbol: string, date: number) {
     const functionResponse = await this.dataRepository.getRSIBySymbolAndDate(symbol, date);
     return functionResponse
       ? `The RSI for ${symbol} on ${date} was ${functionResponse.RSI}.`
@@ -735,54 +1045,75 @@ async getCryptoPrices(symbols: string[], date: number): Promise<string> {
       : 'No data available.';
   }
 
-  async getTopCoinsByCategoryAndSort(
-    category: string,
-    sort: string,
-    limit: number,
-    language: string
-  ): Promise<string> {
-
-    if (!this.validCategories.includes(category)) {
-      const errorMessage = await this.generateErrorMessage(
-        `Invalid category. Please choose from: ${this.validCategories.join(', ')}`,
-        language
-      );
-      return errorMessage;
-    }
-    
-    if (!this.validSorts.includes(sort)) {
-      const errorMessage = await this.generateErrorMessage(
-        `Invalid sort parameter. Please choose from: ${this.validSorts.join(', ')}`,
-        language
-      );
-      return errorMessage;
-    }
-
-    const coins = await this.dataRepository.getTopCoinsByCategoryAndSort(category, sort, limit);
+  async getTopCoinsByCategoryAndAnySort(category: string, sort: string, limit: number, language: string): Promise<string> {
+    const MAX_LIMIT = 50;
+    const finalLimit = limit <= 0 || limit > MAX_LIMIT ? 10 : limit;
   
-    // If no coins are returned, handle the error message in the `lunarCrushService`.
+    const coins = await this.dataRepository.getTopCoinsByCategoryAndSort(category, sort, finalLimit);
+  
     if (!coins || coins.length === 0) {
       return `No data available for category "${category}" and sort "${sort}".`;
     }
   
     // Format the coins into a readable response
-    return coins.length > 0
-      ? coins
-          .map(
-            (coin, index) =>
-              `${index + 1}. ${coin.symbol} (${coin.name}) - ${sort}: ${coin[sort as keyof typeof coin]}`
-          )
-          .join('\n')
-      : 'No data available.';
+    // Optionally, you could consider translating the output based on the `language` parameter later
+    return coins
+      .map((coin, index) => `${index + 1}. ${coin.symbol} (${coin.name}) - ${sort}: ${coin[sort as keyof typeof coin]}`)
+      .join('\n');
   }
+  
 
-  async getMACDForDate(symbol: string, date: string) {
+  async getMACDForDate(symbol: string, date: number) {
     const functionResponse = await this.dataRepository.getMACDBySymbolAndDate(symbol, date);
     if (functionResponse) {
       return `The MACD data for ${symbol} on ${date}:\n- MACD: ${functionResponse.MACD}\n- Signal: ${functionResponse.Signal}\n- Histogram: ${functionResponse.Histogram}.`;
     } else {
       return `No MACD data found for ${symbol} on ${date}.`;
     } }
+
+
+    async getRSIForMultipleSymbolsOnDate(symbols: string[], date: number, language: string): Promise<string> {
+      // TODO: Implement logic to fetch RSI for multiple symbols
+      // Example:
+      const results = await Promise.all(symbols.map(async (sym) => {
+        const data = await this.dataRepository.getRSIBySymbolAndDate(sym, date);
+        if (data && data.RSI) {
+          return `${sym}: RSI ${data.RSI}`;
+        } else {
+          return `${sym}: No RSI data.`;
+        }
+      }));
+      return results.join('\n');
+    }
+  
+    async getTopNRSICryptos(n: number, date: number, language: string): Promise<string> {
+      // TODO: Implement logic to fetch top N RSI cryptos
+      // Example (dummy):
+      const results = await this.dataRepository.getTopNByIndicator('RSI', n, date);
+      if (!results || results.length === 0) return 'No RSI data available.';
+      return results.map((r, i) => `${i+1}. ${r.symbol}: RSI ${r.RSI}`).join('\n');
+    }
+  
+    async getMACDForMultipleSymbolsOnDate(symbols: string[], date: number, language: string): Promise<string> {
+      // TODO: Implement logic to fetch MACD for multiple symbols
+      const results = await Promise.all(symbols.map(async (sym) => {
+        const data = await this.dataRepository.getMACDBySymbolAndDate(sym, date);
+        if (data) {
+          return `${sym}: MACD: ${data.MACD}, Signal: ${data.Signal}, Histogram: ${data.Histogram}`;
+        } else {
+          return `${sym}: No MACD data.`;
+        }
+      }));
+      return results.join('\n');
+    }
+  
+    async getTopNMACDCryptos(n: number, date: number, language: string): Promise<string> {
+      // TODO: Implement logic to fetch top N MACD cryptos
+      const results = await this.dataRepository.getTopNByIndicator('MACD', n, date);
+      if (!results || results.length === 0) return 'No MACD data available.';
+      return results.map((r, i) => `${i+1}. ${r.symbol}: MACD ${r.MACD}`).join('\n');
+    }
+  
 
   async onModuleInit() {
     const me = await this.bot.getMe();

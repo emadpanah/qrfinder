@@ -7,25 +7,15 @@ import { DataRepository } from '../database/repositories/data.repository';
 export class LunarCrushService {
   private readonly apiUrl = 'https://lunarcrush.com/api4/public/coins/list/v2';
   private readonly sorts = [
-    'price',
-    //'price_btc',
     'volume_24h',
     'volatility',
-    //'circulating_supply',
-    //'max_supply',
-    //'percent_change_1h',
     'percent_change_24h',
-    //'percent_change_7d',
     'market_cap',
-    //'market_cap_rank',
-    //'interactions_24h',
-    //'social_volume_24h',
+    'interactions_24h',
     'social_dominance',
     'market_dominance',
     'galaxy_score',
-    'galaxy_score_previous',
     'alt_rank',
-    'alt_rank_previous',
     'sentiment',
   ];
 
@@ -67,7 +57,8 @@ export class LunarCrushService {
 //     console.log('Fetching data for all sorts completed.');
 //   }
 
-@Cron('0 */55 * * * *') // Run every minute
+//@Cron('0 */55 * * * *') // Run every minute
+@Cron('0 0 */2 * * *') // Run every 2 hours
 async fetchAndStoreAllSorts(): Promise<void> {
   const sortsPerBatch = 10; // 10 requests per minute
   const minute = new Date().getMinutes();
@@ -80,65 +71,115 @@ async fetchAndStoreAllSorts(): Promise<void> {
 }
 
 
+// private async fetchBatchData(sorts: string[]): Promise<void> {
+//     await Promise.all(
+//       sorts.map(async (sort) => {
+//         try {
+//           const response = await this.fetchDataWithRetry(this.apiUrl, {
+//             params: {
+//               sort,
+//               limit: 100, // Fetch only the first 100 results
+//             },
+//             headers: {
+//               Authorization: `Bearer ${process.env.LUNARCRUSH_API_KEY}`,
+//             },
+//           });
+  
+//           const data = response.data.data;
+  
+//           const time = new Date().getTime() / 1000;
+//           for (const coin of data) {
+//             await this.repository.createLunarPubCoin({
+//               ...coin,
+//               fetched_sort: sort, // Track the source sort
+//               fetched_at: time,
+//             });
+//           }
+  
+//           console.log(`Fetched and saved ${data.length} items for sort "${sort}".`);
+//         } catch (error) {
+//           console.error(`Error fetching data for sort "${sort}":`, error.message);
+//         }
+//       })
+//     );
+//   }
+
 private async fetchBatchData(sorts: string[]): Promise<void> {
-    await Promise.all(
-      sorts.map(async (sort) => {
-        try {
-          const response = await this.fetchDataWithRetry(this.apiUrl, {
-            params: {
-              sort,
-              limit: 100, // Fetch only the first 100 results
-            },
-            headers: {
-              Authorization: `Bearer ${process.env.LUNARCRUSH_API_KEY}`,
-            },
-          });
-  
-          const data = response.data.data;
-  
-          const time = new Date().getTime() / 1000;
-          for (const coin of data) {
-            await this.repository.createLunarPubCoin({
-              ...coin,
-              fetched_sort: sort, // Track the source sort
-              fetched_at: time,
-            });
-          }
-  
-          console.log(`Fetched and saved ${data.length} items for sort "${sort}".`);
-        } catch (error) {
-          console.error(`Error fetching data for sort "${sort}":`, error.message);
-        }
-      })
-    );
-  }
-  
-  private async fetchDataWithRetry(url: string, options: any, retries = 3): Promise<any> {
+  for (const sort of sorts) {
     try {
-      const response = await axios.get(url, options);
-      return response;
-    } catch (error) {
-      if (error.response?.status === 429 && retries > 0) {
-        const retryAfter = parseInt(error.response.headers['retry-after'] || '1', 10) * 1000;
-        console.warn(`Rate limit exceeded. Retrying after ${retryAfter}ms...`);
-        await new Promise((resolve) => setTimeout(resolve, retryAfter));
-        return this.fetchDataWithRetry(url, options, retries - 1);
+      // Wait between requests to stay under the limit
+      await new Promise(resolve => setTimeout(resolve, 2000)); // 2-second delay between requests
+      
+      const response = await this.fetchDataWithRetry(this.apiUrl, {
+        params: {
+          sort,
+          limit: 100,
+        },
+        headers: {
+          Authorization: `Bearer ${process.env.LUNARCRUSH_API_KEY}`,
+        },
+      });
+
+      const data = response.data.data;
+      const time = Date.now() / 1000;
+      for (const coin of data) {
+        await this.repository.createLunarPubCoin({
+          ...coin,
+          fetched_sort: sort,
+          fetched_at: time,
+        });
       }
-      throw error;
+
+      console.log(`Fetched and saved ${data.length} items for sort "${sort}".`);
+    } catch (error) {
+      console.error(`Error fetching data for sort "${sort}":`, error.message);
     }
   }
+}
+
+private async fetchDataWithRetry(url: string, options: any, retries = 3, delay = 1000): Promise<any> {
+  try {
+    return await axios.get(url, options);
+  } catch (error) {
+    if (error.response?.status === 429 && retries > 0) {
+      const retryAfter = parseInt(error.response.headers['retry-after'] || '1', 10) * 1000;
+      // Increase delay exponentially
+      const newDelay = delay * 2;
+      console.warn(`Rate limit exceeded. Retrying after ${newDelay}ms...`);
+      await new Promise((resolve) => setTimeout(resolve, newDelay));
+      return this.fetchDataWithRetry(url, options, retries - 1, newDelay);
+    }
+    throw error;
+  }
+}
+
+  
+  // private async fetchDataWithRetry(url: string, options: any, retries = 3): Promise<any> {
+  //   try {
+  //     const response = await axios.get(url, options);
+  //     return response;
+  //   } catch (error) {
+  //     if (error.response?.status === 429 && retries > 0) {
+  //       const retryAfter = parseInt(error.response.headers['retry-after'] || '1', 10) * 1000;
+  //       console.warn(`Rate limit exceeded. Retrying after ${retryAfter}ms...`);
+  //       await new Promise((resolve) => setTimeout(resolve, retryAfter));
+  //       return this.fetchDataWithRetry(url, options, retries - 1);
+  //     }
+  //     throw error;
+  //   }
+  // }
   
 
   // Fetch data based on category and sort
   async getByCategoryAndSort(category: string, sort: string, limit: number): Promise<any[]> {
     // Call the repository method to fetch data
-    return await this.repository.findLunarPubCoinByCategoryAndSort(category, sort, limit);
+    return await this.repository.getTopCoinsByCategoryAndSort(category, sort, limit);
   }
 
   // Fetch data based on sort only
   async getBySort(sort: string, limit: number): Promise<any[]> {
     // Call the repository method to fetch data
-    return await this.repository.findLunarPubCoinBySort(sort, limit);
+    return await this.repository.getTopCoinsBySort(sort, limit);
   }
 
 }

@@ -125,13 +125,13 @@ export class DataRepository {
     
 
    // Get RSI for a specific date and symbol
-   async getRSIBySymbolAndDate(symbol: string, date: string): Promise<RSIData | null> {
+   async getRSIBySymbolAndDate(symbol: string, date: number): Promise<RSIData | null> {
     const collection = this.connection.collection(this.rsiCollectionName);
 
-    const targetTimestamp = new Date(date).getTime() / 1000; // Convert date to UNIX timestamp
+    //const targetTimestamp = new Date(date).getTime() / 1000; // Convert date to UNIX timestamp
 
     const result = await collection
-      .find({ symbol, time: { $gte: targetTimestamp } })
+      .find({ symbol, time: { $gte: date } })
       .sort({ time: -1 })
       .limit(1)
       .toArray();
@@ -181,13 +181,12 @@ export class DataRepository {
   }
 
   // Get MACD for a specific date and symbol
-  async getMACDBySymbolAndDate(symbol: string, date: string): Promise<MACDData | null> {
+  async getMACDBySymbolAndDate(symbol: string, date: number): Promise<MACDData | null> {
     const collection = this.connection.collection(this.macdCollectionName);
 
-    const targetTimestamp = new Date(date).getTime() / 1000; // Convert date to UNIX timestamp
 
     const result = await collection
-      .find({ symbol, time: { $gte: targetTimestamp } })
+      .find({ symbol, time: { $gte: date } })
       .sort({ time: -1 })
       .limit(1)
       .toArray();
@@ -236,11 +235,11 @@ export class DataRepository {
   async getTopCoinsBySort(sort: string, limit: number): Promise<LunarCrushPublicCoinDto[]> {
     const collection = this.connection.collection(this.lunarPubCoinCollectionName);
   
-    const results = await collection
-      .find({ fetched_sort: sort }) // Match the specified sort
-      .sort({ [sort]: -1, fetched_at: -1 }) // Sort by the sort field and the latest fetch time
-      .limit(limit) // Limit the number of results
-      .toArray();
+      const results = await collection
+    .find({ fetched_sort: sort })
+    .sort({ fetched_at: -1, [sort]: -1 })
+    .limit(limit)
+    .toArray();
   
     // Map results to exclude `_id` and ensure type consistency
     return results.map((doc) => {
@@ -253,7 +252,8 @@ export class DataRepository {
     const collection = this.connection.collection(this.lunarPubCoinCollectionName);
   
     const results = await collection
-      .find({ categories: category, fetched_sort: sort }) // Match the category and sort
+      //.find({ categories: category, fetched_sort: sort }) // Match the category and sort
+      .find({ categories: { $in: [category] }, fetched_sort: sort })
       .sort({ [sort]: -1, fetched_at: -1 }) // Sort by the sort field and the latest fetch time
       .limit(limit) // Limit the number of results
       .toArray();
@@ -324,37 +324,128 @@ export class DataRepository {
     );
   }
 
-  async findLunarPubCoinByCategoryAndSort(category: string, sort: string, limit: number): Promise<LunarCrushPublicCoinDto[]> {
+  async getSortValueForSymbol(symbol: string, sort: string): Promise<{ categories: string; sortValue: number | null }> {
     const collection = this.connection.collection(this.lunarPubCoinCollectionName);
+  
+    // Find the latest document for this symbol with the requested sort parameter
+    const result = await collection
+      .find({ symbol: symbol.toUpperCase(), fetched_sort: sort })
+      .sort({ fetched_at: -1 })
+      .limit(1)
+      .toArray();
+  
+    if (result.length === 0) {
+      return { categories: '', sortValue: null };
+    }
+  
+    const doc = result[0];
+    return {
+      categories: doc.categories || '',
+      sortValue: doc[sort] !== undefined ? doc[sort] : null,
+    };
+  }
+  
 
+  async getTopNByIndicator(indicator: 'RSI' | 'MACD', limit: number, date: number): Promise<any[]> {
+    let collectionName: string;
+    let sortField: string;
+  
+    // Decide which collection and field to query based on the indicator
+    // If you have different indicators, add them here.
+    if (indicator === 'RSI') {
+      collectionName = this.rsiCollectionName;
+      sortField = 'RSI';
+    } else if (indicator === 'MACD') {
+      collectionName = this.macdCollectionName;
+      sortField = 'MACD';
+    } else {
+      throw new Error(`Unsupported indicator: ${indicator}`);
+    }
+  
+    const collection = this.connection.collection(collectionName);
+  
+    // We assume you want the top N symbols by the given indicator as of 'date'.
+    // Steps:
+    // 1. Filter documents up to the given date.
+    // 2. Sort by time descending to pick the latest entry per symbol.
+    // 3. Group by symbol, picking the latest entry.
+    // 4. Sort by the indicator descending.
+    // 5. Limit to top N.
+  
+    const pipeline = [
+      {
+        $match: {
+          time: { $lte: date }
+        }
+      },
+      {
+        $sort: {
+          time: -1
+        }
+      },
+      {
+        $group: {
+          _id: "$symbol",
+          symbol: { $first: "$symbol" },
+          time: { $first: "$time" },
+          // Include fields you need. For RSI:
+          ...(indicator === 'RSI' ? { RSI: { $first: "$RSI" } } : {}),
+          // For MACD:
+          ...(indicator === 'MACD' ? { MACD: { $first: "$MACD" }, Signal: { $first: "$Signal" }, Histogram: { $first: "$Histogram" } } : {})
+        }
+      },
+      {
+        $sort: {
+          [sortField]: -1
+        }
+      },
+      {
+        $limit: limit
+      }
+    ];
+  
+    const results = await collection.aggregate(pipeline).toArray();
+    return results;
+  }
+  
+
+  /**
+   * Get top N cryptos by RSI on or before the specified date.
+   * Assumes RSIData collection has {symbol, RSI, time} and you want to sort by RSI descending.
+   */
+  async getTopNRSIByDate(n: number, date: string): Promise<RSIData[]> {
+    const collection = this.connection.collection(this.rsiCollectionName);
+    const targetTimestamp = new Date(date).getTime() / 1000;
+    
     const results = await collection
-    .find({ categories: category, fetched_sort: sort })
-    .sort({ fetched_at: -1 }) // Sort by latest fetch time
-    .limit(limit)
-    .toArray();
+      .find({ time: { $lte: targetTimestamp } })
+      .sort({ RSI: -1, time: -1 }) // Sort by RSI descending, then by most recent time
+      .limit(n)
+      .toArray();
 
-  // Map results to exclude `_id` and ensure type consistency
-  return results.map((doc) => {
-    const { _id, ...rest } = doc;
-    return rest as LunarCrushPublicCoinDto;
-  });
+    return results.map(({ symbol, RSI, time }) => ({ symbol, RSI, time }));
   }
 
-  async findLunarPubCoinBySort(sort: string, limit: number): Promise<LunarCrushPublicCoinDto[]> {
-    const collection = this.connection.collection(this.lunarPubCoinCollectionName);
+  /**
+   * Get top N cryptos by MACD on or before the specified date.
+   * Assumes MACDData collection has {symbol, MACD, Signal, Histogram, time} and you want to sort by MACD descending.
+   */
+  async getTopNMACDByDate(n: number, date: string): Promise<MACDData[]> {
+    const collection = this.connection.collection(this.macdCollectionName);
+    const targetTimestamp = new Date(date).getTime() / 1000;
 
     const results = await collection
-    .find({ fetched_sort: sort })
-    .sort({ fetched_at: -1 }) // Sort by latest fetch time
-    .limit(limit)
-    .toArray();
-
-    // Map results to exclude `_id` and ensure type consistency
-    return results.map((doc) => {
-      const { _id, ...rest } = doc;
-      return rest as LunarCrushPublicCoinDto;
-    });
-
+      .find({ time: { $lte: targetTimestamp } })
+      .sort({ MACD: -1, time: -1 }) // Sort by MACD descending, then by most recent time
+      .limit(n)
+      .toArray();
+    
+    return results.map(({ symbol, MACD, Signal, Histogram, time }) => ({
+      symbol, MACD, Signal, Histogram, time
+    }));
   }
+
+  
+  
 
 }
