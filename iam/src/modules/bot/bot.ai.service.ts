@@ -711,40 +711,49 @@ export class BotAIService implements OnModuleInit {
     const date = dateObj.toISOString().split('T')[0]; // e.g., "2024-12-14"
   
     // Get global FNG sentiment for date
-    const fngData = await this.dataRepository.findFngByDate(timestamp);
+    const fngData = await this.dataRepository.findFngByDate();    
     let fngValueClass = fngData ? fngData.value_classification : "Neutral";
-  
     // Map FNG classification to a sentiment score (just example)
     const sentimentScore = this.mapFngToSentimentScore(fngValueClass);
   
     const results: Record<string, { signal: string, explanation: string }> = {};
   
     for (const symbol of symbols) {
-      const rsiData = await this.dataRepository.getRSIBySymbolAndDate(symbol, timestamp);
-      const macdData = await this.dataRepository.getMACDBySymbolAndDate(symbol, timestamp);
+      const rsiData = await this.dataRepository.getRSIBySymbolAndDate(symbol);
+      const macdData = await this.dataRepository.getMACDBySymbolAndDate(symbol);
   
+      // console.log(rsiData);
+      // console.log(macdData);
       if (!rsiData || !macdData) {
         results[symbol] = {
           signal: "No Data",
-          explanation: `No sufficient data (RSI or MACD) for ${symbol} on ${date}.`
+          explanation: `No sufficient data (RSI or MACD) for ${symbol} on ${date}. `
         };
         continue;
       }
   
       // Basic RSI-based signal
       let rsiSignal: "buy"|"sell"|"hold" = "hold";
-      if (typeof rsiData.RSI === 'number') {
-        if (rsiData.RSI < 30) rsiSignal = "buy";
-        else if (rsiData.RSI > 70) rsiSignal = "sell";
-        else rsiSignal = "hold";
-      } else {
-        // If RSI is not a number (e.g. null or undefined), treat as no data
-        results[symbol] = {
-          signal: "No Data",
-          explanation: `RSI data is invalid for ${symbol} on ${date}.`
-        };
-        continue;
+      let rsiValue = rsiData.RSI;
+      if (typeof rsiValue !== 'number') {
+        // Attempt to parse RSI as a number
+        const parsedValue = Number(rsiValue);
+        if (isNaN(parsedValue)) {
+          // If parsing fails, treat as no data
+          results[symbol] = {
+            signal: "No Data",
+            explanation: `Data is invalid for ${symbol}. RSI could not be parsed.`
+          };
+          continue;
+        } else {
+          rsiValue = parsedValue;
+        }
       }
+
+      // Now that rsiValue is confirmed as a number, we can apply the logic
+      if (rsiValue < 30) rsiSignal = "buy";
+      else if (rsiValue > 70) rsiSignal = "sell";
+      else rsiSignal = "hold";
   
       // Basic MACD interpretation
       let macdSignal: "bullish"|"bearish"|"neutral" = "neutral";

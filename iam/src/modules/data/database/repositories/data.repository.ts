@@ -40,24 +40,26 @@ export class DataRepository {
   }
 
 
-  async findFngByDate(targetDate: number): Promise<FngData | null> {
+  async findFngByDate(targetDate?: number): Promise<FngData | null> {
     const collection = this.connection.collection(this.fngCollectionName);
   
-    // Convert the targetDate to a timestamp (at midnight UTC of that day)
-    //const targetTimestamp = Math.floor(new Date(`${targetDate}T00:00:00Z`).getTime() / 1000);
+    //this.logger.log(`Fetching FNG data for closest date on or before: ${targetDate}`);
   
-    this.logger.log(`Fetching FNG data for closest date on or before: ${targetDate} (timestamp <= ${targetDate})`);
+    const query: any = {};
+    if (targetDate) {
+      query.timestamp = { $lte: targetDate };
+    }
   
-    // Find the closest record on or before the target date by sorting in descending order
+    // If no date is provided, this simply returns the latest FNG data
     const result = await collection
-      .find({ timestamp: { $lte: targetDate } })
-      .sort({ timestamp: -1 }) // Sort in descending order to get the closest earlier date
-      .limit(1) // Limit to the closest record found
+      .find(query)
+      .sort({ timestamp: -1 }) // Sort by most recent
+      .limit(1)
       .toArray();
   
     if (result.length > 0) {
       const fngRecord = result[0];
-      this.logger.debug(`Found FNG data for closest date to ${targetDate}: ${JSON.stringify(fngRecord)}`);
+      this.logger.debug(`Found FNG data: ${JSON.stringify(fngRecord)}`);
       return {
         value: fngRecord.value ?? '0',
         value_classification: fngRecord.value_classification ?? 'Neutral',
@@ -65,10 +67,11 @@ export class DataRepository {
         metadata: fngRecord.metadata ?? {},
       } as FngData;
     } else {
-      this.logger.warn(`No FNG data found on or before ${targetDate}.`);
+      this.logger.warn(`No FNG data found.`);
       return null;
     }
   }
+  
   
     // Get latest price by symbol in USDT
     async getLatestPriceBySymbol(symbol: string, date: number): Promise<TradingViewAlertDto | null> {
@@ -124,25 +127,28 @@ export class DataRepository {
     }
     
 
-   // Get RSI for a specific date and symbol
-   async getRSIBySymbolAndDate(symbol: string, date: number): Promise<RSIData | null> {
-    const collection = this.connection.collection(this.rsiCollectionName);
-
-    //const targetTimestamp = new Date(date).getTime() / 1000; // Convert date to UNIX timestamp
-
-    const result = await collection
-      .find({ symbol, time: { $gte: date } })
-      .sort({ time: -1 })
-      .limit(1)
-      .toArray();
-
-    if (result.length > 0) {
-      const { symbol, RSI, time, _id } = result[0];
-      return { symbol, RSI, time }; // Returning only relevant fields
+    async getRSIBySymbolAndDate(symbol: string, date?: number): Promise<RSIData | null> {
+      const collection = this.connection.collection(this.rsiCollectionName);
+    
+      const query: Record<string, any> = { symbol };
+      if (date) {
+        // If date is provided, fetch RSI data on or before that date
+        query.time = { $lte: date };
+      }
+    
+      const result = await collection
+        .find(query)
+        .sort({ time: -1 }) // Most recent data first
+        .limit(1)
+        .toArray();
+    
+      if (result.length > 0) {
+        const { symbol: sym, RSI, time } = result[0];
+        return { symbol: sym, RSI, time };
+      }
+    
+      return null;
     }
-
-    return null;
-  }
 
   async getTopCryptosByVolatility(limit: number): Promise<any[]> {
     const collection = this.connection.collection(this.lunarPubCoinCollectionName);
@@ -180,24 +186,29 @@ export class DataRepository {
     return results.map(({ _id, ...rest }) => rest); // Exclude the _id field
   }
 
-  // Get MACD for a specific date and symbol
-  async getMACDBySymbolAndDate(symbol: string, date: number): Promise<MACDData | null> {
+  async getMACDBySymbolAndDate(symbol: string, date?: number): Promise<MACDData | null> {
     const collection = this.connection.collection(this.macdCollectionName);
-
-
+  
+    const query: Record<string, any> = { symbol };
+    if (date) {
+      // If a date is provided, fetch the closest MACD data on or before that date
+      query.time = { $lte: date };
+    }
+  
     const result = await collection
-      .find({ symbol, time: { $gte: date } })
-      .sort({ time: -1 })
+      .find(query)
+      .sort({ time: -1 }) // Sort by most recent
       .limit(1)
       .toArray();
-
+  
     if (result.length > 0) {
-      const { symbol, MACD, Signal, Histogram, time, _id } = result[0];
-      return { symbol, MACD, Signal, Histogram, time }; // Returning only relevant fields
+      const { symbol: sym, MACD, Signal, Histogram, time } = result[0];
+      return { symbol: sym, MACD, Signal, Histogram, time };
     }
-
+  
     return null;
   }
+  
 
   async getTopCryptosByPrice(limit: number, date: number): Promise<TradingViewAlertDto[]> {
     const collection = this.connection.collection(this.tickerCollectionName);
