@@ -12,6 +12,7 @@ import { ST1Data } from '../schema/st1.schema';
 import { ObjectId } from 'mongodb';
 import { LunarCrushData } from '../schema/lunarcrush.schema';
 import { LunarCrushPublicCoinDto } from '../dto/lunarcrush.dto';
+import { LunarCrushNewsDto } from '../dto/lunarcrush-news.dto';
 
 @Injectable()
 export class DataRepository {
@@ -22,6 +23,8 @@ export class DataRepository {
   private readonly st1CollectionName = '_st1data';
   private readonly dominanceCollectionName = '_dominancedata';
   private readonly lunarPubCoinCollectionName = '_lunarpublicoindata';
+  private readonly lunarNewsCollectionName = "_lunarpublicnewsdata";
+  private readonly translationCollectionName = '_translationsdata';
   private readonly logger = new Logger(DataRepository.name);
 
   constructor(@InjectConnection('service') private readonly connection: Connection) {}
@@ -456,7 +459,105 @@ export class DataRepository {
     }));
   }
 
+ 
+// Method to create LunarCrush news documents
+async createLunarNews(newsData: Partial<LunarCrushNewsDto>): Promise<void> {
+  const collection = this.connection.collection(this.lunarNewsCollectionName);
+  // Upsert the news item by its id
+  await collection.updateOne(
+    { id: newsData.id },
+    { $set: { ...newsData } },
+    { upsert: true }
+  );
+}
+
+  // src/modules/data/database/repositories/data.repository.ts
+async getLatestNews(limit = 50): Promise<any[]> {
+  const collection = this.connection.collection(this.lunarNewsCollectionName);
+  return await collection
+    .find()
+    .sort({ post_created: -1 }) // Sort by creation date descending
+    .limit(Math.min(limit, 10)) // Enforce max limit = 10
+    .toArray();
+}
+
+async getTopNewsByInteractions(limit = 50): Promise<any[]> {
+  const collection = this.connection.collection(this.lunarNewsCollectionName);
+  return await collection
+    .find()
+    .sort({ interactions_24h: -1 }) // Sort by interactions descending
+    .limit(Math.min(limit, 10))
+    .toArray();
+}
+
+async searchNewsByTitle(title: string, limit = 50): Promise<any[]> {
+  const collection = this.connection.collection(this.lunarNewsCollectionName);
   
-  
+  // Regular expression to match substrings within words, e.g., "doge" or "dogecoin"
+  const regex = new RegExp(`\\b${title}`, 'i'); // '\\b' ensures word boundary matching
+
+  return await collection
+    .find({ post_title: { $regex: regex } }) // Case-insensitive search
+    .sort({ post_created: -1 }) // Sort by creation date descending
+    .limit(Math.min(limit, 10)) // Cap at 10 results
+    .toArray();
+}
+
+async getNewsWithHighSentiment(limit = 50): Promise<any[]> {
+  const collection = this.connection.collection(this.lunarNewsCollectionName);
+  return await collection
+    .find({}) // No filter condition, fetch all
+    .sort({ post_sentiment: -1 }) // Sort by sentiment descending
+    .limit(Math.min(limit, 10)) // Limit results to 10 max
+    .toArray();
+}
+
+async getTranslation(contentId: string, language: string): Promise<string | null> {
+  const collection = this.connection.collection(this.translationCollectionName);
+  const result = await collection.findOne({ contentId });
+  if (result && result.translations && result.translations[language]) {
+    this.logger.log(`Translation found in DB for contentId: ${contentId}, Language: ${language}`);
+    return result.translations[language];
+  }
+  this.logger.warn(`No translation found in DB for contentId: ${contentId}, Language: ${language}`);
+  return null;
+}
+
+async saveTranslation(
+  contentId: string,
+  originalText: string,
+  language: string,
+  translatedText: string,
+): Promise<void> {
+  const collection = this.connection.collection(this.translationCollectionName);
+
+  const existingRecord = await collection.findOne({ contentId });
+
+  if (existingRecord) {
+    // Update existing translation
+    const translations = existingRecord.translations || {};
+    translations[language] = translatedText;
+    await collection.updateOne(
+      { contentId },
+      { $set: { translations, updatedAt: new Date() } },
+    );
+    this.logger.log(
+      `Updated translation for contentId: ${contentId}, Language: ${language}`,
+    );
+  } else {
+    // Create new translation record
+    const newRecord = {
+      contentId,
+      originalText,
+      translations: { [language]: translatedText },
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    await collection.insertOne(newRecord);
+    this.logger.log(
+      `Created new translation for contentId: ${contentId}, Language: ${language}`,
+    );
+  }
+}
 
 }

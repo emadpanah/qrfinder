@@ -414,61 +414,84 @@ export class BotAIService implements OnModuleInit {
           },
           required: ['symbols', 'language'],
         },
-      }
-      // {
-      //   name: 'getTopCryptosByVolatility',
-      //   description: 'Fetches the top N cryptocurrencies sorted by volatility.',
-      //   parameters: {
-      //     type: 'object',
-      //     properties: {
-      //       limit: {
-      //         type: 'integer',
-      //         description: 'The number of top cryptocurrencies to fetch.',
-      //       },
-      //       language: {
-      //         type: 'string',
-      //         description: 'The language of the user query, e.g., "en" for English, "fa" for Persian, etc.',
-      //       },
-      //     },
-      //     required: ['limit', 'language'],
-      //   },
-      // },
-      // {
-      //   name: 'getTopCryptosByGalaxyScore',
-      //   description: 'Fetches the top N cryptocurrencies sorted by social trent.',
-      //   parameters: {
-      //     type: 'object',
-      //     properties: {
-      //       limit: {
-      //         type: 'integer',
-      //         description: 'The number of top cryptocurrencies to fetch.',
-      //       },
-      //       language: {
-      //         type: 'string',
-      //         description: 'The language of the user query, e.g., "en" for English, "fa" for Persian, etc.',
-      //       },
-      //     },
-      //     required: ['limit', 'language'],
-      //   },
-      // },
-      // {
-      //   name: 'getTopCryptosByAltRank',
-      //   description: 'Fetches the top N cryptocurrencies sorted by alt rank.',
-      //   parameters: {
-      //     type: 'object',
-      //     properties: {
-      //       limit: {
-      //         type: 'integer',
-      //         description: 'The number of top cryptocurrencies to fetch.',
-      //       },
-      //       language: {
-      //         type: 'string',
-      //         description: 'The language of the user query, e.g., "en" for English, "fa" for Persian, etc.',
-      //       },
-      //     },
-      //     required: ['limit', 'language'],
-      //   },
-      // },
+      },
+      {
+        name: 'getLatestNews',
+        description: 'Fetches the latest N news articles about cryptocurrencies.',
+        parameters: {
+          type: 'object',
+          properties: {
+            limit: {
+              type: 'number',
+              description: 'Number of news articles to retrieve (default 5, max 50).'
+            },
+            language: {
+              type: 'string',
+              description: 'The language of the response, e.g., "en" for English, "fa" for Persian.',
+            }
+          },
+          required: ['language']
+        }
+      },
+      {
+        name: 'getTopNewsByInteractions',
+        description: 'Fetches the top N news articles sorted by interactions in the last 24 hours.',
+        parameters: {
+          type: 'object',
+          properties: {
+            limit: {
+              type: 'number',
+              description: 'Number of news articles to retrieve (default 5, max 50).'
+            },
+            language: {
+              type: 'string',
+              description: 'The language of the response, e.g., "en" for English, "fa" for Persian.',
+            }
+          },
+          required: ['language']
+        }
+      },
+      {
+        name: 'searchNewsByTitle',
+        description: 'Fetches the latest N news articles containing a specific keyword in the title.',
+        parameters: {
+          type: 'object',
+          properties: {
+            title: {
+              type: 'string',
+              description: 'Keyword to search for in the news titles.'
+            },
+            limit: {
+              type: 'number',
+              description: 'Number of news articles to retrieve (default 5, max 50).'
+            },
+            language: {
+              type: 'string',
+              description: 'The language of the response, e.g., "en" for English, "fa" for Persian.',
+            }
+          },
+          required: ['title', 'language']
+        }
+      },
+      {
+        name: 'getHighSentimentNews',
+        description: 'Fetch the top N news articles with high sentiment (positive sentiment >= 4).',
+        parameters: {
+          type: 'object',
+          properties: {
+            n: {
+              type: 'integer',
+              description: 'The number of news articles to fetch (default 4, max 10).',
+            },
+            language: {
+              type: 'string',
+              description: 'The language of the response, e.g., "en" for English, "fa" for Persian.',
+            },
+          },
+          required: ['language'],
+        },
+      },
+      
     ];
   
     //const systemMessage = this.generateSystemMessage();
@@ -674,6 +697,32 @@ export class BotAIService implements OnModuleInit {
                 ? `دسته‌بندی برای ${symbol}: ${categories}\nمقدار ${sort} برای این نماد: ${sortValue}`
                 : `Category for ${symbol}: ${categories}\n${sort} value for this symbol: ${sortValue}`;
             }
+
+            case 'getLatestNews': {
+              const { limit = 5, language } = parameters; // Include language
+              const news = await this.dataRepository.getLatestNews(limit);
+              return await this.formatNewsResponse(news, language); // Pass language to formatNewsResponse
+            }
+            
+            case 'getTopNewsByInteractions': {
+              const { limit = 5, language } = parameters; // Include language
+              const news = await this.dataRepository.getTopNewsByInteractions(limit);
+              return await this.formatNewsResponse(news, language); // Pass language to formatNewsResponse
+            }
+            
+            case 'searchNewsByTitle': {
+              const { title, limit = 5, language } = parameters; // Include language
+              const news = await this.dataRepository.searchNewsByTitle(title, limit);
+              return await this.formatNewsResponse(news, language); // Pass language to formatNewsResponse
+            }
+            
+            
+            case 'getHighSentimentNews': {
+              const { n = 5, language } = parameters;
+              const response = await this.getHighSentimentNews(n, language);
+              this.conversationHistory.push({ role: 'function', name: functionName, content: response });
+              return response;
+            }
             
 
           default:
@@ -815,6 +864,47 @@ export class BotAIService implements OnModuleInit {
     return baseSignal;
   }
 
+  private async getTranslatedText(
+    id: string,
+    originalText: string,
+    language: string,
+  ): Promise<string> {
+    // Check if translation exists in DB
+    const existingTranslation = await this.dataRepository.getTranslation(id, language);
+    if (existingTranslation) {
+      return existingTranslation;
+    }
+  
+    // Translation doesn't exist, request from ChatGPT
+    const translatedText = await this.translateTextWithChatGPT(originalText, language);
+  
+    // Save the translation to DB
+    await this.dataRepository.saveTranslation(id, originalText, language, translatedText);
+    return translatedText;
+  }
+  
+  private async translateTextWithChatGPT(originalText: string, language: string): Promise<string> {
+    const prompt = `
+  Translate the following text to ${language === 'fa' ? 'Persian' : language}:
+  "${originalText}"
+    `;
+    const response = await this.openai.chat.completions.create({
+      messages: [
+        { role: 'system', content: 'You are a professional translator.' },
+        { role: 'user', content: prompt },
+      ],
+      model: 'gpt-4o-mini-2024-07-18',
+    });
+  
+    const translatedText = response.choices[0]?.message?.content?.trim();
+    if (!translatedText) {
+      this.logger.error(`Failed to fetch translation for text: "${originalText}"`);
+      throw new Error('Translation failed.');
+    }
+    this.logger.log(`New translation generated by ChatGPT for language: ${language}`);
+    return translatedText;
+  }
+  
 
   async getDynamicInterpretation(data: any, topic: string, symbol: string, date: string, language: string): Promise<string> {
     const additionalPrompt = `
@@ -1123,6 +1213,86 @@ async getCryptoPrices(symbols: string[], date: number): Promise<string> {
       return results.map((r, i) => `${i+1}. ${r.symbol}: MACD ${r.MACD}`).join('\n');
     }
   
+
+    private getSentimentIcon(sentiment: number): string {
+      if (sentiment >= 4) {
+        return '🟢'; // Positive sentiment
+      } else if (sentiment >= 2.5) {
+        return '🟡'; // Neutral sentiment
+      } else {
+        return '🔴'; // Negative sentiment
+      }
+    }
+    
+    private getSentimentTitle(sentiment: number): string {
+      if (sentiment >= 4) return 'Positive';
+      else if (sentiment >= 2.5) return 'Neutral';
+      else return 'Negative';
+    }
+    
+    private async formatNewsResponse(
+      news: any[],
+      language: string,
+    ): Promise<string> {
+      if (!news || news.length === 0) return 'No news found.';
+    
+      const formattedNews = await Promise.all(
+        news.map(async (item, index) => {
+          const source = item.id.split('-')[0];
+          const sentimentIcon = this.getSentimentIcon(item.post_sentiment);
+          const sentimentTitle = this.getSentimentTitle(item.post_sentiment);
+    
+          const translatedTitle = language === 'en'
+            ? item.post_title
+            : await this.getTranslatedText(item.id, item.post_title, language);
+    
+          return `
+    ${index + 1}. ${translatedTitle} ${sentimentIcon} (${sentimentTitle}, ${item.post_sentiment})
+    🔗 (${item.post_link})
+    📰 Source: ${source}`;
+        }),
+      );
+    
+      return `📢 Latest Crypto News\n${formattedNews.join('\n')}`;
+    }
+    
+
+    // private formatNewsResponse(news: any[], defaultLimit: number = 5): string {
+    //   if (!news || news.length === 0) return 'No news found.';
+    
+    //   const limit = Math.min(news.length, defaultLimit);
+    //   const formattedNews = news.slice(0, limit).map((item, index) => {
+    //     // Extract source from id (split at first '-')
+    //     const source = item.id.split('-')[0];
+    
+    //     // Sentiment
+    //     const sentimentIcon = this.getSentimentIcon(item.post_sentiment);
+    //     const sentimentTitle = this.getSentimentTitle(item.post_sentiment);
+    
+    //     // Prepare the message
+    //     return `
+    // ${index + 1}. ${item.post_title} ${sentimentIcon} (${sentimentTitle}, ${item.post_sentiment})
+    // 🔗 [Read More](${item.post_link})
+    // 📰 Source: ${source}`;
+    //   });
+    
+    //   return `📢 Latest Crypto News\n${formattedNews.join('\n')}`;
+    // }
+    
+    async getHighSentimentNews(n = 5, language: string): Promise<string> {
+      const results = await this.dataRepository.getNewsWithHighSentiment(n);
+    
+      if (!results || results.length === 0) {
+        return language === 'fa'
+          ? 'هیچ خبری با احساس مثبت بالا پیدا نشد.'
+          : 'No news found with high sentiment.';
+      }
+    
+      return await this.formatNewsResponse(results, language);
+    }
+    
+    
+    
 
   async onModuleInit() {
     const me = await this.bot.getMe();

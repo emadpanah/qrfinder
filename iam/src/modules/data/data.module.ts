@@ -15,6 +15,8 @@ import { DominanceData, DominanceDataSchema } from './database/schema/dominance.
 import { ST1Data, ST1DataSchema } from './database/schema/st1.schema';
 import { LunarCrushData, LunarCrushDataSchema } from './database/schema/lunarcrush.schema';
 import { LunarCrushService } from './service/lunar.service';
+import { LunarCrushNews, LunarCrushNewsSchema } from './database/schema/lunarcrush-news.schema';
+import { Translation, TranslationSchema } from './database/schema/translations.schema';
 
 @Module({
   imports: [
@@ -25,6 +27,8 @@ import { LunarCrushService } from './service/lunar.service';
       { name: DominanceData.name, schema: DominanceDataSchema },
       { name: ST1Data.name, schema: ST1DataSchema },
       { name: LunarCrushData.name, schema: LunarCrushDataSchema },
+      { name: LunarCrushNews.name, schema: LunarCrushNewsSchema },
+      { name: Translation.name, schema: TranslationSchema },
     ], 'service'),
   ],
   providers: [FngService, DataService, DataRepository, LunarCrushService ],
