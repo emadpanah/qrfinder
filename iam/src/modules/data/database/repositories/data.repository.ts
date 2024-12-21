@@ -13,6 +13,7 @@ import { ObjectId } from 'mongodb';
 import { LunarCrushData } from '../schema/lunarcrush.schema';
 import { LunarCrushPublicCoinDto } from '../dto/lunarcrush.dto';
 import { LunarCrushNewsDto } from '../dto/lunarcrush-news.dto';
+import { UserChatLogDto } from '../dto/userchatlog.dto';
 
 @Injectable()
 export class DataRepository {
@@ -523,6 +524,32 @@ async getTranslation(contentId: string, language: string): Promise<string | null
   return null;
 }
 
+async saveUserChatLog(log: UserChatLogDto): Promise<void> {
+  const collection = this.connection.collection('_userchatlogdata');
+  await collection.insertOne(log);
+}
+
+async getChatHistory(telegramId: string, limit: number = 20): Promise<UserChatLogDto[]> {
+  const collection = this.connection.collection('_userchatlogdata');
+  const results = await collection
+    .find({ telegramId })
+    .sort({ save_at: -1 }) // Most recent chats first
+    .limit(limit) // Limit the number of results
+    .toArray();
+
+  // Map the results to the UserChatLogDto type
+  return results.map((result) => ({
+    telegramId: result.telegramId as string,
+    query: result.query as string,
+    response: result.response as string,
+    calledFunction: result.calledFunction as string,
+    parameters: result.parameters as Record<string, any>,
+    newParameters: result.newParameters as Record<string, any>,
+    queryType: result.queryType as 'in-scope' | 'out-of-scope',
+    save_at: result.save_at as number,
+  }));
+}
+
 async saveTranslation(
   contentId: string,
   originalText: string,
@@ -550,8 +577,8 @@ async saveTranslation(
       contentId,
       originalText,
       translations: { [language]: translatedText },
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      createdAt: Math.floor(Date.now() / 1000),
+      updatedAt: Math.floor(Date.now() / 1000),
     };
     await collection.insertOne(newRecord);
     this.logger.log(

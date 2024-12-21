@@ -17,6 +17,7 @@ import { LunarCrushData, LunarCrushDataSchema } from './database/schema/lunarcru
 import { LunarCrushService } from './service/lunar.service';
 import { LunarCrushNews, LunarCrushNewsSchema } from './database/schema/lunarcrush-news.schema';
 import { Translation, TranslationSchema } from './database/schema/translations.schema';
+import { UserChatLog, UserChatLogSchema } from './database/schema/userchatlog.schema';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { Translation, TranslationSchema } from './database/schema/translations.s
       { name: LunarCrushData.name, schema: LunarCrushDataSchema },
       { name: LunarCrushNews.name, schema: LunarCrushNewsSchema },
       { name: Translation.name, schema: TranslationSchema },
+      { name: UserChatLog.name, schema: UserChatLogSchema },
     ], 'service'),
   ],
   providers: [FngService, DataService, DataRepository, LunarCrushService ],

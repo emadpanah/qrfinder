@@ -9,13 +9,14 @@ import { UserLogin, UserLoginDocument } from '../schemas/user-login.schema';
 export class UserLoginRepository {
   constructor(@InjectConnection('service') private connection: Connection) {}
 
-  async createLogin(userId: Types.ObjectId, newToken: string): Promise<any> {
+  async createLogin(userId: Types.ObjectId, newToken: string, chatId?: string): Promise<any> {
     const collection = this.connection.collection('_userlogins');
 
     await collection.insertOne({
       userId: userId,
       token: newToken,
-      createdDate: Date.now(),
+      chatId: chatId,
+      createdDate: Math.floor(Date.now() / 1000),
       shopToken:''
     });
 
@@ -30,16 +31,25 @@ export class UserLoginRepository {
     return userlogins;
   }
 
-  async findLatestLoginByUserId(id: Types.ObjectId): Promise<any> {
+  async findLatestLoginByUserId(
+    id: Types.ObjectId,
+    chatId?: string
+  ): Promise<any> {
     const collection = this.connection.collection('_userlogins');
-
-    const userlogins = await collection.findOne(
-      { userId: id },
-      { sort: { createdDate: -1 } },
-    );
-
+  
+    // Build the query object
+    const query: any = { userId: id };
+    if (chatId) {
+      query.chatId = chatId; // Add chatId to the query if it's provided
+    }
+  
+    const userlogins = await collection.findOne(query, {
+      sort: { createdDate: -1 }, // Sort by createdDate in descending order
+    });
+  
     return userlogins;
   }
+  
 
   async updateLoginWithShopToken(userId: Types.ObjectId, shopToken: string): Promise<void> {
     const collection = this.connection.collection('_userlogins');

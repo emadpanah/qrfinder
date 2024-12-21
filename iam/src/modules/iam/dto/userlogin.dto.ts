@@ -33,4 +33,9 @@ export class UserLoginDto {
   @IsNumber()
   @IsNotEmpty()
   createdDate: number;
+
+  @IsOptional()
+  @IsString()
+  chatId: string;  
+
 }

@@ -8,6 +8,7 @@ import {
   IsDateString,
   IsNumber,
   IsOptional,
+  isString,
 } from 'class-validator';
 import { Types } from 'mongoose';
 
@@ -35,7 +36,7 @@ export class UserDto {
   telegramID: string;
 
   @IsString()
-  chatId: string;
+  mobile: string;
 
   @IsNumber()
   @IsNotEmpty()
@@ -43,9 +44,9 @@ export class UserDto {
 }
 
 export class UserInsertDto {
+
   @IsString()
-  @IsNotEmpty()
-  _id: Types.ObjectId;
+  mobile: string; 
 
   @IsString()
   telegramID: string;

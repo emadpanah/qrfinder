@@ -57,9 +57,8 @@ export class LunarCrushService {
 //     console.log('Fetching data for all sorts completed.');
 //   }
 
-//@Cron('0 */55 * * * *') // Run every minute
-// Fetch sort data every 15 minutes
-@Cron('*/15 * * * *') // Runs every 15 minutes
+//@Cron('0 */28 * * * *') // Every 28 minutes
+@Cron('0 0 1 1 *') //run every year
 async fetchAndStoreAllSorts(): Promise<void> {
   console.log(`Fetching all sorts at ${new Date().toISOString()}...`);
   await this.fetchBatchData(this.sorts);
@@ -125,9 +124,8 @@ private async fetchBatchData(sorts: string[]): Promise<void> {
   }
 }
 
-//@Cron('*/30 * * * *') // Runs every 30 minutes
-@Cron('* * * * *') //Run every minute
-//@Cron('0 0 1 1 *') //run every year
+//@Cron('0 */20 * * * *') // Every 20 minutes
+@Cron('0 0 1 1 *') //run every year
 async fetchAndStoreNews(): Promise<void> {
   console.log(`Fetching news at ${new Date().toISOString()}...`);
   try {

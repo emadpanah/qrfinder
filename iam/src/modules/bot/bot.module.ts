@@ -9,6 +9,11 @@ import { CurrencyRepository } from '../iam/database/repositories/currency.reposi
 import { AchievementRepository } from '../qr/database/repositories/qr-achievement.repository';
 import { BotAIService } from './bot.ai.service';
 import { DataModule } from '../data/data.module';
+import { IamService } from '../iam/services/iam.service';
+import { IamRepository } from '../iam/database/repositories/iam.repository';
+import { UserLoginRepository } from '../iam/database/repositories/user-login.repository';
+import { AuthService } from '../iam/services/auth.service';
+import { JwtService } from '@nestjs/jwt';
 
 @Module({
   imports: [ProductModule, DataModule],
@@ -19,7 +24,12 @@ import { DataModule } from '../data/data.module';
     CurrencyRepository,
     AchievementService, 
     AchievementRepository,
-    BotAIService
+    BotAIService,
+    IamService,
+    IamRepository,
+    UserLoginRepository,
+    AuthService,
+    JwtService,
     //ChatGptBotService
     ],
     exports: [BotAIService],

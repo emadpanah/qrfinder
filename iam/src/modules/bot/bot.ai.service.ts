@@ -5,6 +5,9 @@ import { ProductService } from '../product/services/product.service';
 import { DataRepository } from '../data/database/repositories/data.repository'; // Import DataRepository
 import { isEmpty } from 'validator';
 import { DominanceDto } from '../data/database/dto/dominance.dto';
+import { UserChatLogDto } from '../data/database/dto/userchatlog.dto';
+import { IamService } from '../iam/services/iam.service';
+import { Types } from 'mongoose';
 
 
 
@@ -16,15 +19,16 @@ export class BotAIService implements OnModuleInit {
   private readonly logger = new Logger(BotAIService.name);
   private openai = new OpenAI({ apiKey: this.apiKey });
   private botUsername: string;
+  private currentTelegramId: string;
+  private userLastAsk: Record<string, string> = {};
 
-  private conversationHistory: { role: string; content: string; name?: string }[] = [];
 
   private prompts = [
     // Existing prompts...
   ];
 
   constructor(
-    private readonly productService: ProductService,
+    private readonly iamService: IamService,
     private readonly dataRepository: DataRepository // Inject DataRepository
   ) {
     this.bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, { polling: true });
@@ -38,14 +42,14 @@ export class BotAIService implements OnModuleInit {
   // ];
 
   //
-  private readonly validCategories = ['liquid-staking-tokens','runes',
-'analytics','stablecoin','fan','bitcoin-ecosystem','sports','desci','real-estate','real-world-assets',
-'ai','exchange-tokens','wallets','brc20','events','defi','layer-1','base-ecosystem','meme','dao',
-'layer-2','lending-borrowing','nft','gaming','gambling','depin','socialfi', 'stacks-ecosystem'];
+  private readonly validCategories = ['liquid-staking-tokens', 'runes',
+    'analytics', 'stablecoin', 'fan', 'bitcoin-ecosystem', 'sports', 'desci', 'real-estate', 'real-world-assets',
+    'ai', 'exchange-tokens', 'wallets', 'brc20', 'events', 'defi', 'layer-1', 'base-ecosystem', 'meme', 'dao',
+    'layer-2', 'lending-borrowing', 'nft', 'gaming', 'gambling', 'depin', 'socialfi', 'stacks-ecosystem'];
 
   private readonly validSorts = [
     //'price', 
-	//'price_btc',
+    //'price_btc',
     'volume_24h',
     'volatility',
     //'circulating_supply',
@@ -73,55 +77,70 @@ export class BotAIService implements OnModuleInit {
   //   'sentiment',
   // ];
 
-//   private generateSystemMessage(): string {
-//     const categoryList = this.validCategories.join(', ');
-//     const sortList = this.validSorts.join(', ');
-//     const today = new Date().toLocaleDateString('en-US', {
-//       month: 'long', day: 'numeric', year: 'numeric'
-//   });
-  
-// //   // Include the current date in the initial message
-//    const datePrompt = `Today's date is ${today}.`;
+  //   private generateSystemMessage(): string {
+  //     const categoryList = this.validCategories.join(', ');
+  //     const sortList = this.validSorts.join(', ');
+  //     const today = new Date().toLocaleDateString('en-US', {
+  //       month: 'long', day: 'numeric', year: 'numeric'
+  //   });
 
-//     return `
-// You are a crypto assistant. you are  Below are the valid categories and sorting parameters for LunarCrush data:
+  // //   // Include the current date in the initial message
+  //    const datePrompt = `Today's date is ${today}.`;
 
-// - **Categories**:
-//   ${categoryList}.
+  //     return `
+  // You are a crypto assistant. you are  Below are the valid categories and sorting parameters for LunarCrush data:
 
-// - **Sorting Parameters**:
-//   ${sortList}.
+  // - **Categories**:
+  //   ${categoryList}.
 
-// Always ensure the user input matches one of these categories or sorting parameters. If the user query does not match,
-//  politely ask them to select from the available options. ${datePrompt}`;}
+  // - **Sorting Parameters**:
+  //   ${sortList}.
 
-  
-  async getChatGptResponse(prompt: string): Promise<string> {
+  // Always ensure the user input matches one of these categories or sorting parameters. If the user query does not match,
+  //  politely ask them to select from the available options. ${datePrompt}`;}
 
-   
-  
+
+  async getChatGptResponse(prompt: string): Promise<{ responseText: string; queryType: string; newParameters?: string[] }> {
+
+    let queryType = 'in-scope'; // Default to in-scope
+    let newParameters: string[] = [];
+
+
     const functions = [
+      // {
+      //   name: 'getRSIForDate',
+      //   description: 'Fetches the RSI data for a specific symbol on a specific date.',
+      //   parameters: {
+      //     type: 'object',
+      //     properties: {
+      //       symbol: {
+      //         type: 'string',
+      //         description: 'The symbol of the cryptocurrency, e.g., BTCUSDT.',
+      //       },
+      //       date: {
+      //         type: 'string',
+      //         description: 'The date for which to retrieve the RSI data, in YYYY-MM-DD format.',
+      //       },
+      //       language: {
+      //         type: 'string',
+      //         description: 'The language of the user query, e.g., "en" for English, "fa" for Persian, etc.',
+      //       },
+      //     },
+      //     required: ['symbol', 'date', 'language'],
+      //   },
+      // },
       {
-        name: 'getRSIForDate',
-        description: 'Fetches the RSI data for a specific symbol on a specific date.',
-        parameters: {
-          type: 'object',
-          properties: {
-            symbol: {
-              type: 'string',
-              description: 'The symbol of the cryptocurrency, e.g., BTCUSDT.',
-            },
-            date: {
-              type: 'string',
-              description: 'The date for which to retrieve the RSI data, in YYYY-MM-DD format.',
-            },
-            language: {
-              type: 'string',
-              description: 'The language of the user query, e.g., "en" for English, "fa" for Persian, etc.',
-            },
+        "name": "getRSIForDate",
+        "description": "Fetches the RSI data for a specific symbol on a specific date.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "symbol": { "type": "string", "description": "The cryptocurrency symbol." },
+            "date": { "type": "string", "description": "The date in YYYY-MM-DD format. if date is not given use today." },
+            "language": { "type": "string", "description": "The response language." },
           },
-          required: ['symbol', 'date', 'language'],
-        },
+          "required": ["symbol", "language"]
+        }
       },
       {
         name: 'getRSIForMultipleSymbolsOnDate',
@@ -139,14 +158,14 @@ export class BotAIService implements OnModuleInit {
             },
             date: {
               type: 'string',
-              description: 'The date (YYYY-MM-DD) for which to retrieve the RSI data.',
+              description: 'The date (YYYY-MM-DD) for which to retrieve the RSI data. if date is not given use today.',
             },
             language: {
               type: 'string',
               description: 'The language of the user query, e.g. "en" or "fa".'
             }
           },
-          required: ['symbols', 'date', 'language'],
+          required: ['symbols', 'language'],
         },
       },
       {
@@ -161,16 +180,16 @@ export class BotAIService implements OnModuleInit {
             },
             date: {
               type: 'string',
-              description: 'The date (YYYY-MM-DD) for which to retrieve the top RSI cryptos.'
+              description: 'The date (YYYY-MM-DD) for which to retrieve the top RSI cryptos. if date is not given use today.'
             },
             language: {
               type: 'string',
               description: 'The user query language, e.g. "en" or "fa".'
             }
           },
-          required: ['n', 'date', 'language'],
+          required: ['n', 'language'],
         },
-      },{
+      }, {
         name: 'getSortForSymbol',
         description: 'Fetches the requested sort metric value and the categories for a given symbol from the LunarCrush data.',
         parameters: {
@@ -217,7 +236,7 @@ export class BotAIService implements OnModuleInit {
           },
           required: ['category', 'sort', 'language'],
         },
-      },      
+      },
       {
         name: 'getTopCryptosBySort',
         description: 'Fetches the top cryptocurrencies sorted by a given parameter (e.g., volume_24h, volatility, percent_change_24h, market_cap, interactions_24h, social_dominance, market_dominance, galaxy_score, alt_rank, sentiment).',
@@ -252,14 +271,14 @@ export class BotAIService implements OnModuleInit {
             },
             date: {
               type: 'string',
-              description: 'The date for which to retrieve the MACD data, in YYYY-MM-DD format.',
+              description: 'The date for which to retrieve the MACD data, in YYYY-MM-DD format. if date is not given use today.',
             },
             language: {
               type: 'string',
               description: 'The language of the user query, e.g., "en" for English, "fa" for Persian, etc.',
             },
           },
-          required: ['symbol', 'date', 'language'],
+          required: ['symbol', 'language'],
         },
       },
       {
@@ -278,14 +297,14 @@ export class BotAIService implements OnModuleInit {
             },
             date: {
               type: 'string',
-              description: 'The date (YYYY-MM-DD) for which to retrieve MACD data.'
+              description: 'The date (YYYY-MM-DD) for which to retrieve MACD data. if date is not given use today.'
             },
             language: {
               type: 'string',
               description: 'The user query language, e.g. "en" or "fa".'
             }
           },
-          required: ['symbols', 'date', 'language'],
+          required: ['symbols', 'language'],
         },
       },
       {
@@ -300,14 +319,14 @@ export class BotAIService implements OnModuleInit {
             },
             date: {
               type: 'string',
-              description: 'The date (YYYY-MM-DD) for which to retrieve the top MACD cryptos.'
+              description: 'The date (YYYY-MM-DD) for which to retrieve the top MACD cryptos. if date is not given use today.'
             },
             language: {
               type: 'string',
               description: 'The user query language, e.g. "en" or "fa".'
             }
           },
-          required: ['n', 'date', 'language'],
+          required: ['n', 'language'],
         },
       },
       {
@@ -340,14 +359,14 @@ export class BotAIService implements OnModuleInit {
             },
             date: {
               type: 'string',
-              description: 'The date for which to retrieve the price, in YYYY-MM-DD format.',
+              description: 'The date for which to retrieve the price, in YYYY-MM-DD format. if date is not given use today.',
             },
             language: {
               type: 'string',
               description: 'The language of the user query, e.g., "en" for English, "fa" for Persian, etc.',
             },
           },
-          required: ['symbol', 'date', 'language'],
+          required: ['symbol', 'language'],
         },
       },
       {
@@ -363,14 +382,14 @@ export class BotAIService implements OnModuleInit {
             },
             date: {
               type: 'string',
-              description: 'The date for which to retrieve the prices, in YYYY-MM-DD format.',
+              description: 'The date for which to retrieve the prices, in YYYY-MM-DD format. if date is not given use today.',
             },
             language: {
               type: 'string',
               description: 'The language of the user query, e.g., "en" for English, "fa" for Persian, etc.',
             },
           },
-          required: ['symbols', 'date', 'language'],
+          required: ['symbols', 'language'],
         },
       },
       {
@@ -385,7 +404,7 @@ export class BotAIService implements OnModuleInit {
             },
             date: {
               type: 'string',
-              description: 'The date for which to retrieve the prices, in YYYY-MM-DD format.',
+              description: 'The date for which to retrieve the prices, in YYYY-MM-DD format. if date is not given use today.',
             },
             language: {
               type: 'string',
@@ -413,6 +432,28 @@ export class BotAIService implements OnModuleInit {
             },
           },
           required: ['symbols', 'language'],
+        },
+      },
+      {
+        name: 'handleOutOfScopeQuery',
+        description: 'Handles queries that are unrelated to the bot\'s scope (e.g., non-blockchain topics), unrelated topic, e.g., "medical", "general knowledge", "sports" . Logs the query for analysis and informs the user politely.',
+        parameters: {
+          type: 'object',
+          properties: {
+            language: {
+              type: 'string',
+              description: 'The language in which the bot should respond. For example, "en" for English, "fa" for Persian.',
+            },
+            unrelatedTopic: {
+              type: 'string',
+              description: 'The detected category of the unrelated topic, e.g., "medical", "general knowledge", "sports".',
+            },
+            unrelatedsubjuct: {
+              type: 'string',
+              description: 'The detected subject of the unrelated topic, e.g., "trump", "cancer", "football".',
+            },
+          },
+          required: ['query', 'language', 'unrelatedTopic'],
         },
       },
       {
@@ -491,260 +532,430 @@ export class BotAIService implements OnModuleInit {
           required: ['language'],
         },
       },
-      
+
     ];
-  
+
     //const systemMessage = this.generateSystemMessage();
 
     const today = new Date().toLocaleDateString('en-US', {
       month: 'long', day: 'numeric', year: 'numeric'
-  });
-  
-//   // Include the current date in the initial message
-   const datePrompt = `Today's date is ${today}.`;
+    });
+
+    //   // Include the current date in the initial message
+    const datePrompt = `Today's date is ${today}.`;
     try {
       const stream = await this.openai.chat.completions.create({
         messages: [
-          { role: "system", content: 
-            "You are personal asistance for crypto and blockchain,"+
-            " if user ask question in persian you must answer in persian and if user ask in english you answer english."+
-            " as personal asistance you are very helpful and intractive with customer."+
-            "if user ask question in persian but with english characters that called"+
-            " finglish you answer customer with persian language."+
-            + ""+ datePrompt },
-//          { role: 'system', content: systemMessage },
-         { role: "user", content: prompt }
+          {
+            role: "system", content:
+              "You are personal asistance for crypto and blockchain," +
+              " if user ask question in persian you must answer in persian and if user ask in english you answer english." +
+              " as personal asistance you are very helpful and intractive with customer." +
+              "if user ask question in persian but with english characters that called" +
+              " finglish you answer customer with persian language." +
+              + "" + datePrompt
+          },
+          //          { role: 'system', content: systemMessage },
+          { role: "user", content: prompt }
         ],
         model: "gpt-4o-mini-2024-07-18",
         functions: functions,
       });
-  
+
       const message = stream.choices[0].message;
-  
+
       // Check if ChatGPT suggested a function call
       if (message.function_call) {
         // const functionName = message.function_call.name;
         // const parameters = JSON.parse(message.function_call.arguments || '{}');
-  
+
         // // Log the parsed parameters for debugging
-        
-  
+
+
         // // Check if the function exists on the service
         // if (typeof this[functionName] === 'function') {
 
         //    // Convert the date string to a Unix timestamp
-  
+
         //    //const timestamp =  Math.floor(Date.now() / 1000);
         //   const timestamp = new Date(parameters.timestamp).getTime() / 1000;
         //   const functionResponse = await this[functionName](timestamp);
         //   this.conversationHistory.push({ role: 'function', name: functionName, content: functionResponse });
         //   return functionResponse;
 
-        
+
         // } else {
         //   this.logger.error(`Function ${functionName} is not defined.`);
         //   return 'Requested function is not available.';
         // }
 
         const functionName = message.function_call.name;
-      const parameters = JSON.parse(message.function_call.arguments || '{}');
+        const parameters = JSON.parse(message.function_call.arguments || '{}');
 
-      this.logger.log(`Parsed function call: ${functionName} with parameters: ${JSON.stringify(parameters)}`);
+        this.logger.log(`Parsed function call: ${functionName} with parameters: ${JSON.stringify(parameters)}`);
 
-      let functionResponse;
+        let functionResponse;
 
-      switch (functionName) { 
-        
+        switch (functionName) {
 
-        // case 'getTopCryptosByVolatility': {
-        //   const response = await this.getTopCryptosByVolatility(parameters.limit);
-        //   this.conversationHistory.push({ role: 'function', name: functionName, content: response });
-        //   return response;
-        // }
 
-        // case 'getTopCryptosByGalaxyScore': {
-        //   return await this.getTopCryptosByGalaxyScore(parameters.limit);
-        // }
-        // case 'getTopCryptosByAltRank': {
-        //   return await this.getTopCryptosByAltRank(parameters.limit);
-        // }
+          // case 'getTopCryptosByVolatility': {
+          //   const response = await this.getTopCryptosByVolatility(parameters.limit);
+          //   this.conversationHistory.push({ role: 'function', name: functionName, content: response });
+          //   return response;
+          // }
 
-        case 'getTopCryptosByCategoryAndSort': {
-          const { category, sort, limit = 10, language } = parameters;
-        
-          // Validate category
-          if (!this.validCategories.includes(category)) {
-            const errorMsg = `Invalid category: "${category}". Please choose from: ${this.validCategories.join(', ')}.`;
-            return errorMsg;
+          // case 'getTopCryptosByGalaxyScore': {
+          //   return await this.getTopCryptosByGalaxyScore(parameters.limit);
+          // }
+          // case 'getTopCryptosByAltRank': {
+          //   return await this.getTopCryptosByAltRank(parameters.limit);
+          // }
+
+          case 'getTopCryptosByCategoryAndSort': {
+            const { category, sort, limit = 10, language } = parameters;
+            // Validate category
+            if (!this.validCategories.includes(category)) {
+              const errorMsg = `Invalid category: "${category}". Please choose from: ${this.validCategories.join(', ')}.`;
+              return {
+                responseText: errorMsg,
+                queryType,
+                newParameters,
+              };
+            }
+
+            // Validate sort
+            if (!this.validSorts.includes(sort)) {
+              const errorMsg = `Invalid sort parameter: "${sort}". Please choose from: ${this.validSorts.join(', ')}.`;
+              return {
+                responseText: errorMsg,
+                queryType,
+                newParameters,
+              };
+            }
+
+            const response = await this.getTopCoinsByCategoryAndAnySort(category, sort, limit, language);
+            return {
+              responseText: response,
+              queryType,
+              newParameters,
+            };
           }
-        
-          // Validate sort
-          if (!this.validSorts.includes(sort)) {
-            const errorMsg = `Invalid sort parameter: "${sort}". Please choose from: ${this.validSorts.join(', ')}.`;
-            return errorMsg;
+
+          case 'getTopCryptosBySort': {
+            const { sort, limit = 10, language } = parameters;
+            // Validate sort parameter
+            //volume_24h, volatility, percent_change_24h, market_cap, 
+            //interactions_24h, social_dominance, market_dominance,
+            // galaxy_score, alt_rank, sentiment
+
+            if (!this.validSorts.includes(sort)) {
+              const errorMsg = `Invalid sort parameter: "${sort}". Please choose from: ${this.validSorts.join(', ')}.`;
+              return {
+                responseText: errorMsg,
+                queryType,
+                newParameters,
+              };
+            }
+
+            // Now retrieve data from the repository
+            const response = await this.getTopCryptosByAnySort(sort, limit, language);
+            return {
+              responseText: response,
+              queryType,
+              newParameters,
+            };
           }
-        
-          const response = await this.getTopCoinsByCategoryAndAnySort(category, sort, limit, language);
-          this.conversationHistory.push({ role: 'function', name: functionName, content: response });
-          return response;
-        }
 
-        case 'getTopCryptosBySort': {
-          const { sort, limit = 10, language } = parameters;
-        
-          // Validate sort parameter
-          //volume_24h, volatility, percent_change_24h, market_cap, 
-          //interactions_24h, social_dominance, market_dominance,
-          // galaxy_score, alt_rank, sentiment
-        
-          if (!this.validSorts.includes(sort)) {
-            const errorMsg = `Invalid sort parameter: "${sort}". Please choose from: ${this.validSorts.join(', ')}.`;
-            return errorMsg;
+          case 'handleOutOfScopeQuery': {
+            const { language, unrelatedTopic, unrelatedSubjuct } = parameters;
+
+            // Generate the response using ChatGPT
+            const response = await this.generateDynamicPoliteResponse(unrelatedTopic, language);
+
+            const newParameters = [
+              unrelatedTopic,unrelatedSubjuct
+            ];
+            // Return the response to the user
+            queryType = 'out-of-scope';
+            return {
+              responseText: response,
+              queryType,
+              newParameters,
+            };
           }
-        
-          // Now retrieve data from the repository
-          const response = await this.getTopCryptosByAnySort(sort, limit, language);
-          this.conversationHistory.push({ role: 'function', name: functionName, content: response });
-          return response;
-        }
-        
 
-        case 'getRSIForDate':
-          const timestamp1 = new Date(parameters.date).getTime() / 1000;
-          functionResponse = await this.getRSIForDate(parameters.symbol, timestamp1);
-          return this.getDynamicInterpretation(functionResponse, 'RSI', parameters.symbol, parameters.date, parameters.language);
+          case 'getRSIForDate': {
+            // Set the default date if not provided
+            const effectiveDate = parameters.date || new Date().toISOString().split('T')[0];
+            const timestamp1 = new Date(effectiveDate).getTime() / 1000;
 
-        case 'getMACDForDate':
-          const timestamp2 = new Date(parameters.date).getTime() / 1000;
-          functionResponse = await this.getMACDForDate(parameters.symbol, timestamp2);
-          return this.getDynamicInterpretation(functionResponse, 'MACD', parameters.symbol, parameters.date, parameters.language);
+            // Call the actual function
+            functionResponse = await this.getRSIForDate(parameters.symbol, timestamp1);
 
-        case 'getFngForDate':
-          const timestamp = new Date(parameters.timestamp).getTime() / 1000;
-          functionResponse = await this.getFngForDate(timestamp);
-          return this.getDynamicInterpretation(functionResponse, 'FNG',"", parameters.timestamp, parameters.language);
+            // // Identify new or unexpected parameters
+            // const allowedParameters = ['symbol', 'date', 'language'];
+            // const newParameters = Object.keys(parameters).filter(
+            //   (key) => !allowedParameters.includes(key)
+            // );
 
-        case 'getCryptoPrice':
-          const dateTimestamp = new Date(parameters.date).getTime() / 1000;
-          functionResponse = await this.getCryptoPrice(parameters.symbol, dateTimestamp);
-          return this.getDynamicInterpretation(functionResponse, 'Crypto Price', parameters.symbol, parameters.date, parameters.language);
+            // Generate AI response using getDynamicInterpretation
+            const aiResponse = await this.getDynamicInterpretation(
+              functionResponse,
+              'RSI',
+              parameters.symbol,
+              effectiveDate,
+              parameters.language
+            );
+
+            return {
+              responseText: aiResponse,
+              queryType,
+              newParameters,
+            };
+          }
+
+          case 'getMACDForDate':
+            const ddd = parameters.date || new Date().toISOString().split('T')[0];  
+            const timestamp2 = new Date(ddd).getTime() / 1000;
+            functionResponse = await this.getMACDForDate(parameters.symbol, timestamp2);
+            return {
+              responseText: await this.getDynamicInterpretation(functionResponse, 'MACD', parameters.symbol, parameters.date, parameters.language),
+              queryType,
+              newParameters,
+            };
+
+          case 'getFngForDate':
+            const dd = parameters.date || new Date().toISOString().split('T')[0];
+            const timesta = new Date(dd).getTime() / 1000;
+            functionResponse = await this.getFngForDate(timesta);
+            return {
+              responseText: await this.getDynamicInterpretation(functionResponse, 'FNG', "", parameters.timestamp, parameters.language),
+              queryType,
+              newParameters,
+            };
+
+          case 'getCryptoPrice':
+            const effectiveDate = parameters.date || new Date().toISOString().split('T')[0];
+            const timestamp1 = new Date(effectiveDate).getTime() / 1000;
+            functionResponse = await this.getCryptoPrice(parameters.symbol, timestamp1);
+            return {
+              responseText: await this.getDynamicInterpretation(functionResponse, 'Crypto Price', parameters.symbol, parameters.date, parameters.language),
+              queryType,
+              newParameters,
+            };
 
 
           case 'getTopCryptosByPrice': {
-              functionResponse = await this.getTopCryptosByPrice(parameters.limit, parameters.date);
-              this.conversationHistory.push({ role: 'function', name: functionName, content: functionResponse });
-              return functionResponse; 
-            }
+            functionResponse = await this.getTopCryptosByPrice(parameters.limit, parameters.date);
+            return {
+              responseText: functionResponse,
+              queryType,
+              newParameters,
+            };
+          }
 
-            //we need to handel multiple comparing 
+          //we need to handel multiple comparing 
           case 'getCryptoPrices': {
-              functionResponse = await this.getCryptoPrices(parameters.symbols, parameters.date);
-              this.conversationHistory.push({ role: 'function', name: functionName, content: functionResponse });
-              return functionResponse;
+            functionResponse = await this.getCryptoPrices(parameters.symbols, parameters.date);
+            return {
+              responseText: functionResponse,
+              queryType,
+              newParameters,
+            };
+          }
+
+          case 'getRSIForMultipleSymbolsOnDate': {
+            const effectiveDate = parameters.date || new Date().toISOString().split('T')[0];
+            const timestamp1 = new Date(effectiveDate).getTime() / 1000;
+            const { symbols, language } = parameters;
+            functionResponse = await this.getRSIForMultipleSymbolsOnDate(symbols, timestamp1, language);
+            return {
+              responseText: functionResponse,
+              queryType,
+              newParameters,
+            };
+          }
+
+          case 'getTopNRSICryptos': {
+            const effectiveDate = parameters.date || new Date().toISOString().split('T')[0];
+            const timestamp = new Date(effectiveDate).getTime() / 1000;
+            const { n, language } = parameters;
+            functionResponse = await this.getTopNRSICryptos(n, timestamp, language);
+            return {
+              responseText: functionResponse,
+              queryType,
+              newParameters,
+            };
+          }
+
+          // New function calls for MACD (multiple and top N)
+          case 'getMACDForMultipleSymbolsOnDate': {
+            const effectiveDate = parameters.date || new Date().toISOString().split('T')[0];
+            const timestamp = new Date(effectiveDate).getTime() / 1000;
+            const { symbols, language } = parameters;
+            functionResponse = await this.getMACDForMultipleSymbolsOnDate(symbols, timestamp, language);
+            return {
+              responseText: functionResponse,
+              queryType,
+              newParameters,
+            };
+          }
+
+          case 'getTopNMACDCryptos': {
+            const { n, date, language } = parameters;
+            const effectiveDate = date || new Date().toISOString().split('T')[0];
+            const timestamp = new Date(effectiveDate).getTime() / 1000;
+            functionResponse = await this.getTopNMACDCryptos(n, timestamp, language);
+            return {
+              responseText: functionResponse,
+              queryType,
+              newParameters,
+            };
+          }
+
+          case 'analyzeAndCreateSignals':
+            functionResponse = await this.analyzeAndCreateSignals(parameters.symbols, parameters.language);
+            return {
+              responseText: functionResponse,
+              queryType,
+              newParameters,
+            };
+
+          case 'getSortForSymbol': {
+            const { symbol, sort, language } = parameters;
+
+            // Validate sort
+            if (!this.validSorts.includes(sort)) {
+              const errorMsg = `Invalid sort parameter: "${sort}". Please choose from: ${this.validSorts.join(', ')}.`;
+              return {
+                responseText: errorMsg,
+                queryType,
+                newParameters,
+              };
             }
 
-            case 'getRSIForMultipleSymbolsOnDate': {
-              const timestamp = new Date(parameters.date).getTime() / 1000;
-              const { symbols, language } = parameters;
-              functionResponse = await this.getRSIForMultipleSymbolsOnDate(symbols, timestamp, language);
-              return functionResponse;
-            }
-  
-            case 'getTopNRSICryptos': {
-              const timestamp = new Date(parameters.date).getTime() / 1000;
-              const { n, language } = parameters;
-              functionResponse = await this.getTopNRSICryptos(n, timestamp, language);
-              return functionResponse;
-            }
-  
-            // New function calls for MACD (multiple and top N)
-            case 'getMACDForMultipleSymbolsOnDate': {
-              const timestamp = new Date(parameters.date).getTime() / 1000;
-              const { symbols, language } = parameters;
-              functionResponse = await this.getMACDForMultipleSymbolsOnDate(symbols, timestamp, language);
-              return functionResponse;
-            }
-  
-            case 'getTopNMACDCryptos': {
-              const { n, date, language } = parameters;
-              functionResponse = await this.getTopNMACDCryptos(n, date, language);
-              return functionResponse;
-            }
-  
-            case 'analyzeAndCreateSignals':
-            functionResponse = await this.analyzeAndCreateSignals(parameters.symbols,parameters.language);
-            this.conversationHistory.push({ role: 'function', name: functionName, content: functionResponse });
-            return functionResponse;
+            const { categories, sortValue } = await this.dataRepository.getSortValueForSymbol(symbol, sort);
 
-            case 'getSortForSymbol': {
-              const { symbol, sort, language } = parameters;
-            
-              // Validate sort
-              if (!this.validSorts.includes(sort)) {
-                const errorMsg = `Invalid sort parameter: "${sort}". Please choose from: ${this.validSorts.join(', ')}.`;
-                return errorMsg;
-              }
-            
-              const { categories, sortValue } = await this.dataRepository.getSortValueForSymbol(symbol, sort);
-            
-              if (!categories && sortValue === null) {
-                return language === 'fa'
-                  ? `هیچ اطلاعاتی برای نماد ${symbol} با این پارامتر یافت نشد.`
-                  : `No data found for symbol ${symbol} with the requested sort parameter.`;
-              }
-            
-              return language === 'fa'
-                ? `دسته‌بندی برای ${symbol}: ${categories}\nمقدار ${sort} برای این نماد: ${sortValue}`
-                : `Category for ${symbol}: ${categories}\n${sort} value for this symbol: ${sortValue}`;
+            if (!categories && sortValue === null) {
+              const errorMas = `No data found for symbol ${symbol} with the requested sort parameter.`;
+              return {
+                responseText: errorMas,
+                queryType,
+                newParameters,
+              };
             }
 
-            case 'getLatestNews': {
-              const { limit = 5, language } = parameters; // Include language
-              const news = await this.dataRepository.getLatestNews(limit);
-              return await this.formatNewsResponse(news, language); // Pass language to formatNewsResponse
-            }
-            
-            case 'getTopNewsByInteractions': {
-              const { limit = 5, language } = parameters; // Include language
-              const news = await this.dataRepository.getTopNewsByInteractions(limit);
-              return await this.formatNewsResponse(news, language); // Pass language to formatNewsResponse
-            }
-            
-            case 'searchNewsByTitle': {
-              const { title, limit = 5, language } = parameters; // Include language
-              const news = await this.dataRepository.searchNewsByTitle(title, limit);
-              return await this.formatNewsResponse(news, language); // Pass language to formatNewsResponse
-            }
-            
-            
-            case 'getHighSentimentNews': {
-              const { n = 5, language } = parameters;
-              const response = await this.getHighSentimentNews(n, language);
-              this.conversationHistory.push({ role: 'function', name: functionName, content: response });
-              return response;
-            }
-            
+            const err = `Category for ${symbol}: ${categories}\n${sort} value for this symbol: ${sortValue}`;
+            return {
+              responseText: err,
+              queryType,
+              newParameters,
+            };
+          }
+
+          case 'getLatestNews': {
+
+            const { limit = 5, language } = parameters; // Include language
+            const news = await this.dataRepository.getLatestNews(limit);
+            return {
+              responseText: await this.formatNewsResponse(news, language),
+              queryType,
+              newParameters,
+            };
+          }
+
+          case 'getTopNewsByInteractions': {
+            const { limit = 5, language } = parameters; // Include language
+            const news = await this.dataRepository.getTopNewsByInteractions(limit);
+            return {
+              responseText: await this.formatNewsResponse(news, language),
+              queryType,
+              newParameters,
+            };
+          }
+
+          case 'searchNewsByTitle': {
+            const { title, limit = 5, language } = parameters; // Include language
+            const news = await this.dataRepository.searchNewsByTitle(title, limit);
+            return {
+              responseText: await this.formatNewsResponse(news, language),
+              queryType,
+              newParameters,
+            };
+          }
+
+
+          case 'getHighSentimentNews': {
+            const { n = 5, language } = parameters;
+            const response = await this.getHighSentimentNews(n, language);
+            return {
+              responseText: response,
+              queryType,
+              newParameters,
+            };
+          }
+
 
           default:
-              return 'Requested function is not available.';
+            {
+              queryType = 'out-of-scope';
+              return { responseText: 'Requested function is not available.', queryType };
+            }
+        }
       }
-      }
-      else
-      {
+      else {
         const responseMessage = message.content?.trim();
 
         if (responseMessage) {
-          this.conversationHistory.push({ role: 'assistant', content: responseMessage });
           this.logger.log(`Response from ChatGPT: ${responseMessage}`);
-          return responseMessage;
+          return { responseText: responseMessage || 'Invalid response from ChatGPT.', queryType };
+
         } else {
           this.logger.error('Received an empty response from ChatGPT', { stream });
-          return 'Sorry, I didn’t receive a valid response from ChatGPT. Please try again.';
+          return { responseText: 'Sorry, I didn’t receive a valid response from ChatGPT. Please try again.', queryType };
         }
       }
     } catch (error) {
       console.error('Error fetching response from ChatGPT:', error);
-      return 'Error fetching response from ChatGPT.';
+      return { responseText: 'Error fetching response from ChatGPT.', queryType };
+
+    }
+  }
+
+
+  /**
+ * Generates a polite response in the user's language using ChatGPT.
+ * @param topic - The unrelated topic to include in the response.
+ * @param language - The language in which the response should be generated (e.g., 'en', 'fa', 'es', etc.).
+ * @returns {Promise<string>} - The generated response message.
+ */
+  private async generateDynamicPoliteResponse(topic: string, language: string): Promise<string> {
+    const prompt = `
+    You are a multilingual assistant. A user asked a question about an unrelated topic: "${topic}".
+    Generate a polite response in ${language} that explains you can only answer questions related to blockchain and cryptocurrencies, and encourages the user to ask relevant questions.
+  `;
+
+    try {
+      const response = await this.openai.chat.completions.create({
+        messages: [
+          { role: 'system', content: 'You are a polite and professional assistant.' },
+          { role: 'user', content: prompt },
+        ],
+        model: 'gpt-4o-mini-2024-07-18',
+      });
+
+      const generatedMessage = response.choices[0]?.message?.content?.trim();
+
+      if (!generatedMessage) {
+        throw new Error('Empty response from ChatGPT.');
+      }
+
+      return generatedMessage;
+    } catch (error) {
+      this.logger.error('Failed to generate polite response using ChatGPT', error);
+      // Fallback message
+      return `Sorry, I couldn't generate a response in ${language}. Please ask questions related to blockchain and cryptocurrencies.`;
     }
   }
 
@@ -753,24 +964,24 @@ export class BotAIService implements OnModuleInit {
     if (symbols.length > 10) {
       return `Please provide 10 or fewer symbols. You provided ${symbols.length}.`;
     }
-   
+
     const timestamp = new Date().getTime() / 1000;
     //const timestamp = Math.floor(Date.now() / 1000);
     const dateObj = new Date();
     const date = dateObj.toISOString().split('T')[0]; // e.g., "2024-12-14"
-  
+
     // Get global FNG sentiment for date
-    const fngData = await this.dataRepository.findFngByDate();    
+    const fngData = await this.dataRepository.findFngByDate();
     let fngValueClass = fngData ? fngData.value_classification : "Neutral";
     // Map FNG classification to a sentiment score (just example)
     const sentimentScore = this.mapFngToSentimentScore(fngValueClass);
-  
+
     const results: Record<string, { signal: string, explanation: string }> = {};
-  
+
     for (const symbol of symbols) {
       const rsiData = await this.dataRepository.getRSIBySymbolAndDate(symbol);
       const macdData = await this.dataRepository.getMACDBySymbolAndDate(symbol);
-  
+
       // console.log(rsiData);
       // console.log(macdData);
       if (!rsiData || !macdData) {
@@ -780,9 +991,9 @@ export class BotAIService implements OnModuleInit {
         };
         continue;
       }
-  
+
       // Basic RSI-based signal
-      let rsiSignal: "buy"|"sell"|"hold" = "hold";
+      let rsiSignal: "buy" | "sell" | "hold" = "hold";
       let rsiValue = rsiData.RSI;
       if (typeof rsiValue !== 'number') {
         // Attempt to parse RSI as a number
@@ -803,29 +1014,29 @@ export class BotAIService implements OnModuleInit {
       if (rsiValue < 30) rsiSignal = "buy";
       else if (rsiValue > 70) rsiSignal = "sell";
       else rsiSignal = "hold";
-  
+
       // Basic MACD interpretation
-      let macdSignal: "bullish"|"bearish"|"neutral" = "neutral";
+      let macdSignal: "bullish" | "bearish" | "neutral" = "neutral";
       if (macdData.MACD > macdData.Signal) macdSignal = "bullish";
       else if (macdData.MACD < macdData.Signal) macdSignal = "bearish";
-  
+
       // Combine signals
       let finalSignal = this.combineSignals(rsiSignal, macdSignal, sentimentScore);
-  
+
       // Explanation
       let explanation = `RSI is ${rsiData.RSI} suggesting ${rsiSignal}. MACD shows ${macdSignal}. ` +
-                        `FNG sentiment: ${fngValueClass}. Overall signal: ${finalSignal}.`;
-  
+        `FNG sentiment: ${fngValueClass}. Overall signal: ${finalSignal}.`;
+
       // Here you can do language-based formatting if needed
       results[symbol] = {
         signal: finalSignal,
         explanation
       };
     }
-  
+
     return JSON.stringify(results, null, 2);
   }
-  
+
 
   mapFngToSentimentScore(classification: string): number {
     // Example mapping
@@ -839,7 +1050,7 @@ export class BotAIService implements OnModuleInit {
     }
   }
 
-  combineSignals(rsiSignal: "buy"|"sell"|"hold", macdSignal: "bullish"|"bearish"|"neutral", sentiment: number): string {
+  combineSignals(rsiSignal: "buy" | "sell" | "hold", macdSignal: "bullish" | "bearish" | "neutral", sentiment: number): string {
     // Simple logic:
     // If RSI says buy and MACD is bullish, stronger buy. If sentiment is positive, "Strong Buy".
     // If RSI says sell and MACD is bearish, stronger sell. If sentiment is negative, "Strong Sell".
@@ -874,15 +1085,15 @@ export class BotAIService implements OnModuleInit {
     if (existingTranslation) {
       return existingTranslation;
     }
-  
+
     // Translation doesn't exist, request from ChatGPT
     const translatedText = await this.translateTextWithChatGPT(originalText, language);
-  
+
     // Save the translation to DB
     await this.dataRepository.saveTranslation(id, originalText, language, translatedText);
     return translatedText;
   }
-  
+
   private async translateTextWithChatGPT(originalText: string, language: string): Promise<string> {
     const prompt = `
   Translate the following text to ${language === 'fa' ? 'Persian' : language}:
@@ -895,7 +1106,7 @@ export class BotAIService implements OnModuleInit {
       ],
       model: 'gpt-4o-mini-2024-07-18',
     });
-  
+
     const translatedText = response.choices[0]?.message?.content?.trim();
     if (!translatedText) {
       this.logger.error(`Failed to fetch translation for text: "${originalText}"`);
@@ -904,7 +1115,7 @@ export class BotAIService implements OnModuleInit {
     this.logger.log(`New translation generated by ChatGPT for language: ${language}`);
     return translatedText;
   }
-  
+
 
   async getDynamicInterpretation(data: any, topic: string, symbol: string, date: string, language: string): Promise<string> {
     const additionalPrompt = `
@@ -913,61 +1124,61 @@ export class BotAIService implements OnModuleInit {
       Please include an explanation of what this ${topic} data implies in terms of market conditions and trading strategy.
        Answer in ${language}.
     `;
-  
+
     try {
       const response = await this.openai.chat.completions.create({
         messages: [
-          { role: "system", content: "You are a crypto assistant that provides insights based on given data and context. " +
-            "You must respond in the language specified by the user. If the user specifies Persian, respond in Persian. " +
-            "For English or other languages, respond accordingly."
-           },
+          {
+            role: "system", content: "You are a crypto assistant that provides insights based on given data and context. " +
+              "You must respond in the language specified by the user. If the user specifies Persian, respond in Persian. " +
+              "For English or other languages, respond accordingly."
+          },
           { role: "user", content: additionalPrompt }
         ],
         model: "gpt-4o-mini-2024-07-18",
       });
-  
+
       const detailedInterpretation = response.choices[0].message.content.trim();
-      this.conversationHistory.push({ role: 'assistant', content: detailedInterpretation });
       return detailedInterpretation;
     } catch (error) {
       console.error('Error fetching dynamic interpretation from ChatGPT:', error);
       return `Here is the raw ${topic} data: ${JSON.stringify(data)}`;
     }
   }
-  
-  
+
+
   // Fetch prices for multiple symbols
-async getCryptoPrices(symbols: string[], date: number): Promise<string> {
-  if (!symbols || symbols.length === 0) {
-    return "Please provide at least one cryptocurrency symbol.";
+  async getCryptoPrices(symbols: string[], date: number): Promise<string> {
+    if (!symbols || symbols.length === 0) {
+      return "Please provide at least one cryptocurrency symbol.";
+    }
+
+    console.log("symbols -- ", symbols);
+    // Fetch the latest price for each symbol
+    const prices = await Promise.all(
+      symbols.map(async (symbol) => {
+        const latestPrice = await this.dataRepository.getLatestPriceBySymbol(symbol, date);
+        if (latestPrice) {
+          return `${latestPrice.symbol}: ${latestPrice.price} USDT`;
+        } else {
+          return `${symbol}: Price not available.`;
+        }
+      })
+    );
+
+    // Combine all responses into a single message
+    return prices.join('\n');
   }
 
-  console.log("symbols -- ", symbols);
-  // Fetch the latest price for each symbol
-  const prices = await Promise.all(
-    symbols.map(async (symbol) => {
-      const latestPrice = await this.dataRepository.getLatestPriceBySymbol(symbol, date);
-      if (latestPrice) {
-        return `${latestPrice.symbol}: ${latestPrice.price} USDT`;
-      } else {
-        return `${symbol}: Price not available.`;
-      }
-    })
-  );
 
-  // Combine all responses into a single message
-  return prices.join('\n');
-}
-
- 
   async getFngForDate(date?: number): Promise<string> {
 
     // Convert the date to a timestamp or use date logic to match "today", "yesterday", etc.
     const targetDate = new Date(date).setHours(0, 0, 0, 0) / 1000; // Adjust for your timestamp format
-    
+
     // Retrieve the relevant FNG data based on the target date
     const fngData = await this.dataRepository.findFngByDate(date); // Fetch by date
-    
+
     if (fngData) {
       const formattedDate = new Date(fngData.timestamp * 1000).toLocaleDateString('fa-IR');
       return `The FNG index for ${formattedDate} was ${fngData.value} (${fngData.value_classification}).`;
@@ -975,7 +1186,7 @@ async getCryptoPrices(symbols: string[], date: number): Promise<string> {
       return `No FNG data found for ${date}.`;
     }
   }
-  
+
   async getCryptoPrice(symbol: string, date: number): Promise<string> {
     // Map common names to symbols
     const symbolMapping: { [key: string]: string } = {
@@ -1018,22 +1229,22 @@ async getCryptoPrices(symbols: string[], date: number): Promise<string> {
 
   // async getTopCryptosByVolatility(limit: number): Promise<string> {
   //   const MAX_LIMIT = 50; // Maximum allowed limit for results
-  
+
   //   // If the limit is 0 or greater than MAX_LIMIT, use MAX_LIMIT
   //   const finalLimit = limit === 0 || limit > MAX_LIMIT ? MAX_LIMIT : 10;
-  
+
   //   const topCryptos = await this.dataRepository.getTopCryptosByVolatility(finalLimit);
-  
+
   //   if (topCryptos.length === 0) {
   //     return 'No data available for top cryptocurrencies sorted by volatility.';
   //   }
-  
+
   //   // Append a message if the returned limit is MAX_LIMIT
   //   const limitMessage =
   //     finalLimit === MAX_LIMIT
   //       ? ` (Returning the top ${MAX_LIMIT} most volatile cryptocurrencies.)`
   //       : '';
-  
+
   //   return (
   //     `Top ${finalLimit} cryptocurrencies by volatility${limitMessage}:\n` +
   //     topCryptos
@@ -1045,12 +1256,12 @@ async getCryptoPrices(symbols: string[], date: number): Promise<string> {
   //   // Method to get the top cryptocurrencies by galaxy score
   //   async getTopCryptosByGalaxyScore(limit: number): Promise<string> {
   //     const MAX_LIMIT = 50; // Maximum allowed limit for results
-  
+
   //   // If the limit is 0 or greater than MAX_LIMIT, use MAX_LIMIT
   //   const finalLimit = limit === 0 || limit > MAX_LIMIT ? MAX_LIMIT : 10;
   //     const topCryptos = await this.dataRepository.getTopCryptosByGalaxyScore(finalLimit);
   //     if (topCryptos.length === 0) return 'No data available for top cryptocurrencies by galaxy score.';
-  
+
   //     return (
   //       `Top ${finalLimit} cryptocurrencies by social score:\n` +
   //       topCryptos
@@ -1061,39 +1272,39 @@ async getCryptoPrices(symbols: string[], date: number): Promise<string> {
   //         .join('\n')
   //     );
   //   }
-  
+
   //   // Method to get the top cryptocurrencies by alt rank
   //   async getTopCryptosByAltRank(limit: number): Promise<string> {
   //     const MAX_LIMIT = 50; // Maximum allowed limit for results
-  
+
   //   // If the limit is 0 or greater than MAX_LIMIT, use MAX_LIMIT
   //   const finalLimit = limit === 0 || limit > MAX_LIMIT ? MAX_LIMIT : 10;
   //     const topCryptos = await this.dataRepository.getTopCryptosByAltRank(finalLimit);
   //     if (topCryptos.length === 0) return 'No data available for top cryptocurrencies by alt rank.';
-  
-  
+
+
   //     return `Top ${finalLimit} altcoin cryptocurrencies \n` + 
   //            topCryptos.map((crypto, index) => `${index + 1}. ${crypto.symbol} - Rank Score: ${crypto.alt_rank}, Price:  ${parseFloat(crypto.price).toFixed(6)} USDT`).join('\n');
   //   }
   async getTopCryptosByAnySort(sort: string, limit: number, language: string): Promise<string> {
     // Check that the limit is sensible
     const MAX_LIMIT = 50;
-    const finalLimit = limit <= 0 || limit > MAX_LIMIT ? 10 : limit; 
-  
+    const finalLimit = limit <= 0 || limit > MAX_LIMIT ? 10 : limit;
+
     const coins = await this.dataRepository.getTopCoinsBySort(sort, finalLimit);
-    
+
     if (!coins || coins.length === 0) {
       return `No data available for sort "${sort}".`;
     }
-  
+
     // Format the coins into a readable response
     // You can later also prompt for `language` if you need to translate this output
     return coins
       .map((coin, index) => `${index + 1}. ${coin.symbol} (${coin.name}) - ${sort}: ${coin[sort as keyof typeof coin]}`)
       .join('\n');
   }
-  
-  
+
+
   async getRSIForDate(symbol: string, date: number) {
     const functionResponse = await this.dataRepository.getRSIBySymbolAndDate(symbol, date);
     return functionResponse
@@ -1101,7 +1312,7 @@ async getCryptoPrices(symbols: string[], date: number): Promise<string> {
       : `No RSI data found for ${symbol} on ${date}.`;
   }
 
-  
+
 
   private async generateErrorMessage(message: string, language: string): Promise<string> {
     // Use ChatGPT to translate the error message dynamically
@@ -1114,7 +1325,7 @@ async getCryptoPrices(symbols: string[], date: number): Promise<string> {
     });
     return response.choices[0].message.content.trim();
   }
-  
+
   async getTopCoinsBySort(sort: string, limit: number, language: string): Promise<string> {
 
     if (!this.validSorts.includes(sort)) {
@@ -1127,40 +1338,40 @@ async getCryptoPrices(symbols: string[], date: number): Promise<string> {
 
 
     const coins = await this.dataRepository.getTopCoinsBySort(sort, limit);
-  
+
     // If no coins are returned, handle the error message in the `lunarCrushService`.
     if (!coins || coins.length === 0) {
       return `No data available for sort "${sort}".`;
     }
-  
+
     // Format the coins into a readable response
     return coins.length > 0
       ? coins
-          .map(
-            (coin, index) =>
-              `${index + 1}. ${coin.symbol} (${coin.name}) - ${sort}: ${coin[sort as keyof typeof coin]}`
-          )
-          .join('\n')
+        .map(
+          (coin, index) =>
+            `${index + 1}. ${coin.symbol} (${coin.name}) - ${sort}: ${coin[sort as keyof typeof coin]}`
+        )
+        .join('\n')
       : 'No data available.';
   }
 
   async getTopCoinsByCategoryAndAnySort(category: string, sort: string, limit: number, language: string): Promise<string> {
     const MAX_LIMIT = 50;
     const finalLimit = limit <= 0 || limit > MAX_LIMIT ? 10 : limit;
-  
+
     const coins = await this.dataRepository.getTopCoinsByCategoryAndSort(category, sort, finalLimit);
-  
+
     if (!coins || coins.length === 0) {
       return `No data available for category "${category}" and sort "${sort}".`;
     }
-  
+
     // Format the coins into a readable response
     // Optionally, you could consider translating the output based on the `language` parameter later
     return coins
       .map((coin, index) => `${index + 1}. ${coin.symbol} (${coin.name}) - ${sort}: ${coin[sort as keyof typeof coin]}`)
       .join('\n');
   }
-  
+
 
   async getMACDForDate(symbol: string, date: number) {
     const functionResponse = await this.dataRepository.getMACDBySymbolAndDate(symbol, date);
@@ -1168,131 +1379,132 @@ async getCryptoPrices(symbols: string[], date: number): Promise<string> {
       return `The MACD data for ${symbol} on ${date}:\n- MACD: ${functionResponse.MACD}\n- Signal: ${functionResponse.Signal}\n- Histogram: ${functionResponse.Histogram}.`;
     } else {
       return `No MACD data found for ${symbol} on ${date}.`;
-    } }
+    }
+  }
 
 
-    async getRSIForMultipleSymbolsOnDate(symbols: string[], date: number, language: string): Promise<string> {
-      // TODO: Implement logic to fetch RSI for multiple symbols
-      // Example:
-      const results = await Promise.all(symbols.map(async (sym) => {
-        const data = await this.dataRepository.getRSIBySymbolAndDate(sym, date);
-        if (data && data.RSI) {
-          return `${sym}: RSI ${data.RSI}`;
-        } else {
-          return `${sym}: No RSI data.`;
-        }
-      }));
-      return results.join('\n');
-    }
-  
-    async getTopNRSICryptos(n: number, date: number, language: string): Promise<string> {
-      // TODO: Implement logic to fetch top N RSI cryptos
-      // Example (dummy):
-      const results = await this.dataRepository.getTopNByIndicator('RSI', n, date);
-      if (!results || results.length === 0) return 'No RSI data available.';
-      return results.map((r, i) => `${i+1}. ${r.symbol}: RSI ${r.RSI}`).join('\n');
-    }
-  
-    async getMACDForMultipleSymbolsOnDate(symbols: string[], date: number, language: string): Promise<string> {
-      // TODO: Implement logic to fetch MACD for multiple symbols
-      const results = await Promise.all(symbols.map(async (sym) => {
-        const data = await this.dataRepository.getMACDBySymbolAndDate(sym, date);
-        if (data) {
-          return `${sym}: MACD: ${data.MACD}, Signal: ${data.Signal}, Histogram: ${data.Histogram}`;
-        } else {
-          return `${sym}: No MACD data.`;
-        }
-      }));
-      return results.join('\n');
-    }
-  
-    async getTopNMACDCryptos(n: number, date: number, language: string): Promise<string> {
-      // TODO: Implement logic to fetch top N MACD cryptos
-      const results = await this.dataRepository.getTopNByIndicator('MACD', n, date);
-      if (!results || results.length === 0) return 'No MACD data available.';
-      return results.map((r, i) => `${i+1}. ${r.symbol}: MACD ${r.MACD}`).join('\n');
-    }
-  
-
-    private getSentimentIcon(sentiment: number): string {
-      if (sentiment >= 4) {
-        return '🟢'; // Positive sentiment
-      } else if (sentiment >= 2.5) {
-        return '🟡'; // Neutral sentiment
+  async getRSIForMultipleSymbolsOnDate(symbols: string[], date: number, language: string): Promise<string> {
+    // TODO: Implement logic to fetch RSI for multiple symbols
+    // Example:
+    const results = await Promise.all(symbols.map(async (sym) => {
+      const data = await this.dataRepository.getRSIBySymbolAndDate(sym, date);
+      if (data && data.RSI) {
+        return `${sym}: RSI ${data.RSI}`;
       } else {
-        return '🔴'; // Negative sentiment
+        return `${sym}: No RSI data.`;
       }
+    }));
+    return results.join('\n');
+  }
+
+  async getTopNRSICryptos(n: number, date: number, language: string): Promise<string> {
+    // TODO: Implement logic to fetch top N RSI cryptos
+    // Example (dummy):
+    const results = await this.dataRepository.getTopNByIndicator('RSI', n, date);
+    if (!results || results.length === 0) return 'No RSI data available.';
+    return results.map((r, i) => `${i + 1}. ${r.symbol}: RSI ${r.RSI}`).join('\n');
+  }
+
+  async getMACDForMultipleSymbolsOnDate(symbols: string[], date: number, language: string): Promise<string> {
+    // TODO: Implement logic to fetch MACD for multiple symbols
+    const results = await Promise.all(symbols.map(async (sym) => {
+      const data = await this.dataRepository.getMACDBySymbolAndDate(sym, date);
+      if (data) {
+        return `${sym}: MACD: ${data.MACD}, Signal: ${data.Signal}, Histogram: ${data.Histogram}`;
+      } else {
+        return `${sym}: No MACD data.`;
+      }
+    }));
+    return results.join('\n');
+  }
+
+  async getTopNMACDCryptos(n: number, date: number, language: string): Promise<string> {
+    // TODO: Implement logic to fetch top N MACD cryptos
+    const results = await this.dataRepository.getTopNByIndicator('MACD', n, date);
+    if (!results || results.length === 0) return 'No MACD data available.';
+    return results.map((r, i) => `${i + 1}. ${r.symbol}: MACD ${r.MACD}`).join('\n');
+  }
+
+
+  private getSentimentIcon(sentiment: number): string {
+    if (sentiment >= 4) {
+      return '🟢'; // Positive sentiment
+    } else if (sentiment >= 2.5) {
+      return '🟡'; // Neutral sentiment
+    } else {
+      return '🔴'; // Negative sentiment
     }
-    
-    private getSentimentTitle(sentiment: number): string {
-      if (sentiment >= 4) return 'Positive';
-      else if (sentiment >= 2.5) return 'Neutral';
-      else return 'Negative';
-    }
-    
-    private async formatNewsResponse(
-      news: any[],
-      language: string,
-    ): Promise<string> {
-      if (!news || news.length === 0) return 'No news found.';
-    
-      const formattedNews = await Promise.all(
-        news.map(async (item, index) => {
-          const source = item.id.split('-')[0];
-          const sentimentIcon = this.getSentimentIcon(item.post_sentiment);
-          const sentimentTitle = this.getSentimentTitle(item.post_sentiment);
-    
-          const translatedTitle = language === 'en'
-            ? item.post_title
-            : await this.getTranslatedText(item.id, item.post_title, language);
-    
-          return `
+  }
+
+  private getSentimentTitle(sentiment: number): string {
+    if (sentiment >= 4) return 'Positive';
+    else if (sentiment >= 2.5) return 'Neutral';
+    else return 'Negative';
+  }
+
+  private async formatNewsResponse(
+    news: any[],
+    language: string,
+  ): Promise<string> {
+    if (!news || news.length === 0) return 'No news found.';
+
+    const formattedNews = await Promise.all(
+      news.map(async (item, index) => {
+        const source = item.id.split('-')[0];
+        const sentimentIcon = this.getSentimentIcon(item.post_sentiment);
+        const sentimentTitle = this.getSentimentTitle(item.post_sentiment);
+
+        const translatedTitle = language === 'en'
+          ? item.post_title
+          : await this.getTranslatedText(item.id, item.post_title, language);
+
+        return `
     ${index + 1}. ${translatedTitle} ${sentimentIcon} (${sentimentTitle}, ${item.post_sentiment})
     🔗 (${item.post_link})
     📰 Source: ${source}`;
-        }),
-      );
-    
-      return `📢 Latest Crypto News\n${formattedNews.join('\n')}`;
-    }
-    
+      }),
+    );
 
-    // private formatNewsResponse(news: any[], defaultLimit: number = 5): string {
-    //   if (!news || news.length === 0) return 'No news found.';
-    
-    //   const limit = Math.min(news.length, defaultLimit);
-    //   const formattedNews = news.slice(0, limit).map((item, index) => {
-    //     // Extract source from id (split at first '-')
-    //     const source = item.id.split('-')[0];
-    
-    //     // Sentiment
-    //     const sentimentIcon = this.getSentimentIcon(item.post_sentiment);
-    //     const sentimentTitle = this.getSentimentTitle(item.post_sentiment);
-    
-    //     // Prepare the message
-    //     return `
-    // ${index + 1}. ${item.post_title} ${sentimentIcon} (${sentimentTitle}, ${item.post_sentiment})
-    // 🔗 [Read More](${item.post_link})
-    // 📰 Source: ${source}`;
-    //   });
-    
-    //   return `📢 Latest Crypto News\n${formattedNews.join('\n')}`;
-    // }
-    
-    async getHighSentimentNews(n = 5, language: string): Promise<string> {
-      const results = await this.dataRepository.getNewsWithHighSentiment(n);
-    
-      if (!results || results.length === 0) {
-        return language === 'fa'
-          ? 'هیچ خبری با احساس مثبت بالا پیدا نشد.'
-          : 'No news found with high sentiment.';
-      }
-    
-      return await this.formatNewsResponse(results, language);
+    return `📢 Latest Crypto News\n${formattedNews.join('\n')}`;
+  }
+
+
+  // private formatNewsResponse(news: any[], defaultLimit: number = 5): string {
+  //   if (!news || news.length === 0) return 'No news found.';
+
+  //   const limit = Math.min(news.length, defaultLimit);
+  //   const formattedNews = news.slice(0, limit).map((item, index) => {
+  //     // Extract source from id (split at first '-')
+  //     const source = item.id.split('-')[0];
+
+  //     // Sentiment
+  //     const sentimentIcon = this.getSentimentIcon(item.post_sentiment);
+  //     const sentimentTitle = this.getSentimentTitle(item.post_sentiment);
+
+  //     // Prepare the message
+  //     return `
+  // ${index + 1}. ${item.post_title} ${sentimentIcon} (${sentimentTitle}, ${item.post_sentiment})
+  // 🔗 [Read More](${item.post_link})
+  // 📰 Source: ${source}`;
+  //   });
+
+  //   return `📢 Latest Crypto News\n${formattedNews.join('\n')}`;
+  // }
+
+  async getHighSentimentNews(n = 5, language: string): Promise<string> {
+    const results = await this.dataRepository.getNewsWithHighSentiment(n);
+
+    if (!results || results.length === 0) {
+      return language === 'fa'
+        ? 'هیچ خبری با احساس مثبت بالا پیدا نشد.'
+        : 'No news found with high sentiment.';
     }
-    
-    
-    
+
+    return await this.formatNewsResponse(results, language);
+  }
+
+
+
 
   async onModuleInit() {
     const me = await this.bot.getMe();
@@ -1303,18 +1515,50 @@ async getCryptoPrices(symbols: string[], date: number): Promise<string> {
       const chatId = msg.chat.id;
       const text = msg.text?.toLowerCase();
 
-      // // Detect "/fng" command or keywords related to FNG
-      // if (text === '/fng' || text.includes('fear and greed') || text.includes('شاخص ترس و طمع')) {
-      //   const chatGptResponse = await this.getFngResponseWithChatGpt();
-      //   await this.bot.sendMessage(chatId, chatGptResponse);
-      //   return;
-      // }
+      // Extract user info from the Telegram message
+      console.log('start');
+      const telegramID = msg.from?.id?.toString();
+      const telegramUserName = msg.from?.username || 'Unknown';
+      const telegramFirstName = msg.from?.first_name || '';
+      const telegramLastName = msg.from?.last_name || '';
+      const telegramLanCode = msg.from?.language_code || 'en';
+
+      // If no Telegram ID is found, log an error and skip processing
+      if (!telegramID) {
+        this.logger.error('Missing Telegram ID in message.');
+        return;
+      }
+      console.log('telegramID :', telegramID);
+      // Save the Telegram ID locally for chat saving
+      this.currentTelegramId = telegramID;
+
+      // Register or login the user
+      const userInsertDto = {
+        telegramID,
+        mobile: '',
+        chatId: chatId,
+        telegramUserName,
+        telegramFirstName,
+        telegramLastName,
+        telegramLanCode,
+        clientSecret: process.env.NEXT_PUBLIC_APP_SECRET, // Add this to .env if not already present
+      };
+
+      try {
+        const { token, isNewToken, userId } = await this.iamService.registerOrLogin(userInsertDto);
+        this.logger.log(
+          `User ${isNewToken ? 'registered' : 'logged in'} successfully with userId: ${userId}. Token: ${token}`
+        );
+      } catch (error) {
+        this.logger.error('Error during user registration/login:', error.message);
+        return;
+      }
 
       // Handle help command
       if (msg.text === '/help') {
         const inlineKeyboard = this.prompts.map((prompt, index) => [{
-          text: prompt.length > 150 
-            ? `${prompt.slice(0, 147)}...` 
+          text: prompt.length > 150
+            ? `${prompt.slice(0, 147)}...`
             : prompt,
           callback_data: `prompt_${index}`
         }]);
@@ -1330,9 +1574,41 @@ async getCryptoPrices(symbols: string[], date: number): Promise<string> {
       // General message handling
       if (msg.text) {
         this.logger.log('Received text message:', msg.text);
-        let responseText = await this.getChatGptResponse(msg.text);
+        //check balance 
+        // Get the last ask for this user (if any)
+  const lastAsk = this.userLastAsk[chatId] || null;
 
-        this.bot.sendMessage(chatId, responseText).catch((err) => {
+  // Update the last ask to the current one for the next iteration
+  this.userLastAsk[chatId] = text;
+
+  // Create a prompt with only the last and current asks
+  const prompt = `
+    The user asked this previously: "${lastAsk || 'None'}".
+    The user is now asking: "${text}".
+    Based on this, please infer the user's intent and provide a relevant response.
+  `;
+
+        let responseText = await this.getChatGptResponse(prompt);
+        //reduce balance by response lenth 
+        // Save user chat log
+        const chatLog: UserChatLogDto = {
+          telegramId: this.currentTelegramId,
+          query: text,
+          response: responseText.responseText,
+          queryType: responseText.queryType,
+          newParameters: responseText.newParameters || [],
+          save_at: Math.floor(Date.now() / 1000),
+        };
+
+        try {
+          await this.dataRepository.saveUserChatLog(chatLog);
+          this.logger.log('User chat log saved successfully.');
+        } catch (error) {
+          this.logger.error('Failed to save user chat log:', error);
+        }
+
+
+        this.bot.sendMessage(chatId, responseText.responseText).catch((err) => {
           this.logger.error('Failed to send message', err);
         });
       }

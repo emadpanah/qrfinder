@@ -12,6 +12,7 @@ import { AuthService } from './auth.service';
 import { TokenExpiredError } from 'jsonwebtoken';
 import axios, { AxiosInstance } from 'axios';
 import { getOS } from 'mongodb-memory-server-core/lib/util/getos';
+import { Chat } from 'openai/resources';
 
 @Injectable()
 export class IamService {
@@ -45,6 +46,8 @@ export class IamService {
     dto: UserInsertDto,
   ): Promise<{ token: string; isNewToken: boolean; userId: string }> {
     try {
+      console.log('registering started ');
+      
       if (process.env.NEXT_PUBLIC_APP_SECRET !== dto.clientSecret) {
         throw new UnauthorizedException();
       }
@@ -55,15 +58,15 @@ export class IamService {
       if (user) {
         // User exists, check if there is a valid token
         if (
-          user.chatId != dto.chatId ||
           user.telegramUserName != dto.telegramUserName
         ) {
           await this.iamRepository
-            .updateUser(user.telegramID, dto.chatId, dto.telegramUserName)
+            .updateUser(user.telegramID, dto.telegramUserName)
             .then((newuser) => {
               user = newuser;
             });
         }
+        console.log('user - last login repo ');
         const existingLoginInfo =
           await this.userLoginRepository.findLatestLoginByUserId(user._id);
         console.log('latestlogin - ', existingLoginInfo);
@@ -79,8 +82,8 @@ export class IamService {
           } catch (error) {
             if (error instanceof TokenExpiredError) {
               // Generate a new token if the existing one is expired
-              const newToken = await this.authService.generateJwt(dto._id);
-              await this.userLoginRepository.createLogin(dto._id, newToken);
+              const newToken = await this.authService.generateJwt(user._id);
+              await this.userLoginRepository.createLogin(user._id, newToken, dto.chatId);
               return { token: newToken, isNewToken: true, userId: user._id };
             } else {
               throw error; // Re-throw the error if it's not a TokenExpiredError
@@ -89,8 +92,10 @@ export class IamService {
         }
 
         // Generate a new token if no valid token exists
-        const newToken = await this.authService.generateJwt(dto._id);
-        await this.userLoginRepository.createLogin(dto._id, newToken);
+        console.log('Generate a new token', user._id);
+        const newToken = await this.authService.generateJwt(user._id);
+        console.log('Generate a new token', newToken);
+        await this.userLoginRepository.createLogin(user._id, newToken, dto.chatId);
         return { token: newToken, isNewToken: true, userId: user._id };
       }
 
@@ -98,8 +103,8 @@ export class IamService {
       const newUser = await this.iamRepository.createUser(dto);
 
       // Generate a new token for the new user
-      const token = await this.authService.generateJwt(dto._id);
-      await this.userLoginRepository.createLogin(newUser._id, token);
+      const token = await this.authService.generateJwt(newUser._id);
+      await this.userLoginRepository.createLogin(newUser._id, token, dto.chatId);
 
       return { token: token, isNewToken: true, userId: newUser._id };
     } catch (error) {

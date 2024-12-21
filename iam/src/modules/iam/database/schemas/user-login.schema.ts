@@ -18,6 +18,9 @@ export class UserLogin {
   @Prop({ type: String, required: false }) 
   shopToken: string;
 
+  @Prop({ type: String, required: false })
+  chatId: string;
+
 }
 
 export const UserLoginSchema = SchemaFactory.createForClass(UserLogin);

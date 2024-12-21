@@ -10,18 +10,17 @@ export class IamRepository {
 
   async createUser(dto: UserInsertDto): Promise<any> {
     const collection = this.connection.collection('_iamusers');
-    const i = new Types.ObjectId();
+    
     await collection.insertOne({
-      _id: i,
       telegramID: dto.telegramID,
-      chatId: dto.chatId,
+      mobile: dto.mobile,
       telegramUserName: dto.telegramUserName,
       telegramFirstName: dto.telegramFirstName,
       telegramLastName: dto.telegramLastName,
       telegramLanCode: dto.telegramLanCode,
       createdDate: Date.now(),
     });
-    const user = await collection.findOne({ _id: i });
+    const user = await collection.findOne({ telegramID: dto.telegramID });
     if (!user) {
       // Handle the case where the agent is not found
       throw new Error('User insert not completed.');
@@ -32,14 +31,12 @@ export class IamRepository {
 
   async updateUser(
     telegramID: string,
-    chatId: string,
     username: string,
   ): Promise<any> {
     const collection = this.connection.collection('_iamusers');
     await collection.updateOne(
       { telegramID: telegramID },
       {
-        chatId: chatId,
         telegramUserName: username,
       },
     );

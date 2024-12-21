@@ -12,9 +12,16 @@ export class AuthService {
   ) {}
 
   async generateJwt(id: Types.ObjectId): Promise<string> {
-    return this.jwtService.sign({
-      sub: id,
-    });
+    const secret = this.configService.get<string>('JWT_SECRET');
+    console.log("sec : ",secret)
+    if (!secret) {
+      throw new Error('JWT_SECRET is not defined in the environment variables.');
+    }
+
+    return this.jwtService.sign(
+      { sub: id },
+      { secret } // Explicitly provide the secret
+    );
   }
 
   async verifyJwt(token: string): Promise<any> {
