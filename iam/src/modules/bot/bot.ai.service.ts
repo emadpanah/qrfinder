@@ -8,6 +8,7 @@ import { DominanceDto } from '../data/database/dto/dominance.dto';
 import { UserChatLogDto } from '../data/database/dto/userchatlog.dto';
 import { IamService } from '../iam/services/iam.service';
 import { Types } from 'mongoose';
+import { BalanceService } from '../iam/services/iam-balance.service';
 
 
 
@@ -20,6 +21,7 @@ export class BotAIService implements OnModuleInit {
   private openai = new OpenAI({ apiKey: this.apiKey });
   private botUsername: string;
   private currentTelegramId: string;
+  private userId: Types.ObjectId;
   private userLastAsk: Record<string, string> = {};
 
 
@@ -29,6 +31,7 @@ export class BotAIService implements OnModuleInit {
 
   constructor(
     private readonly iamService: IamService,
+    private readonly balanceService: BalanceService,
     private readonly dataRepository: DataRepository // Inject DataRepository
   ) {
     this.bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, { polling: true });
@@ -100,7 +103,7 @@ export class BotAIService implements OnModuleInit {
   //  politely ask them to select from the available options. ${datePrompt}`;}
 
 
-  async getChatGptResponse(prompt: string): Promise<{ responseText: string; queryType: string; newParameters?: string[] }> {
+  async getChatGptResponse(prompt: string): Promise<{ responseText: string; queryType: string; newParameters?: string[]; languague: string }> {
 
     let queryType = 'in-scope'; // Default to in-scope
     let newParameters: string[] = [];
@@ -162,7 +165,7 @@ export class BotAIService implements OnModuleInit {
             },
             language: {
               type: 'string',
-              description: 'The language of the user query, e.g. "en" or "fa".'
+              description: 'The language of the response, using ISO 639-1 codes (e.g., "en" for English, "fa" for Persian, "es" for Spanish, etc.).',
             }
           },
           required: ['symbols', 'language'],
@@ -184,7 +187,7 @@ export class BotAIService implements OnModuleInit {
             },
             language: {
               type: 'string',
-              description: 'The user query language, e.g. "en" or "fa".'
+              description: 'The language of the response, using ISO 639-1 codes (e.g., "en" for English, "fa" for Persian, "es" for Spanish, etc.).',
             }
           },
           required: ['n', 'language'],
@@ -205,7 +208,7 @@ export class BotAIService implements OnModuleInit {
             },
             language: {
               type: 'string',
-              description: 'The language of the user query, e.g., "en" for English, "fa" for Persian.',
+              description: 'The language of the response, using ISO 639-1 codes (e.g., "en" for English, "fa" for Persian, "es" for Spanish, etc.).',
             },
           },
           required: ['symbol', 'sort', 'language'],
@@ -231,7 +234,7 @@ export class BotAIService implements OnModuleInit {
             },
             language: {
               type: 'string',
-              description: 'The language of the user query, e.g., "en" for English, "fa" for Persian.',
+              description: 'The language of the response, using ISO 639-1 codes (e.g., "en" for English, "fa" for Persian, "es" for Spanish, etc.).',
             },
           },
           required: ['category', 'sort', 'language'],
@@ -253,7 +256,7 @@ export class BotAIService implements OnModuleInit {
             },
             language: {
               type: 'string',
-              description: 'The language of the user query, e.g., "en" for English, "fa" for Persian.',
+              description: 'The language of the response, using ISO 639-1 codes (e.g., "en" for English, "fa" for Persian, "es" for Spanish, etc.).',
             },
           },
           required: ['sort', 'language'],
@@ -275,7 +278,7 @@ export class BotAIService implements OnModuleInit {
             },
             language: {
               type: 'string',
-              description: 'The language of the user query, e.g., "en" for English, "fa" for Persian, etc.',
+              description: 'The language of the response, using ISO 639-1 codes (e.g., "en" for English, "fa" for Persian, "es" for Spanish, etc.).',
             },
           },
           required: ['symbol', 'language'],
@@ -301,7 +304,7 @@ export class BotAIService implements OnModuleInit {
             },
             language: {
               type: 'string',
-              description: 'The user query language, e.g. "en" or "fa".'
+              description: 'The language of the response, using ISO 639-1 codes (e.g., "en" for English, "fa" for Persian, "es" for Spanish, etc.).',
             }
           },
           required: ['symbols', 'language'],
@@ -323,7 +326,7 @@ export class BotAIService implements OnModuleInit {
             },
             language: {
               type: 'string',
-              description: 'The user query language, e.g. "en" or "fa".'
+              description: 'The language of the response, using ISO 639-1 codes (e.g., "en" for English, "fa" for Persian, "es" for Spanish, etc.).',
             }
           },
           required: ['n', 'language'],
@@ -363,7 +366,7 @@ export class BotAIService implements OnModuleInit {
             },
             language: {
               type: 'string',
-              description: 'The language of the user query, e.g., "en" for English, "fa" for Persian, etc.',
+              description: 'The language of the response, using ISO 639-1 codes (e.g., "en" for English, "fa" for Persian, "es" for Spanish, etc.).',
             },
           },
           required: ['symbol', 'language'],
@@ -386,7 +389,7 @@ export class BotAIService implements OnModuleInit {
             },
             language: {
               type: 'string',
-              description: 'The language of the user query, e.g., "en" for English, "fa" for Persian, etc.',
+              description: 'The language of the response, using ISO 639-1 codes (e.g., "en" for English, "fa" for Persian, "es" for Spanish, etc.).',
             },
           },
           required: ['symbols', 'language'],
@@ -408,7 +411,7 @@ export class BotAIService implements OnModuleInit {
             },
             language: {
               type: 'string',
-              description: 'The language of the user query, e.g., "en" for English, "fa" for Persian, etc.',
+              description: 'The language of the response, using ISO 639-1 codes (e.g., "en" for English, "fa" for Persian, "es" for Spanish, etc.).',
             },
           },
           required: ['limit', 'language'],
@@ -428,7 +431,7 @@ export class BotAIService implements OnModuleInit {
             },
             language: {
               type: 'string',
-              description: 'The language in which to provide the signals and explanations. For example: "en" for English, "fa" for Persian.',
+              description: 'The language of the response, using ISO 639-1 codes (e.g., "en" for English, "fa" for Persian, "es" for Spanish, etc.).',
             },
           },
           required: ['symbols', 'language'],
@@ -436,21 +439,21 @@ export class BotAIService implements OnModuleInit {
       },
       {
         name: 'handleOutOfScopeQuery',
-        description: 'Handles queries that are unrelated to the bot\'s scope (e.g., non-blockchain topics), unrelated topic, e.g., "medical", "general knowledge", "sports" . Logs the query for analysis and informs the user politely.',
+        description: 'Handles queries that are unrelated to the bot\'s scope (e.g., non-blockchain topics), unrelated topic, e.g., "medical", "general knowledge", "sports", etc. Logs the query for analysis and informs the user politely.',
         parameters: {
           type: 'object',
           properties: {
             language: {
               type: 'string',
-              description: 'The language in which the bot should respond. For example, "en" for English, "fa" for Persian.',
+              description: 'The language of the response, using ISO 639-1 codes (e.g., "en" for English, "fa" for Persian, "es" for Spanish, etc.).',
             },
             unrelatedTopic: {
               type: 'string',
-              description: 'The detected category of the unrelated topic, e.g., "medical", "general knowledge", "sports".',
+              description: 'The detected category of the unrelated topic, e.g., "medical", "general knowledge", "sports" , etc.',
             },
             unrelatedsubjuct: {
               type: 'string',
-              description: 'The detected subject of the unrelated topic, e.g., "trump", "cancer", "football".',
+              description: 'The detected subject of the unrelated topic, e.g., "trump", "cancer", "football", etc.',
             },
           },
           required: ['query', 'language', 'unrelatedTopic'],
@@ -468,7 +471,7 @@ export class BotAIService implements OnModuleInit {
             },
             language: {
               type: 'string',
-              description: 'The language of the response, e.g., "en" for English, "fa" for Persian.',
+              description: 'The language of the response, using ISO 639-1 codes (e.g., "en" for English, "fa" for Persian, "es" for Spanish, etc.).',
             }
           },
           required: ['language']
@@ -486,7 +489,7 @@ export class BotAIService implements OnModuleInit {
             },
             language: {
               type: 'string',
-              description: 'The language of the response, e.g., "en" for English, "fa" for Persian.',
+              description: 'The language of the response, using ISO 639-1 codes (e.g., "en" for English, "fa" for Persian, "es" for Spanish, etc.).',
             }
           },
           required: ['language']
@@ -508,7 +511,7 @@ export class BotAIService implements OnModuleInit {
             },
             language: {
               type: 'string',
-              description: 'The language of the response, e.g., "en" for English, "fa" for Persian.',
+              description: 'The language of the response, using ISO 639-1 codes (e.g., "en" for English, "fa" for Persian, "es" for Spanish, etc.).',
             }
           },
           required: ['title', 'language']
@@ -526,7 +529,7 @@ export class BotAIService implements OnModuleInit {
             },
             language: {
               type: 'string',
-              description: 'The language of the response, e.g., "en" for English, "fa" for Persian.',
+              description: 'The language of the response, using ISO 639-1 codes (e.g., "en" for English, "fa" for Persian, "es" for Spanish, etc.).',
             },
           },
           required: ['language'],
@@ -621,6 +624,7 @@ export class BotAIService implements OnModuleInit {
                 responseText: errorMsg,
                 queryType,
                 newParameters,
+                languague: language,
               };
             }
 
@@ -631,6 +635,7 @@ export class BotAIService implements OnModuleInit {
                 responseText: errorMsg,
                 queryType,
                 newParameters,
+                languague: language,
               };
             }
 
@@ -639,6 +644,7 @@ export class BotAIService implements OnModuleInit {
               responseText: response,
               queryType,
               newParameters,
+              languague: language,
             };
           }
 
@@ -655,6 +661,7 @@ export class BotAIService implements OnModuleInit {
                 responseText: errorMsg,
                 queryType,
                 newParameters,
+                languague: language,
               };
             }
 
@@ -664,6 +671,7 @@ export class BotAIService implements OnModuleInit {
               responseText: response,
               queryType,
               newParameters,
+              languague: language,
             };
           }
 
@@ -674,7 +682,7 @@ export class BotAIService implements OnModuleInit {
             const response = await this.generateDynamicPoliteResponse(unrelatedTopic, language);
 
             const newParameters = [
-              unrelatedTopic,unrelatedSubjuct
+              unrelatedTopic, unrelatedSubjuct
             ];
             // Return the response to the user
             queryType = 'out-of-scope';
@@ -682,6 +690,7 @@ export class BotAIService implements OnModuleInit {
               responseText: response,
               queryType,
               newParameters,
+              languague: language,
             };
           }
 
@@ -712,17 +721,19 @@ export class BotAIService implements OnModuleInit {
               responseText: aiResponse,
               queryType,
               newParameters,
+              languague: parameters.language,
             };
           }
 
           case 'getMACDForDate':
-            const ddd = parameters.date || new Date().toISOString().split('T')[0];  
+            const ddd = parameters.date || new Date().toISOString().split('T')[0];
             const timestamp2 = new Date(ddd).getTime() / 1000;
             functionResponse = await this.getMACDForDate(parameters.symbol, timestamp2);
             return {
               responseText: await this.getDynamicInterpretation(functionResponse, 'MACD', parameters.symbol, parameters.date, parameters.language),
               queryType,
               newParameters,
+              languague: parameters.language,
             };
 
           case 'getFngForDate':
@@ -733,6 +744,7 @@ export class BotAIService implements OnModuleInit {
               responseText: await this.getDynamicInterpretation(functionResponse, 'FNG', "", parameters.timestamp, parameters.language),
               queryType,
               newParameters,
+              languague: parameters.language,
             };
 
           case 'getCryptoPrice':
@@ -743,6 +755,7 @@ export class BotAIService implements OnModuleInit {
               responseText: await this.getDynamicInterpretation(functionResponse, 'Crypto Price', parameters.symbol, parameters.date, parameters.language),
               queryType,
               newParameters,
+              languague: parameters.language,
             };
 
 
@@ -752,6 +765,7 @@ export class BotAIService implements OnModuleInit {
               responseText: functionResponse,
               queryType,
               newParameters,
+              languague: parameters.language,
             };
           }
 
@@ -762,6 +776,7 @@ export class BotAIService implements OnModuleInit {
               responseText: functionResponse,
               queryType,
               newParameters,
+              languague: parameters.language,
             };
           }
 
@@ -774,6 +789,7 @@ export class BotAIService implements OnModuleInit {
               responseText: functionResponse,
               queryType,
               newParameters,
+              languague: parameters.language,
             };
           }
 
@@ -786,6 +802,7 @@ export class BotAIService implements OnModuleInit {
               responseText: functionResponse,
               queryType,
               newParameters,
+              languague: parameters.language,
             };
           }
 
@@ -799,6 +816,7 @@ export class BotAIService implements OnModuleInit {
               responseText: functionResponse,
               queryType,
               newParameters,
+              languague: parameters.language,
             };
           }
 
@@ -811,6 +829,7 @@ export class BotAIService implements OnModuleInit {
               responseText: functionResponse,
               queryType,
               newParameters,
+              languague: parameters.language,
             };
           }
 
@@ -820,6 +839,7 @@ export class BotAIService implements OnModuleInit {
               responseText: functionResponse,
               queryType,
               newParameters,
+              languague: parameters.language,
             };
 
           case 'getSortForSymbol': {
@@ -832,6 +852,7 @@ export class BotAIService implements OnModuleInit {
                 responseText: errorMsg,
                 queryType,
                 newParameters,
+                languague: parameters.language,
               };
             }
 
@@ -843,6 +864,7 @@ export class BotAIService implements OnModuleInit {
                 responseText: errorMas,
                 queryType,
                 newParameters,
+                languague: parameters.language,
               };
             }
 
@@ -851,6 +873,7 @@ export class BotAIService implements OnModuleInit {
               responseText: err,
               queryType,
               newParameters,
+              languague: parameters.language,
             };
           }
 
@@ -862,6 +885,7 @@ export class BotAIService implements OnModuleInit {
               responseText: await this.formatNewsResponse(news, language),
               queryType,
               newParameters,
+              languague: parameters.language,
             };
           }
 
@@ -872,6 +896,7 @@ export class BotAIService implements OnModuleInit {
               responseText: await this.formatNewsResponse(news, language),
               queryType,
               newParameters,
+              languague: parameters.language,
             };
           }
 
@@ -882,6 +907,7 @@ export class BotAIService implements OnModuleInit {
               responseText: await this.formatNewsResponse(news, language),
               queryType,
               newParameters,
+              languague: parameters.language,
             };
           }
 
@@ -893,6 +919,7 @@ export class BotAIService implements OnModuleInit {
               responseText: response,
               queryType,
               newParameters,
+              languague: parameters.language,
             };
           }
 
@@ -900,7 +927,7 @@ export class BotAIService implements OnModuleInit {
           default:
             {
               queryType = 'out-of-scope';
-              return { responseText: 'Requested function is not available.', queryType };
+              return { responseText: 'Requested function is not available.', queryType, languague: "en" };
             }
         }
       }
@@ -909,16 +936,16 @@ export class BotAIService implements OnModuleInit {
 
         if (responseMessage) {
           this.logger.log(`Response from ChatGPT: ${responseMessage}`);
-          return { responseText: responseMessage || 'Invalid response from ChatGPT.', queryType };
+          return { responseText: responseMessage || 'Invalid response from ChatGPT.', queryType, languague: "en" };
 
         } else {
           this.logger.error('Received an empty response from ChatGPT', { stream });
-          return { responseText: 'Sorry, I didn’t receive a valid response from ChatGPT. Please try again.', queryType };
+          return { responseText: 'Sorry, I didn’t receive a valid response from ChatGPT. Please try again.', queryType, languague: "en" };
         }
       }
     } catch (error) {
       console.error('Error fetching response from ChatGPT:', error);
-      return { responseText: 'Error fetching response from ChatGPT.', queryType };
+      return { responseText: 'Error fetching response from ChatGPT.', queryType, languague: "en" };
 
     }
   }
@@ -1096,7 +1123,7 @@ export class BotAIService implements OnModuleInit {
 
   private async translateTextWithChatGPT(originalText: string, language: string): Promise<string> {
     const prompt = `
-  Translate the following text to ${language === 'fa' ? 'Persian' : language}:
+  Translate the following text to ${language}:
   "${originalText}"
     `;
     const response = await this.openai.chat.completions.create({
@@ -1546,6 +1573,7 @@ export class BotAIService implements OnModuleInit {
 
       try {
         const { token, isNewToken, userId } = await this.iamService.registerOrLogin(userInsertDto);
+        this.userId = new Types.ObjectId(userId);
         this.logger.log(
           `User ${isNewToken ? 'registered' : 'logged in'} successfully with userId: ${userId}. Token: ${token}`
         );
@@ -1576,19 +1604,65 @@ export class BotAIService implements OnModuleInit {
         this.logger.log('Received text message:', msg.text);
         //check balance 
         // Get the last ask for this user (if any)
-  const lastAsk = this.userLastAsk[chatId] || null;
+        const lastAsk = this.userLastAsk[chatId] || null;
 
-  // Update the last ask to the current one for the next iteration
-  this.userLastAsk[chatId] = text;
+        // Update the last ask to the current one for the next iteration
+        this.userLastAsk[chatId] = text;
 
-  // Create a prompt with only the last and current asks
-  const prompt = `
+
+        const cur = await this.balanceService.getCurrencyByName('Toman');
+        const userBalance = await this.balanceService.getUserBalance(this.userId, cur._id);
+        console.log("userBalance", userBalance);
+        // Check user balance
+        if (userBalance < 500) {
+          await this.bot.sendMessage(chatId, 'Insufficient balance for this request. Please recharge to continue.');
+          return;
+        }
+
+        // Create a prompt with only the last and current asks
+        const prompt = `
     The user asked this previously: "${lastAsk || 'None'}".
     The user is now asking: "${text}".
-    Based on this, please infer the user's intent and provide a relevant response.
+    Based on this, please infer the user's intent and provide a 
+    relevant response in detected user's language.
   `;
 
         let responseText = await this.getChatGptResponse(prompt);
+
+        // Calculate token counts for prompt and response
+        const inputTokens = Math.ceil(prompt.length / 4); // Approx 4 chars per token
+        const outputTokens = Math.ceil(responseText.responseText.length / 4);
+
+        // Calculate costs in USD
+        const inputCost = (inputTokens / 1_000_000) * 0.15; // $0.15 per 1M tokens
+        const outputCost = (outputTokens / 1_000_000) * 0.60; // $0.60 per 1M tokens
+
+        const totalCost = inputCost + outputCost; // Total cost in USD
+
+        // Convert to IRT
+        const conversionRateToIRT = 130_000; // Example conversion rate
+        const totalCostInIRT = Math.ceil(totalCost * conversionRateToIRT);
+
+        // Check user balance
+        if (userBalance < totalCostInIRT) {
+          await this.bot.sendMessage(chatId, 'Insufficient balance for this request. Please recharge to continue.');
+          return;
+        }
+
+        //Deduct the cost
+        const remainingBalance = userBalance - totalCostInIRT;
+        await this.balanceService.addTransaction({
+          userId: this.userId,
+          transactionType: 'payment',
+          amount: -totalCostInIRT,
+          currency: cur._id,
+          transactionEntityId: new Types.ObjectId().toString(), // Generate a unique ID for this transaction
+          balanceAfterTransaction: remainingBalance,
+          timestamp: Math.floor(Date.now() / 1000),
+          _id: new Types.ObjectId()
+        });
+        //const timestamp1 = new Date(effectiveDate).getTime() / 1000;
+
         //reduce balance by response lenth 
         // Save user chat log
         const chatLog: UserChatLogDto = {

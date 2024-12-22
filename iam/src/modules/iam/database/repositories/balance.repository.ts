@@ -9,7 +9,7 @@ export class BalanceRepository {
 
   async addTransaction(dto: BalanceDto): Promise<any> {
     try {
-      console.log("BalanceDto---------------", dto);
+      //console.log("BalanceDto---------------", dto);
       const collection = this.connection.collection('_iambalances');
   
       // Insert transaction

@@ -14,6 +14,7 @@ import { LunarCrushData } from '../schema/lunarcrush.schema';
 import { LunarCrushPublicCoinDto } from '../dto/lunarcrush.dto';
 import { LunarCrushNewsDto } from '../dto/lunarcrush-news.dto';
 import { UserChatLogDto } from '../dto/userchatlog.dto';
+import { ADXData } from '../schema/adx.schema';
 
 @Injectable()
 export class DataRepository {
@@ -548,6 +549,33 @@ async getChatHistory(telegramId: string, limit: number = 20): Promise<UserChatLo
     queryType: result.queryType as 'in-scope' | 'out-of-scope',
     save_at: result.save_at as number,
   }));
+}
+
+async createADXData(adxData: Partial<ADXData>): Promise<void> {
+  const collection = this.connection.collection('_adxdata');
+  await collection.insertOne(adxData);
+}
+
+async getADXBySymbolAndDate(symbol: string, date?: number): Promise<ADXData | null> {
+  const collection = this.connection.collection('_adxdata');
+
+  const query: Record<string, any> = { symbol };
+  if (date) {
+    query.time = { $lte: date };
+  }
+
+  const result = await collection
+    .find(query)
+    .sort({ time: -1 })
+    .limit(1)
+    .toArray();
+
+  if (result.length > 0) {
+    const { symbol, status, adx_value, price, time } = result[0];
+    return { symbol, status, adx_value, price, time };
+  }
+
+  return null;
 }
 
 async saveTranslation(

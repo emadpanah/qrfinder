@@ -36,3 +36,4 @@ export class BalanceDto {
   balanceAfterTransaction: number;
   
 }
+

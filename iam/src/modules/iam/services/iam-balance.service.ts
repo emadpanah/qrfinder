@@ -23,7 +23,7 @@ export class BalanceService {
     return this.currencyRepository.findAllCurrencies();
   }
 
-  async getCurrencyByName(name : string): Promise<Currency> {
+  async getCurrencyByName(name : string): Promise<CurrencyDto> {
     return this.currencyRepository.findCurrencyByName(name);
   }
 

@@ -8,6 +8,7 @@ import { DominanceDto } from '../database/dto/dominance.dto';
 import { ST1Dto } from '../database/dto/st1.dto';
 import * as TelegramBot from 'node-telegram-bot-api';
 import { LunarCrushService } from '../service/lunar.service';
+import { ADXDto } from '../database/dto/adx.dto';
 
 @Controller('data')
 export class DataController {
@@ -40,6 +41,12 @@ export class DataController {
     return { message: 'MACD data received and saved successfully' };
   }
 
+  @Post('ADXticker')
+async adxTicker(@Body() adxData: ADXDto) {
+  console.log('Received ADX Data:', adxData);
+  await this.dataService.saveADXData(adxData);
+  return { message: 'ADX data received and saved successfully' };
+}
   
 @Post('ST1')
 async st1Ticker(@Body() st1Data: ST1Dto) {

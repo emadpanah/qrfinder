@@ -9,6 +9,8 @@ import { RSIData } from '../database/schema/rsi.schema';
 import { MACDData } from '../database/schema/macd.schema';
 import { DominanceDto } from '../database/dto/dominance.dto';
 import { ST1Dto } from '../database/dto/st1.dto';
+import { ADXDto } from '../database/dto/adx.dto';
+import { ADXData } from '../database/schema/adx.schema';
 
 @Injectable()
 export class DataService {
@@ -90,6 +92,22 @@ export class DataService {
   async getDominanceData(symbol: string, date: number): Promise<DominanceDto | null> {
     const timestamp = new Date(date).getTime() / 1000;
     return await this.dataRepository.getDominanceBySymbolAndDate(symbol, timestamp);
+  }
+
+  async saveADXData(adxData: ADXDto): Promise<void> {
+    const timestamp = new Date(adxData.time).getTime() / 1000;
+    const formattedData = {
+      symbol: adxData.symbol,
+      status: adxData.status,
+      adx_value: adxData.adx_value,
+      price: adxData.price,
+      time: timestamp,
+    };
+    await this.dataRepository.createADXData(formattedData);
+  }
+  
+  async getADXBySymbolAndDate(symbol: string, date?: number): Promise<ADXData | null> {
+    return await this.dataRepository.getADXBySymbolAndDate(symbol, date);
   }
 
 }
