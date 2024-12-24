@@ -128,7 +128,7 @@ export class DataRepository {
     async updateST1IsDone(id: string, isDone: boolean): Promise<void> {
       const collection = this.connection.collection(this.st1CollectionName);
       const objectId = new ObjectId(id);
-      await collection.updateOne({ _id: objectId }, { $set: { isDone } });
+      await collection.updateOne({ _id: objectId as any }, { $set: { isDone } });
     }
     
 
@@ -361,6 +361,47 @@ export class DataRepository {
     };
   }
   
+  async getAllSortsForSymbol(symbol: string): Promise<Record<string, any>> {
+    const transformedSymbol = symbol.replace(/USDT$/, ''); // Remove 'USDT' from the symbol
+    const collection = this.connection.collection(this.lunarPubCoinCollectionName);
+    console.log("symbol : ", transformedSymbol);
+    const results = await collection
+      .find({ symbol: transformedSymbol.toUpperCase() }) // Use transformed symbol
+      .sort({ fetched_at: -1 })
+      .limit(1)
+      .toArray();
+  
+    if (results.length === 0) {
+      return {};
+    }
+  
+    const data = results[0];
+    return {
+      price: data.price || 0,
+      volume_24h: data.volume_24h || 0,
+      volatility: data.volatility || 0,
+      circulating_supply: data.circulating_supply || 0,
+      max_supply: data.max_supply || 0,
+      percent_change_1h: data.percent_change_1h || 0,
+      percent_change_24h: data.percent_change_24h || 0,
+      percent_change_7d: data.percent_change_7d || 0,
+      percent_change_30d: data.percent_change_30d || 0,
+      market_cap: data.market_cap || 0,
+      market_cap_rank: data.market_cap_rank || 0,
+      interactions_24h: data.interactions_24h || 0,
+      social_volume_24h: data.social_volume_24h || 0,
+      social_dominance: data.social_dominance || 0,
+      market_dominance: data.market_dominance || 0,
+      market_dominance_prev: data.market_dominance_prev || 0,
+      galaxy_score: data.galaxy_score || 0,
+      galaxy_score_previous: data.galaxy_score_previous || 0,
+      alt_rank: data.alt_rank || 0,
+      alt_rank_previous: data.alt_rank_previous || 0,
+      sentiment: data.sentiment || 0,
+    };
+  }
+  
+  
 
   async getTopNByIndicator(indicator: 'RSI' | 'MACD', limit: number, date: number): Promise<any[]> {
     let collectionName: string;
@@ -571,8 +612,8 @@ async getADXBySymbolAndDate(symbol: string, date?: number): Promise<ADXData | nu
     .toArray();
 
   if (result.length > 0) {
-    const { symbol, status, adx_value, price, time } = result[0];
-    return { symbol, status, adx_value, price, time };
+    const { symbol, adx_value, price, time } = result[0];
+    return { symbol, adx_value, price, time };
   }
 
   return null;

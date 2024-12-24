@@ -7,9 +7,6 @@ export class ADXData {
   @Prop({ required: true })
   symbol: string;
 
-  @Prop({ required: true })
-  status: string;
-
   @Prop({ required: true, type: Number })
   adx_value: number;
 

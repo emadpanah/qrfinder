@@ -29,24 +29,18 @@ export class IamRepository {
     return user;
   }
 
-  async updateUser(
-    telegramID: string,
-    username: string,
-  ): Promise<any> {
+  async updateUser(telegramID: string, username: string): Promise<any> {
     const collection = this.connection.collection('_iamusers');
-    await collection.updateOne(
+    const result = await collection.updateOne(
       { telegramID: telegramID },
-      {
-        telegramUserName: username,
-      },
+      { $set: { telegramUserName: username } } // Use $set to modify the field
     );
-    const user = await collection.findOne({ telegramID: telegramID });
-    if (!user) {
-      // Handle the case where the agent is not found
-      throw new Error('User update not completed.');
+  
+    if (result.matchedCount === 0) {
+      throw new Error(`User with telegramID ${telegramID} not found.`);
     }
-    // Return the inserted document
-    return user;
+  
+    return result;
   }
 
   async findUserByTelegramID(telegramId: string): Promise<any> {

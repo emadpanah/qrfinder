@@ -47,6 +47,11 @@ async adxTicker(@Body() adxData: ADXDto) {
   await this.dataService.saveADXData(adxData);
   return { message: 'ADX data received and saved successfully' };
 }
+
+// @Post('EMAticker')
+// @Post('SMAticker')
+// @Post('STOCHASTICticker')
+// @Post('CCIticker')
   
 @Post('ST1')
 async st1Ticker(@Body() st1Data: ST1Dto) {

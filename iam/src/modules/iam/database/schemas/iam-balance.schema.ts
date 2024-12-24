@@ -9,7 +9,7 @@ export class Balance {
   userId: Types.ObjectId;
 
   @Prop({ required: true })
-  transactionType: 'deposit' | 'withdraw' | 'achievementsreward' | 'payment' | 'walletsync';
+  transactionType: 'deposit' | 'withdraw' | 'achievementsreward' | 'payment' | 'walletsync' ;
 
   @Prop({ required: true })
   amount: number;
@@ -33,6 +33,6 @@ export class Balance {
 //const AchievementSelectedSchema = SchemaFactory.createForClass(AchievementSelected);
  
 // Create a unique index on achievementId and userId
-BalanceSchema.index({ transactionEntityId: 1}, { unique: true });
+BalanceSchema.index({ transactionEntityId: 1, userId: 1}, { unique: true });
 
 export { BalanceSchema };

@@ -9,6 +9,7 @@ import { UserChatLogDto } from '../data/database/dto/userchatlog.dto';
 import { IamService } from '../iam/services/iam.service';
 import { Types } from 'mongoose';
 import { BalanceService } from '../iam/services/iam-balance.service';
+import { Balance } from '../iam/database/schemas/iam-balance.schema';
 
 
 
@@ -23,6 +24,8 @@ export class BotAIService implements OnModuleInit {
   private currentTelegramId: string;
   private userId: Types.ObjectId;
   private userLastAsk: Record<string, string> = {};
+  private curId: Types.ObjectId;
+  private userBalance: number;
 
 
   private prompts = [
@@ -60,12 +63,14 @@ export class BotAIService implements OnModuleInit {
     //'percent_change_1h',
     'percent_change_24h',
     //'percent_change_7d',
+    //'percent_change_30d',
     'market_cap',
     //'market_cap_rank',
     'interactions_24h',
     //'social_volume_24h',
     'social_dominance',
     'market_dominance',
+    //'market_dominance_prev',
     'galaxy_score',
     //'galaxy_score_previous',
     'alt_rank',
@@ -760,7 +765,9 @@ export class BotAIService implements OnModuleInit {
 
 
           case 'getTopCryptosByPrice': {
-            functionResponse = await this.getTopCryptosByPrice(parameters.limit, parameters.date);
+            const effectiveDate = parameters.date || new Date().toISOString().split('T')[0];
+            const timestamp1 = new Date(effectiveDate).getTime() / 1000;
+            functionResponse = await this.getTopCryptosByPrice(parameters.limit, timestamp1);
             return {
               responseText: functionResponse,
               queryType,
@@ -771,7 +778,9 @@ export class BotAIService implements OnModuleInit {
 
           //we need to handel multiple comparing 
           case 'getCryptoPrices': {
-            functionResponse = await this.getCryptoPrices(parameters.symbols, parameters.date);
+            const effectiveDate = parameters.date || new Date().toISOString().split('T')[0];
+            const timestamp1 = new Date(effectiveDate).getTime() / 1000;
+            functionResponse = await this.getCryptoPrices(parameters.symbols, timestamp1);
             return {
               responseText: functionResponse,
               queryType,
@@ -987,120 +996,138 @@ export class BotAIService implements OnModuleInit {
   }
 
   async analyzeAndCreateSignals(symbols: string[], language: string): Promise<string> {
-    // Limit symbols to 10
-    if (symbols.length > 10) {
-      return `Please provide 10 or fewer symbols. You provided ${symbols.length}.`;
+    if (symbols.length > 1) {
+      return `Please provide a single symbol. You provided ${symbols.length}.`;
     }
-
-    const timestamp = new Date().getTime() / 1000;
-    //const timestamp = Math.floor(Date.now() / 1000);
-    const dateObj = new Date();
-    const date = dateObj.toISOString().split('T')[0]; // e.g., "2024-12-14"
-
-    // Get global FNG sentiment for date
+  
     const fngData = await this.dataRepository.findFngByDate();
-    let fngValueClass = fngData ? fngData.value_classification : "Neutral";
-    // Map FNG classification to a sentiment score (just example)
-    const sentimentScore = this.mapFngToSentimentScore(fngValueClass);
-
-    const results: Record<string, { signal: string, explanation: string }> = {};
-
+    const fng = fngData
+      ? { value: fngData.value || "0", value_classification: fngData.value_classification || "Neutral" }
+      : { value: "0", value_classification: "Neutral" };
+  
+    let responseText = `🔍 **Trading Analysis Results** 📊\n\n`;
+  
     for (const symbol of symbols) {
-      const rsiData = await this.dataRepository.getRSIBySymbolAndDate(symbol);
-      const macdData = await this.dataRepository.getMACDBySymbolAndDate(symbol);
-
-      // console.log(rsiData);
-      // console.log(macdData);
-      if (!rsiData || !macdData) {
-        results[symbol] = {
-          signal: "No Data",
-          explanation: `No sufficient data (RSI or MACD) for ${symbol} on ${date}. `
-        };
-        continue;
+      const [indicators, sorts, macdData, adx] = await Promise.all([
+        this.dataRepository.getRSIBySymbolAndDate(symbol),
+        this.dataRepository.getAllSortsForSymbol(symbol),
+        this.dataRepository.getMACDBySymbolAndDate(symbol),
+        this.dataRepository.getADXBySymbolAndDate(symbol),
+      ]);
+  
+      if (!indicators || Object.keys(sorts).length === 0 || !macdData || !adx) {
+        return `⚠️ Insufficient data (RSI, MACD, ADX, or sorts) for ${symbol}.`;
       }
-
-      // Basic RSI-based signal
-      let rsiSignal: "buy" | "sell" | "hold" = "hold";
-      let rsiValue = rsiData.RSI;
-      if (typeof rsiValue !== 'number') {
-        // Attempt to parse RSI as a number
-        const parsedValue = Number(rsiValue);
-        if (isNaN(parsedValue)) {
-          // If parsing fails, treat as no data
-          results[symbol] = {
-            signal: "No Data",
-            explanation: `Data is invalid for ${symbol}. RSI could not be parsed.`
-          };
-          continue;
-        } else {
-          rsiValue = parsedValue;
-        }
-      }
-
-      // Now that rsiValue is confirmed as a number, we can apply the logic
-      if (rsiValue < 30) rsiSignal = "buy";
-      else if (rsiValue > 70) rsiSignal = "sell";
-      else rsiSignal = "hold";
-
-      // Basic MACD interpretation
-      let macdSignal: "bullish" | "bearish" | "neutral" = "neutral";
-      if (macdData.MACD > macdData.Signal) macdSignal = "bullish";
-      else if (macdData.MACD < macdData.Signal) macdSignal = "bearish";
-
-      // Combine signals
-      let finalSignal = this.combineSignals(rsiSignal, macdSignal, sentimentScore);
-
-      // Explanation
-      let explanation = `RSI is ${rsiData.RSI} suggesting ${rsiSignal}. MACD shows ${macdSignal}. ` +
-        `FNG sentiment: ${fngValueClass}. Overall signal: ${finalSignal}.`;
-
-      // Here you can do language-based formatting if needed
-      results[symbol] = {
-        signal: finalSignal,
-        explanation
-      };
-    }
-
-    return JSON.stringify(results, null, 2);
-  }
-
-
-  mapFngToSentimentScore(classification: string): number {
-    // Example mapping
-    switch (classification.toLowerCase()) {
-      case 'extreme fear': return -2;
-      case 'fear': return -1;
-      case 'neutral': return 0;
-      case 'greed': return 1;
-      case 'extreme greed': return 2;
-      default: return 0;
-    }
-  }
-
-  combineSignals(rsiSignal: "buy" | "sell" | "hold", macdSignal: "bullish" | "bearish" | "neutral", sentiment: number): string {
-    // Simple logic:
-    // If RSI says buy and MACD is bullish, stronger buy. If sentiment is positive, "Strong Buy".
-    // If RSI says sell and MACD is bearish, stronger sell. If sentiment is negative, "Strong Sell".
-    // Otherwise hold or mild signals.
-
-    let baseSignal: string;
-
-    if (rsiSignal === "buy" && macdSignal === "bullish") {
-      baseSignal = "Buy";
-      if (sentiment > 0) baseSignal = "Strong Buy";
-    } else if (rsiSignal === "sell" && macdSignal === "bearish") {
-      baseSignal = "Sell";
-      if (sentiment < 0) baseSignal = "Strong Sell";
-    } else {
-      baseSignal = "Hold";
-      // If sentiment is extremely negative but signals are neutral, might say "Cautious Hold"
-      if (sentiment < 0 && rsiSignal === "hold" && macdSignal === "neutral") {
-        baseSignal = "Cautious Hold";
+  
+      const indicatorsWithADX = { ...indicators, MACD: macdData, ADX: adx.adx_value };
+  
+      // Generate dynamic analyze prompt
+      const prompt = await this.generateDynamicAnalyzePrompt(symbol, sorts, indicatorsWithADX, fng, language);
+  
+      try {
+        const response = await this.openai.chat.completions.create({
+          messages: [
+            {
+              role: "system",
+              content: `You are a crypto assistant that provides detailed technical analysis and trading insights based on the given data.`,
+            },
+            {
+              role: "user",
+              content: prompt,
+            },
+          ],
+          model: "gpt-4o-mini-2024-07-18",
+        });
+  
+        const analysis = response.choices[0].message.content.trim();
+  
+        // Append the formatted analysis to the response text
+        responseText += `💡 **${symbol} Analysis**:\n${this.formatAnalysis(analysis)}\n\n`;
+      } catch (error) {
+        console.error("Error fetching analysis from ChatGPT:", error);
+        responseText += `❌ **${symbol}**: Error generating analysis. Please try again later.\n\n`;
       }
     }
-
-    return baseSignal;
+  
+    return responseText;
   }
+  
+  private formatAnalysis(rawAnalysis: string): string {
+    return rawAnalysis
+      .replace(/###/g, "🔹") // Replace section headers with a bullet icon
+      .replace(/\*\*(.*?)\*\*/g, "🌟 $1") // Highlight bolded text with a star emoji
+      .replace(/- /g, "➡️ "); // Use an arrow for list items
+      
+  }
+  
+  
+
+  async generateDynamicAnalyzePrompt(
+    symbol: string,
+    sorts: Record<string, any>,
+    indicators: { RSI?: number; MACD?: { MACD: number; Signal: number; Histogram: number }; ADX?: number },
+    fng: { value: string; value_classification: string },
+    language: string
+  ): Promise<string> {
+    const prompt = `
+  You are a trading assistant specializing in cryptocurrency analysis. Use the following methodologies, indicators, and data points to generate a comprehensive trading signal for the symbol ${symbol}:
+  
+   ### **Analysis Instructions**
+  1. **RSI**: Evaluate for overbought (>70) or oversold (<30) conditions.
+  2. **MACD**: Identify bullish or bearish crossovers.
+  3. **ADX**: Assess the trend's strength (e.g., ADX > 25 indicates a strong trend).
+  4. **FNG**: Factor in market sentiment (e.g., "Fear" indicates cautious trading; "Greed" suggests optimism).
+  5. **Sorts**: Use price, volume_24h, volatility, circulating_supply, max_supply, percent_change_1h, percent_change_24h, 
+  percent_change_7d, percent_change_30d, market_cap, market_cap_rank, interactions_24h, 
+  social_volume_24h, social_dominance, market_dominance, market_dominance_prev, galaxy_score, 
+  galaxy_score_previous, alt_rank, alt_rank_previous and sentiment, to refine the signal.
+  6. Combine these indicators to suggest a trading action: "Buy", "Sell", "Hold", or "Strong Buy/Sell".
+  7. Provide a detailed explanation for the signal, considering the above data points.
+  8. Respond in ${language} language.
+  
+  ### **Objective**
+  Deliver actionable insights to traders using these data points. Include a summary of the analysis and a clear recommendation.
+
+  ### **Indicators**
+  - **RSI**: ${indicators.RSI ? `Value: ${indicators.RSI}` : "No data available"}
+  - **MACD**: ${
+      indicators.MACD
+        ? `MACD: ${indicators.MACD.MACD}, Signal: ${indicators.MACD.Signal}, Histogram: ${indicators.MACD.Histogram}`
+        : "No data available"
+    }
+  - **ADX**: ${indicators.ADX ? `Value: ${indicators.ADX}` : "No data available"}
+  
+  ### **Sentiment**
+  - **Fear and Greed Index (FNG)**: ${fng.value} (${fng.value_classification})
+  
+  ### **Sorts**
+- **Price**: ${sorts.price || "No data"}
+  - **Volume (24h)**: ${sorts.volume_24h || "No data"}
+- **Volatility**: ${sorts.volatility || "No data"}
+- **Circulating Supply**: ${sorts.circulating_supply || "No data"}
+- **Max Supply**: ${sorts.max_supply || "No data"}
+- **Percent Change (1h)**: ${sorts.percent_change_1h || "No data"}
+- **Percent Change (24h)**: ${sorts.percent_change_24h || "No data"}
+- **Percent Change (7d)**: ${sorts.percent_change_7d || "No data"}
+- **Percent Change (30d)**: ${sorts.percent_change_30d || "No data"}
+- **Market Cap**: ${sorts.market_cap || "No data"}
+- **Market Cap Rank**: ${sorts.market_cap_rank || "No data"}
+- **Interactions (24h)**: ${sorts.interactions_24h || "No data"}
+- **Social Volume (24h)**: ${sorts.social_volume_24h || "No data"}
+- **Social Dominance**: ${sorts.social_dominance || "No data"}
+- **Market Dominance**: ${sorts.market_dominance || "No data"}
+- **Market Dominance (Prev)**: ${sorts.market_dominance_prev || "No data"}
+- **Galaxy Score**: ${sorts.galaxy_score || "No data"}
+- **Galaxy Score (Prev)**: ${sorts.galaxy_score_previous || "No data"}
+- **Alt Rank**: ${sorts.alt_rank || "No data"}
+- **Alt Rank (Prev)**: ${sorts.alt_rank_previous || "No data"}
+- **Sentiment**: ${sorts.sentiment || "No data"} 
+`;
+  
+    return prompt;
+  }
+  
+  
 
   private async getTranslatedText(
     id: string,
@@ -1496,28 +1523,6 @@ export class BotAIService implements OnModuleInit {
   }
 
 
-  // private formatNewsResponse(news: any[], defaultLimit: number = 5): string {
-  //   if (!news || news.length === 0) return 'No news found.';
-
-  //   const limit = Math.min(news.length, defaultLimit);
-  //   const formattedNews = news.slice(0, limit).map((item, index) => {
-  //     // Extract source from id (split at first '-')
-  //     const source = item.id.split('-')[0];
-
-  //     // Sentiment
-  //     const sentimentIcon = this.getSentimentIcon(item.post_sentiment);
-  //     const sentimentTitle = this.getSentimentTitle(item.post_sentiment);
-
-  //     // Prepare the message
-  //     return `
-  // ${index + 1}. ${item.post_title} ${sentimentIcon} (${sentimentTitle}, ${item.post_sentiment})
-  // 🔗 [Read More](${item.post_link})
-  // 📰 Source: ${source}`;
-  //   });
-
-  //   return `📢 Latest Crypto News\n${formattedNews.join('\n')}`;
-  // }
-
   async getHighSentimentNews(n = 5, language: string): Promise<string> {
     const results = await this.dataRepository.getNewsWithHighSentiment(n);
 
@@ -1574,14 +1579,48 @@ export class BotAIService implements OnModuleInit {
       try {
         const { token, isNewToken, userId } = await this.iamService.registerOrLogin(userInsertDto);
         this.userId = new Types.ObjectId(userId);
-        this.logger.log(
-          `User ${isNewToken ? 'registered' : 'logged in'} successfully with userId: ${userId}. Token: ${token}`
-        );
+        // this.logger.log(
+        //   `User ${isNewToken ? 'registered' : 'logged in'} successfully with userId: ${userId}. Token: ${token}`
+        // );        
+
+        this.curId = (await this.balanceService.getCurrencyByName('Toman'))._id;
+        this.userBalance = await this.balanceService.getUserBalance(this.userId, this.curId);
+        if (isNewToken) {
+          try {
+            //add trial credit for bot
+            await this.balanceService.addTransaction({
+              userId: this.userId,
+              transactionType: 'achievementsreward',
+              amount: 5000,
+              currency: this.curId,
+              transactionEntityId: "6741f536d877c06a82d7e751", //unique ID for trial - just add once
+              balanceAfterTransaction: this.userBalance + 5000,
+              timestamp: Math.floor(Date.now() / 1000),
+              _id: new Types.ObjectId()
+            });
+            this.userBalance = await this.balanceService.getUserBalance(this.userId, this.curId);
+            await this.bot.sendMessage(
+              chatId,
+              `🎉 <b>Congratulations!</b> 🎉\n\n✨ You have received <b>5000 Tomans</b> as a welcome credit to explore the amazing <b>Trading AI Bot</b> features! 🚀\n\n💡 Start your trading journey now!`,
+              { parse_mode: 'HTML' }
+            );
+          }
+          catch (err) {
+            this.logger.warn('trial added once', err.message);
+          }
+          await this.bot.sendMessage(
+            chatId,
+            `*Welcome to Trade AI Bot!* 🎉\n\nYour current balance is: *${this.userBalance.toLocaleString()} Tomans* 💰`,
+            { parse_mode: 'Markdown' }
+          );
+        }
+
       } catch (error) {
         this.logger.error('Error during user registration/login:', error.message);
         return;
       }
 
+      
       // Handle help command
       if (msg.text === '/help') {
         const inlineKeyboard = this.prompts.map((prompt, index) => [{
@@ -1610,11 +1649,13 @@ export class BotAIService implements OnModuleInit {
         this.userLastAsk[chatId] = text;
 
 
-        const cur = await this.balanceService.getCurrencyByName('Toman');
-        const userBalance = await this.balanceService.getUserBalance(this.userId, cur._id);
-        console.log("userBalance", userBalance);
+        console.log("userBalance", this.userBalance);
         // Check user balance
-        if (userBalance < 500) {
+        if (this.userBalance < 100) {
+          await this.bot.sendMessage(chatId, 'Insufficient balance for this request. Please recharge to continue.');
+        }
+
+        if (this.userBalance < 20) {
           await this.bot.sendMessage(chatId, 'Insufficient balance for this request. Please recharge to continue.');
           return;
         }
@@ -1644,18 +1685,18 @@ export class BotAIService implements OnModuleInit {
         const totalCostInIRT = Math.ceil(totalCost * conversionRateToIRT);
 
         // Check user balance
-        if (userBalance < totalCostInIRT) {
+        if (this.userBalance < totalCostInIRT) {
           await this.bot.sendMessage(chatId, 'Insufficient balance for this request. Please recharge to continue.');
           return;
         }
 
         //Deduct the cost
-        const remainingBalance = userBalance - totalCostInIRT;
+        const remainingBalance = this.userBalance - totalCostInIRT;
         await this.balanceService.addTransaction({
           userId: this.userId,
           transactionType: 'payment',
           amount: -totalCostInIRT,
-          currency: cur._id,
+          currency: this.curId,
           transactionEntityId: new Types.ObjectId().toString(), // Generate a unique ID for this transaction
           balanceAfterTransaction: remainingBalance,
           timestamp: Math.floor(Date.now() / 1000),
@@ -1700,7 +1741,7 @@ export class BotAIService implements OnModuleInit {
         await this.bot.sendMessage(chatId, `پرسش انتخابی شما: ${selectedPrompt}`);
 
         const chatGptResponse = await this.getChatGptResponse(selectedPrompt);
-        this.bot.sendMessage(chatId, chatGptResponse).catch((err) => {
+        this.bot.sendMessage(chatId, chatGptResponse.responseText).catch((err) => {
           this.logger.error('Failed to send message', err);
         });
       }

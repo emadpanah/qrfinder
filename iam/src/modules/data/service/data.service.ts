@@ -98,7 +98,6 @@ export class DataService {
     const timestamp = new Date(adxData.time).getTime() / 1000;
     const formattedData = {
       symbol: adxData.symbol,
-      status: adxData.status,
       adx_value: adxData.adx_value,
       price: adxData.price,
       time: timestamp,
