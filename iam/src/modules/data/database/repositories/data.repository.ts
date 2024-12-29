@@ -15,9 +15,19 @@ import { LunarCrushPublicCoinDto } from '../dto/lunarcrush.dto';
 import { LunarCrushNewsDto } from '../dto/lunarcrush-news.dto';
 import { UserChatLogDto } from '../dto/userchatlog.dto';
 import { ADXData } from '../schema/adx.schema';
+import { StochasticData } from '../schema/stochastic.schema';
+import { EMAData } from '../schema/ema.schema';
+import { SMAData } from '../schema/sma.schema';
+import { CCIData } from '../schema/cci.schema';
 
 @Injectable()
 export class DataRepository {
+  private readonly emaCollectionName = '_emadata';
+  private readonly smaCollectionName = '_smadata';
+  private readonly stochasticCollectionName = '_stochasticdata';
+  private readonly cciCollectionName = '_ccidata';
+  private readonly userchatlogCollectionName = '_userchatlogdata';
+  private readonly adxCollectionName = '_adxdata';
   private readonly fngCollectionName = '_fngdata';
   private readonly tickerCollectionName = '_tickerdata';
   private readonly rsiCollectionName = '_rsidata';
@@ -29,7 +39,7 @@ export class DataRepository {
   private readonly translationCollectionName = '_translationsdata';
   private readonly logger = new Logger(DataRepository.name);
 
-  constructor(@InjectConnection('service') private readonly connection: Connection) {}
+  constructor(@InjectConnection('service') private readonly connection: Connection) { }
 
   // Save FNG data point in MongoDB
   async create(fngData: Partial<FngData>): Promise<FngData> {
@@ -45,23 +55,55 @@ export class DataRepository {
   }
 
 
+  async getLast7DaysFngData(endDate: number): Promise<FngData[]> {
+    const collection = this.connection.collection(this.fngCollectionName);
+    const results: FngData[] = [];
+  
+    for (let i = 0; i < 7; i++) {
+      const targetDateStart = endDate - i * 24 * 60 * 60; // Start of the target day
+      const targetDateEnd = targetDateStart + 24 * 60 * 60; // End of the target day
+  
+      // Query the latest FNG value within the day
+      const result = await collection
+        .find({
+          timestamp: { $gte: targetDateStart, $lt: targetDateEnd },
+        })
+        .sort({ timestamp: -1 }) // Sort by timestamp descending
+        .limit(1) // Get only the latest record for the day
+        .toArray();
+  
+      if (result.length > 0) {
+        const fngRecord = result[0];
+        results.push({
+          value: fngRecord.value ?? '0',
+          value_classification: fngRecord.value_classification ?? 'Neutral',
+          timestamp: fngRecord.timestamp ?? 0,
+          metadata: fngRecord.metadata ?? {},
+        } as FngData);
+      }
+    }
+  
+    return results;
+  }
+  
+
   async findFngByDate(targetDate?: number): Promise<FngData | null> {
     const collection = this.connection.collection(this.fngCollectionName);
-  
+
     //this.logger.log(`Fetching FNG data for closest date on or before: ${targetDate}`);
-  
+
     const query: any = {};
     if (targetDate) {
       query.timestamp = { $lte: targetDate };
     }
-  
+
     // If no date is provided, this simply returns the latest FNG data
     const result = await collection
       .find(query)
       .sort({ timestamp: -1 }) // Sort by most recent
       .limit(1)
       .toArray();
-  
+
     if (result.length > 0) {
       const fngRecord = result[0];
       this.logger.debug(`Found FNG data: ${JSON.stringify(fngRecord)}`);
@@ -76,98 +118,181 @@ export class DataRepository {
       return null;
     }
   }
-  
-  
-    // Get latest price by symbol in USDT
-    async getLatestPriceBySymbol(symbol: string, date: number): Promise<TradingViewAlertDto | null> {
-      const collection = this.connection.collection(this.tickerCollectionName);
-    
-      // Convert `date` to a timestamp if needed
-      const targetTimestamp = new Date(date).getTime() / 1000;  // Assuming `date` is passed as a UNIX timestamp in seconds
 
+  async createEMAData(emaData: Partial<EMAData>): Promise<void> {
+    const collection = this.connection.collection(this.emaCollectionName);
+    await collection.insertOne(emaData);
+  }
+  
+  async createSMAData(smaData: Partial<SMAData>): Promise<void> {
+    const collection = this.connection.collection(this.smaCollectionName);
+    await collection.insertOne(smaData);
+  }
+  
+  async createStochasticData(stochasticData: Partial<StochasticData>): Promise<void> {
+    const collection = this.connection.collection(this.stochasticCollectionName);
+    await collection.insertOne(stochasticData);
+  }
+  
+  async createCCIData(cciData: Partial<CCIData>): Promise<void> {
+    const collection = this.connection.collection(this.cciCollectionName);
+    await collection.insertOne(cciData);
+  }
+
+  async getEMABySymbolAndDate(symbol: string, date?: number): Promise<EMAData | null> {
+    const collection = this.connection.collection(this.emaCollectionName);
+    return this.getIndicatorBySymbolAndDate<EMAData>(collection, symbol, date);
+  }
+  
+  async getSMABySymbolAndDate(symbol: string, date?: number): Promise<SMAData | null> {
+    const collection = this.connection.collection(this.smaCollectionName);
+    return this.getIndicatorBySymbolAndDate<SMAData>(collection, symbol, date);
+  }
+  
+  async getStochasticBySymbolAndDate(symbol: string, date?: number): Promise<StochasticData | null> {
+    const collection = this.connection.collection(this.stochasticCollectionName);
+    return this.getIndicatorBySymbolAndDate<StochasticData>(collection, symbol, date);
+  }
+  
+  async getCCIBySymbolAndDate(symbol: string, date?: number): Promise<CCIData | null> {
+    const collection = this.connection.collection(this.cciCollectionName);
+    return this.getIndicatorBySymbolAndDate<CCIData>(collection, symbol, date);
+  }
+  
+  // Helper for common fetch logic
+  private async getIndicatorBySymbolAndDate<T>(
+    collection: any,
+    symbol: string,
+    date?: number
+  ): Promise<T | null> {
+    const query: Record<string, any> = { symbol };
+    if (date) query.time = { $lte: date };
+  
+    const result = await collection.find(query).sort({ time: -1 }).limit(1).toArray();
+    return result.length > 0 ? result[0] : null;
+  }
+
+
+  async getLast7DaysDailyPrice(symbol: string, endDate: number): Promise<TradingViewAlertDto[]> {
+    const collection = this.connection.collection(this.tickerCollectionName);
+  
+    const results: TradingViewAlertDto[] = [];
+  
+    // Loop through the last 7 days
+    for (let i = 0; i < 7; i++) {
+      const targetDateStart = endDate - i * 24 * 60 * 60; // Start of the target day
+      const targetDateEnd = targetDateStart + 24 * 60 * 60; // End of the target day
+  
+      // Get the last recorded price within the target day
       const result = await collection
         .find({
           symbol,
-          time: { $gte: targetTimestamp } // Filter by date, only records on or before the given date
+          time: { $gte: targetDateStart, $lt: targetDateEnd } // Filter records within the target day
         })
-        .sort({ time: -1 }) // Sort by timestamp in descending order to get the latest record before or on the date
-        .limit(1)
+        .sort({ time: -1 }) // Sort by time descending
+        .limit(1) // Get only the latest record for the day
         .toArray();
-    
+  
       if (result.length > 0) {
-        const { symbol, price, time, exchange, _id } = result[0];
-        // Return as TradingViewAlertDto, excluding _id
-        return { symbol, price, time, exchange };
+        const { symbol, price, time, exchange } = result[0];
+        results.push({ symbol, price, time, exchange });
       }
-    
-      return null;
     }
-    
+  
+    return results;
+  }
+  
+  
+  // Get latest price by symbol in USDT
+  async getLatestPriceBySymbol(symbol: string, date: number): Promise<TradingViewAlertDto | null> {
+    const collection = this.connection.collection(this.tickerCollectionName);
 
-    async createST1Data(st1Data: Partial<ST1Data>): Promise<void> {
-      const collection = this.connection.collection(this.st1CollectionName);
-      await collection.insertOne(st1Data);
+    // Convert `date` to a timestamp if needed
+    const targetTimestamp = new Date(date).getTime() / 1000;  // Assuming `date` is passed as a UNIX timestamp in seconds
+
+    const result = await collection
+      .find({
+        symbol,
+        time: { $gte: targetTimestamp } // Filter by date, only records on or before the given date
+      })
+      .sort({ time: -1 }) // Sort by timestamp in descending order to get the latest record before or on the date
+      .limit(1)
+      .toArray();
+
+    if (result.length > 0) {
+      const { symbol, price, time, exchange, _id } = result[0];
+      // Return as TradingViewAlertDto, excluding _id
+      return { symbol, price, time, exchange };
     }
 
-    async getLastST1BySymbol(symbol: string): Promise<ST1Data | null> {
-      const collection = this.connection.collection(this.st1CollectionName);
-      const result = await collection
-        .find({ symbol })
-        .sort({ time: -1 }) // Sort by time descending to get the most recent signal
-        .limit(1)
-        .toArray();
-        
-        if (result.length > 0) {
-          const { signal, exchange, symbol, price, time, target, stop, isDone, _id } = result[0];
-          return { signal, exchange, symbol, price, time, target, stop, isDone }; // Map only the required fields
-        }
-      
-        return null;
-    }
-    
-    async updateST1IsDone(id: string, isDone: boolean): Promise<void> {
-      const collection = this.connection.collection(this.st1CollectionName);
-      const objectId = new ObjectId(id);
-      await collection.updateOne({ _id: objectId as any }, { $set: { isDone } });
-    }
-    
+    return null;
+  }
 
-    async getRSIBySymbolAndDate(symbol: string, date?: number): Promise<RSIData | null> {
-      const collection = this.connection.collection(this.rsiCollectionName);
-    
-      const query: Record<string, any> = { symbol };
-      if (date) {
-        // If date is provided, fetch RSI data on or before that date
-        query.time = { $lte: date };
-      }
-    
-      const result = await collection
-        .find(query)
-        .sort({ time: -1 }) // Most recent data first
-        .limit(1)
-        .toArray();
-    
-      if (result.length > 0) {
-        const { symbol: sym, RSI, time } = result[0];
-        return { symbol: sym, RSI, time };
-      }
-    
-      return null;
+
+  async createST1Data(st1Data: Partial<ST1Data>): Promise<void> {
+    const collection = this.connection.collection(this.st1CollectionName);
+    await collection.insertOne(st1Data);
+  }
+
+  async getLastST1BySymbol(symbol: string): Promise<ST1Data | null> {
+    const collection = this.connection.collection(this.st1CollectionName);
+    const result = await collection
+      .find({ symbol })
+      .sort({ time: -1 }) // Sort by time descending to get the most recent signal
+      .limit(1)
+      .toArray();
+
+    if (result.length > 0) {
+      const { signal, exchange, symbol, price, time, target, stop, isDone, _id } = result[0];
+      return { signal, exchange, symbol, price, time, target, stop, isDone }; // Map only the required fields
     }
+
+    return null;
+  }
+
+  async updateST1IsDone(id: string, isDone: boolean): Promise<void> {
+    const collection = this.connection.collection(this.st1CollectionName);
+    const objectId = new ObjectId(id);
+    await collection.updateOne({ _id: objectId as any }, { $set: { isDone } });
+  }
+
+
+  async getRSIBySymbolAndDate(symbol: string, date?: number): Promise<RSIData | null> {
+    const collection = this.connection.collection(this.rsiCollectionName);
+
+    const query: Record<string, any> = { symbol };
+    if (date) {
+      // If date is provided, fetch RSI data on or before that date
+      query.time = { $lte: date };
+    }
+
+    const result = await collection
+      .find(query)
+      .sort({ time: -1 }) // Most recent data first
+      .limit(1)
+      .toArray();
+
+    if (result.length > 0) {
+      const { symbol: sym, RSI, time } = result[0];
+      return { symbol: sym, RSI, time };
+    }
+
+    return null;
+  }
 
   async getTopCryptosByVolatility(limit: number): Promise<any[]> {
     const collection = this.connection.collection(this.lunarPubCoinCollectionName);
-  
+
     const results = await collection
       .find({ fetched_sort: 'volatility' }) // Filter by fetched_sort: galaxy_score
       .sort({ fetched_at: -1, volatility: -1 }) // Sort by latest fetched_at first, then by galaxy_score in descending order
       .limit(limit)
       .toArray();
-  
+
     return results.map(({ _id, ...rest }) => rest); // Exclude the _id field
   }
 
-   async getTopCryptosByGalaxyScore(limit: number): Promise<any[]> {
+  async getTopCryptosByGalaxyScore(limit: number): Promise<any[]> {
     const collection = this.connection.collection(this.lunarPubCoinCollectionName);
 
     const results = await collection
@@ -178,7 +303,7 @@ export class DataRepository {
 
     return results.map(({ _id, ...rest }) => rest); // Exclude the _id field
   }
-  
+
   async getTopCryptosByAltRank(limit: number): Promise<any[]> {
     const collection = this.connection.collection(this.lunarPubCoinCollectionName);
 
@@ -193,31 +318,31 @@ export class DataRepository {
 
   async getMACDBySymbolAndDate(symbol: string, date?: number): Promise<MACDData | null> {
     const collection = this.connection.collection(this.macdCollectionName);
-  
+
     const query: Record<string, any> = { symbol };
     if (date) {
       // If a date is provided, fetch the closest MACD data on or before that date
       query.time = { $lte: date };
     }
-  
+
     const result = await collection
       .find(query)
       .sort({ time: -1 }) // Sort by most recent
       .limit(1)
       .toArray();
-  
+
     if (result.length > 0) {
       const { symbol: sym, MACD, Signal, Histogram, time } = result[0];
       return { symbol: sym, MACD, Signal, Histogram, time };
     }
-  
+
     return null;
   }
-  
+
 
   async getTopCryptosByPrice(limit: number, date: number): Promise<TradingViewAlertDto[]> {
     const collection = this.connection.collection(this.tickerCollectionName);
-  
+
     const results = await collection.aggregate([
       {
         $match: {
@@ -238,7 +363,7 @@ export class DataRepository {
       { $sort: { price: -1 } }, // Sort by price in descending order after grouping
       { $limit: limit } // Limit to the top `limit` cryptos by price
     ]).toArray();
-  
+
     // Map results to TradingViewAlertDto
     return results.map(({ symbol, price, time, exchange }) => ({
       symbol,
@@ -247,40 +372,40 @@ export class DataRepository {
       exchange,
     }));
   }
-  
+
   async getTopCoinsBySort(sort: string, limit: number): Promise<LunarCrushPublicCoinDto[]> {
     const collection = this.connection.collection(this.lunarPubCoinCollectionName);
-  
-      const results = await collection
-    .find({ fetched_sort: sort })
-    .sort({ fetched_at: -1, [sort]: -1 })
-    .limit(limit)
-    .toArray();
-  
+
+    const results = await collection
+      .find({ fetched_sort: sort })
+      .sort({ fetched_at: -1, [sort]: -1 })
+      .limit(limit)
+      .toArray();
+
     // Map results to exclude `_id` and ensure type consistency
     return results.map((doc) => {
       const { _id, ...rest } = doc;
       return rest as LunarCrushPublicCoinDto;
     });
   }
-  
+
   async getTopCoinsByCategoryAndSort(category: string, sort: string, limit: number): Promise<LunarCrushPublicCoinDto[]> {
     const collection = this.connection.collection(this.lunarPubCoinCollectionName);
-  
+
     const results = await collection
       //.find({ categories: category, fetched_sort: sort }) // Match the category and sort
       .find({ categories: { $in: [category] }, fetched_sort: sort })
       .sort({ [sort]: -1, fetched_at: -1 }) // Sort by the sort field and the latest fetch time
       .limit(limit) // Limit the number of results
       .toArray();
-  
+
     // Map results to exclude `_id` and ensure type consistency
     return results.map((doc) => {
       const { _id, ...rest } = doc;
       return rest as LunarCrushPublicCoinDto;
     });
   }
-  
+
 
   async createDominanceData(dominanceData: Partial<DominanceData>): Promise<void> {
     const collection = this.connection.collection(this.dominanceCollectionName);
@@ -304,7 +429,7 @@ export class DataRepository {
     return null;
   }
 
-  
+
 
   // Check if a data point with a specific timestamp already exists
   async existsFng(timestamp: number): Promise<boolean> {
@@ -326,8 +451,8 @@ export class DataRepository {
   async createLunarPubCoin(data: Partial<LunarCrushPublicCoinDto>): Promise<void> {
     const collection = this.connection.collection(this.lunarPubCoinCollectionName);
 
-  // Upsert data to avoid duplicates for the same sort and symbol
-  await collection.updateOne(
+    // Upsert data to avoid duplicates for the same sort and symbol
+    await collection.updateOne(
       { id: data.id, fetched_sort: data.fetched_sort },
       {
         $set: {
@@ -342,25 +467,25 @@ export class DataRepository {
 
   async getSortValueForSymbol(symbol: string, sort: string): Promise<{ categories: string; sortValue: number | null }> {
     const collection = this.connection.collection(this.lunarPubCoinCollectionName);
-  
+
     // Find the latest document for this symbol with the requested sort parameter
     const result = await collection
       .find({ symbol: symbol.toUpperCase(), fetched_sort: sort })
       .sort({ fetched_at: -1 })
       .limit(1)
       .toArray();
-  
+
     if (result.length === 0) {
       return { categories: '', sortValue: null };
     }
-  
+
     const doc = result[0];
     return {
       categories: doc.categories || '',
       sortValue: doc[sort] !== undefined ? doc[sort] : null,
     };
   }
-  
+
   async getAllSortsForSymbol(symbol: string): Promise<Record<string, any>> {
     const transformedSymbol = symbol.replace(/USDT$/, ''); // Remove 'USDT' from the symbol
     const collection = this.connection.collection(this.lunarPubCoinCollectionName);
@@ -370,11 +495,11 @@ export class DataRepository {
       .sort({ fetched_at: -1 })
       .limit(1)
       .toArray();
-  
+
     if (results.length === 0) {
       return {};
     }
-  
+
     const data = results[0];
     return {
       price: data.price || 0,
@@ -400,69 +525,100 @@ export class DataRepository {
       sentiment: data.sentiment || 0,
     };
   }
+
+  async getLast7DaysDailyIndicator(
+    symbol: string,
+    indicator: 'RSI' | 'MACD' | 'ADX' | 'EMA' | 'SMA' | 'Stochastic' | 'CCI',
+    endDate: number
+  ): Promise<{ value: number | object; time: number }[]> {
+    let collectionName: string;
   
+    // Determine the collection name based on the indicator type
+    if (indicator === 'RSI') {
+      collectionName = this.rsiCollectionName;
+    } else if (indicator === 'MACD') {
+      collectionName = this.macdCollectionName;
+    } else if (indicator === 'ADX') {
+      collectionName = this.adxCollectionName;
+    } else if (indicator === 'EMA') {
+      collectionName = this.emaCollectionName;
+    } else if (indicator === 'SMA') {
+      collectionName = this.smaCollectionName;
+    } else if (indicator === 'Stochastic') {
+      collectionName = this.stochasticCollectionName;
+    } else if (indicator === 'CCI') {
+      collectionName = this.cciCollectionName;
+    } else {
+      throw new Error(`Unsupported indicator: ${indicator}`);
+    }
+  
+    const collection = this.connection.collection(collectionName);
+    const results: { value: number | object; time: number }[] = [];
+  
+    // Loop through the last 7 days
+    for (let i = 0; i < 7; i++) {
+      const targetDateStart = endDate - i * 24 * 60 * 60; // Start of the target day
+      const targetDateEnd = targetDateStart + 24 * 60 * 60; // End of the target day
+  
+      // Get the last recorded indicator value within the target day
+      const result = await collection
+        .find({
+          symbol,
+          time: { $gte: targetDateStart, $lt: targetDateEnd }, // Filter records within the target day
+        })
+        .sort({ time: -1 }) // Sort by time descending
+        .limit(1) // Get only the latest record for the day
+        .toArray();
+  
+      if (result.length > 0) {
+        const { time, ...rest } = result[0]; // Exclude unnecessary fields
+        results.push({ value: rest[indicator.toLowerCase()] || rest, time });
+      }
+    }
+  
+    return results;
+  }
   
 
-  async getTopNByIndicator(indicator: 'RSI' | 'MACD', limit: number, date: number): Promise<any[]> {
+  async getTopNByIndicator(
+    indicator: 'RSI' | 'MACD' | 'ADX' | 'EMA' | 'SMA' | 'Stochastic' | 'CCI',
+    limit: number,
+    date: number
+  ): Promise<any[]> {
     let collectionName: string;
     let sortField: string;
   
-    // Decide which collection and field to query based on the indicator
-    // If you have different indicators, add them here.
     if (indicator === 'RSI') {
       collectionName = this.rsiCollectionName;
       sortField = 'RSI';
     } else if (indicator === 'MACD') {
       collectionName = this.macdCollectionName;
       sortField = 'MACD';
+    } else if (indicator === 'ADX') {
+      collectionName = this.adxCollectionName;
+      sortField = 'ADX';
+    } else if (indicator === 'EMA') {
+      collectionName = this.emaCollectionName;
+      sortField = 'ema_value';
+    } else if (indicator === 'SMA') {
+      collectionName = this.smaCollectionName;
+      sortField = 'sma_value';
+    } else if (indicator === 'Stochastic') {
+      collectionName = this.stochasticCollectionName;
+      sortField = 'k_value';
+    } else if (indicator === 'CCI') {
+      collectionName = this.cciCollectionName;
+      sortField = 'cci_value';
     } else {
       throw new Error(`Unsupported indicator: ${indicator}`);
     }
   
     const collection = this.connection.collection(collectionName);
-  
-    // We assume you want the top N symbols by the given indicator as of 'date'.
-    // Steps:
-    // 1. Filter documents up to the given date.
-    // 2. Sort by time descending to pick the latest entry per symbol.
-    // 3. Group by symbol, picking the latest entry.
-    // 4. Sort by the indicator descending.
-    // 5. Limit to top N.
-  
-    const pipeline = [
-      {
-        $match: {
-          time: { $lte: date }
-        }
-      },
-      {
-        $sort: {
-          time: -1
-        }
-      },
-      {
-        $group: {
-          _id: "$symbol",
-          symbol: { $first: "$symbol" },
-          time: { $first: "$time" },
-          // Include fields you need. For RSI:
-          ...(indicator === 'RSI' ? { RSI: { $first: "$RSI" } } : {}),
-          // For MACD:
-          ...(indicator === 'MACD' ? { MACD: { $first: "$MACD" }, Signal: { $first: "$Signal" }, Histogram: { $first: "$Histogram" } } : {})
-        }
-      },
-      {
-        $sort: {
-          [sortField]: -1
-        }
-      },
-      {
-        $limit: limit
-      }
-    ];
-  
-    const results = await collection.aggregate(pipeline).toArray();
-    return results;
+    return collection
+      .find({ time: { $lte: date } })
+      .sort({ [sortField]: -1 })
+      .limit(limit)
+      .toArray();
   }
   
 
@@ -473,7 +629,7 @@ export class DataRepository {
   async getTopNRSIByDate(n: number, date: string): Promise<RSIData[]> {
     const collection = this.connection.collection(this.rsiCollectionName);
     const targetTimestamp = new Date(date).getTime() / 1000;
-    
+
     const results = await collection
       .find({ time: { $lte: targetTimestamp } })
       .sort({ RSI: -1, time: -1 }) // Sort by RSI descending, then by most recent time
@@ -496,164 +652,164 @@ export class DataRepository {
       .sort({ MACD: -1, time: -1 }) // Sort by MACD descending, then by most recent time
       .limit(n)
       .toArray();
-    
+
     return results.map(({ symbol, MACD, Signal, Histogram, time }) => ({
       symbol, MACD, Signal, Histogram, time
     }));
   }
 
- 
-// Method to create LunarCrush news documents
-async createLunarNews(newsData: Partial<LunarCrushNewsDto>): Promise<void> {
-  const collection = this.connection.collection(this.lunarNewsCollectionName);
-  // Upsert the news item by its id
-  await collection.updateOne(
-    { id: newsData.id },
-    { $set: { ...newsData } },
-    { upsert: true }
-  );
-}
+
+  // Method to create LunarCrush news documents
+  async createLunarNews(newsData: Partial<LunarCrushNewsDto>): Promise<void> {
+    const collection = this.connection.collection(this.lunarNewsCollectionName);
+    // Upsert the news item by its id
+    await collection.updateOne(
+      { id: newsData.id },
+      { $set: { ...newsData } },
+      { upsert: true }
+    );
+  }
 
   // src/modules/data/database/repositories/data.repository.ts
-async getLatestNews(limit = 50): Promise<any[]> {
-  const collection = this.connection.collection(this.lunarNewsCollectionName);
-  return await collection
-    .find()
-    .sort({ post_created: -1 }) // Sort by creation date descending
-    .limit(Math.min(limit, 10)) // Enforce max limit = 10
-    .toArray();
-}
-
-async getTopNewsByInteractions(limit = 50): Promise<any[]> {
-  const collection = this.connection.collection(this.lunarNewsCollectionName);
-  return await collection
-    .find()
-    .sort({ interactions_24h: -1 }) // Sort by interactions descending
-    .limit(Math.min(limit, 10))
-    .toArray();
-}
-
-async searchNewsByTitle(title: string, limit = 50): Promise<any[]> {
-  const collection = this.connection.collection(this.lunarNewsCollectionName);
-  
-  // Regular expression to match substrings within words, e.g., "doge" or "dogecoin"
-  const regex = new RegExp(`\\b${title}`, 'i'); // '\\b' ensures word boundary matching
-
-  return await collection
-    .find({ post_title: { $regex: regex } }) // Case-insensitive search
-    .sort({ post_created: -1 }) // Sort by creation date descending
-    .limit(Math.min(limit, 10)) // Cap at 10 results
-    .toArray();
-}
-
-async getNewsWithHighSentiment(limit = 50): Promise<any[]> {
-  const collection = this.connection.collection(this.lunarNewsCollectionName);
-  return await collection
-    .find({}) // No filter condition, fetch all
-    .sort({ post_sentiment: -1 }) // Sort by sentiment descending
-    .limit(Math.min(limit, 10)) // Limit results to 10 max
-    .toArray();
-}
-
-async getTranslation(contentId: string, language: string): Promise<string | null> {
-  const collection = this.connection.collection(this.translationCollectionName);
-  const result = await collection.findOne({ contentId });
-  if (result && result.translations && result.translations[language]) {
-    this.logger.log(`Translation found in DB for contentId: ${contentId}, Language: ${language}`);
-    return result.translations[language];
-  }
-  this.logger.warn(`No translation found in DB for contentId: ${contentId}, Language: ${language}`);
-  return null;
-}
-
-async saveUserChatLog(log: UserChatLogDto): Promise<void> {
-  const collection = this.connection.collection('_userchatlogdata');
-  await collection.insertOne(log);
-}
-
-async getChatHistory(telegramId: string, limit: number = 20): Promise<UserChatLogDto[]> {
-  const collection = this.connection.collection('_userchatlogdata');
-  const results = await collection
-    .find({ telegramId })
-    .sort({ save_at: -1 }) // Most recent chats first
-    .limit(limit) // Limit the number of results
-    .toArray();
-
-  // Map the results to the UserChatLogDto type
-  return results.map((result) => ({
-    telegramId: result.telegramId as string,
-    query: result.query as string,
-    response: result.response as string,
-    calledFunction: result.calledFunction as string,
-    parameters: result.parameters as Record<string, any>,
-    newParameters: result.newParameters as Record<string, any>,
-    queryType: result.queryType as 'in-scope' | 'out-of-scope',
-    save_at: result.save_at as number,
-  }));
-}
-
-async createADXData(adxData: Partial<ADXData>): Promise<void> {
-  const collection = this.connection.collection('_adxdata');
-  await collection.insertOne(adxData);
-}
-
-async getADXBySymbolAndDate(symbol: string, date?: number): Promise<ADXData | null> {
-  const collection = this.connection.collection('_adxdata');
-
-  const query: Record<string, any> = { symbol };
-  if (date) {
-    query.time = { $lte: date };
+  async getLatestNews(limit = 50): Promise<any[]> {
+    const collection = this.connection.collection(this.lunarNewsCollectionName);
+    return await collection
+      .find()
+      .sort({ post_created: -1 }) // Sort by creation date descending
+      .limit(Math.min(limit, 10)) // Enforce max limit = 10
+      .toArray();
   }
 
-  const result = await collection
-    .find(query)
-    .sort({ time: -1 })
-    .limit(1)
-    .toArray();
-
-  if (result.length > 0) {
-    const { symbol, adx_value, price, time } = result[0];
-    return { symbol, adx_value, price, time };
+  async getTopNewsByInteractions(limit = 50): Promise<any[]> {
+    const collection = this.connection.collection(this.lunarNewsCollectionName);
+    return await collection
+      .find()
+      .sort({ interactions_24h: -1 }) // Sort by interactions descending
+      .limit(Math.min(limit, 10))
+      .toArray();
   }
 
-  return null;
-}
+  async searchNewsByTitle(title: string, limit = 50): Promise<any[]> {
+    const collection = this.connection.collection(this.lunarNewsCollectionName);
 
-async saveTranslation(
-  contentId: string,
-  originalText: string,
-  language: string,
-  translatedText: string,
-): Promise<void> {
-  const collection = this.connection.collection(this.translationCollectionName);
+    // Regular expression to match substrings within words, e.g., "doge" or "dogecoin"
+    const regex = new RegExp(`\\b${title}`, 'i'); // '\\b' ensures word boundary matching
 
-  const existingRecord = await collection.findOne({ contentId });
-
-  if (existingRecord) {
-    // Update existing translation
-    const translations = existingRecord.translations || {};
-    translations[language] = translatedText;
-    await collection.updateOne(
-      { contentId },
-      { $set: { translations, updatedAt: new Date() } },
-    );
-    this.logger.log(
-      `Updated translation for contentId: ${contentId}, Language: ${language}`,
-    );
-  } else {
-    // Create new translation record
-    const newRecord = {
-      contentId,
-      originalText,
-      translations: { [language]: translatedText },
-      createdAt: Math.floor(Date.now() / 1000),
-      updatedAt: Math.floor(Date.now() / 1000),
-    };
-    await collection.insertOne(newRecord);
-    this.logger.log(
-      `Created new translation for contentId: ${contentId}, Language: ${language}`,
-    );
+    return await collection
+      .find({ post_title: { $regex: regex } }) // Case-insensitive search
+      .sort({ post_created: -1 }) // Sort by creation date descending
+      .limit(Math.min(limit, 10)) // Cap at 10 results
+      .toArray();
   }
-}
+
+  async getNewsWithHighSentiment(limit = 50): Promise<any[]> {
+    const collection = this.connection.collection(this.lunarNewsCollectionName);
+    return await collection
+      .find({}) // No filter condition, fetch all
+      .sort({ post_sentiment: -1 }) // Sort by sentiment descending
+      .limit(Math.min(limit, 10)) // Limit results to 10 max
+      .toArray();
+  }
+
+  async getTranslation(contentId: string, language: string): Promise<string | null> {
+    const collection = this.connection.collection(this.translationCollectionName);
+    const result = await collection.findOne({ contentId });
+    if (result && result.translations && result.translations[language]) {
+      this.logger.log(`Translation found in DB for contentId: ${contentId}, Language: ${language}`);
+      return result.translations[language];
+    }
+    this.logger.warn(`No translation found in DB for contentId: ${contentId}, Language: ${language}`);
+    return null;
+  }
+
+  async saveUserChatLog(log: UserChatLogDto): Promise<void> {
+    const collection = this.connection.collection(this.userchatlogCollectionName);
+    await collection.insertOne(log);
+  }
+
+  async getChatHistory(telegramId: string, limit: number = 20): Promise<UserChatLogDto[]> {
+    const collection = this.connection.collection('this.userchatlogCollectionName');
+    const results = await collection
+      .find({ telegramId })
+      .sort({ save_at: -1 }) // Most recent chats first
+      .limit(limit) // Limit the number of results
+      .toArray();
+
+    // Map the results to the UserChatLogDto type
+    return results.map((result) => ({
+      telegramId: result.telegramId as string,
+      query: result.query as string,
+      response: result.response as string,
+      calledFunction: result.calledFunction as string,
+      parameters: result.parameters as Record<string, any>,
+      newParameters: result.newParameters as Record<string, any>,
+      queryType: result.queryType as 'in-scope' | 'out-of-scope',
+      save_at: result.save_at as number,
+    }));
+  }
+
+  async createADXData(adxData: Partial<ADXData>): Promise<void> {
+    const collection = this.connection.collection(this.adxCollectionName);
+    await collection.insertOne(adxData);
+  }
+
+  async getADXBySymbolAndDate(symbol: string, date?: number): Promise<ADXData | null> {
+    const collection = this.connection.collection(this.adxCollectionName);
+
+    const query: Record<string, any> = { symbol };
+    if (date) {
+      query.time = { $lte: date };
+    }
+
+    const result = await collection
+      .find(query)
+      .sort({ time: -1 })
+      .limit(1)
+      .toArray();
+
+    if (result.length > 0) {
+      const { symbol, adx_value, price, time } = result[0];
+      return { symbol, adx_value, price, time };
+    }
+
+    return null;
+  }
+
+  async saveTranslation(
+    contentId: string,
+    originalText: string,
+    language: string,
+    translatedText: string,
+  ): Promise<void> {
+    const collection = this.connection.collection(this.translationCollectionName);
+
+    const existingRecord = await collection.findOne({ contentId });
+
+    if (existingRecord) {
+      // Update existing translation
+      const translations = existingRecord.translations || {};
+      translations[language] = translatedText;
+      await collection.updateOne(
+        { contentId },
+        { $set: { translations, updatedAt: new Date() } },
+      );
+      this.logger.log(
+        `Updated translation for contentId: ${contentId}, Language: ${language}`,
+      );
+    } else {
+      // Create new translation record
+      const newRecord = {
+        contentId,
+        originalText,
+        translations: { [language]: translatedText },
+        createdAt: Math.floor(Date.now() / 1000),
+        updatedAt: Math.floor(Date.now() / 1000),
+      };
+      await collection.insertOne(newRecord);
+      this.logger.log(
+        `Created new translation for contentId: ${contentId}, Language: ${language}`,
+      );
+    }
+  }
 
 }

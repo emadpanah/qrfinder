@@ -19,6 +19,10 @@ import { LunarCrushNews, LunarCrushNewsSchema } from './database/schema/lunarcru
 import { Translation, TranslationSchema } from './database/schema/translations.schema';
 import { UserChatLog, UserChatLogSchema } from './database/schema/userchatlog.schema';
 import { ADXData, ADXDataSchema } from './database/schema/adx.schema';
+import { CCIData, CCIDataSchema } from './database/schema/cci.schema';
+import { StochasticData, StochasticDataSchema } from './database/schema/stochastic.schema';
+import { EMAData, EMADataSchema } from './database/schema/ema.schema';
+import { SMAData, SMADataSchema } from './database/schema/sma.schema';
 
 @Module({
   imports: [
@@ -33,6 +37,10 @@ import { ADXData, ADXDataSchema } from './database/schema/adx.schema';
       { name: Translation.name, schema: TranslationSchema },
       { name: UserChatLog.name, schema: UserChatLogSchema },
       { name: ADXData.name, schema: ADXDataSchema },
+      { name: CCIData.name, schema: CCIDataSchema },
+      { name: StochasticData.name, schema: StochasticDataSchema },
+      { name: EMAData.name, schema: EMADataSchema },
+      { name: SMAData.name, schema: SMADataSchema },
     ], 'service'),
   ],
   providers: [FngService, DataService, DataRepository, LunarCrushService ],

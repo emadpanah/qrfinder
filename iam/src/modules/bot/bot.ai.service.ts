@@ -10,6 +10,7 @@ import { IamService } from '../iam/services/iam.service';
 import { Types } from 'mongoose';
 import { BalanceService } from '../iam/services/iam-balance.service';
 import { Balance } from '../iam/database/schemas/iam-balance.schema';
+import { mapSymbol } from 'src/shared/helper';
 
 
 
@@ -123,7 +124,7 @@ export class BotAIService implements OnModuleInit {
       //     properties: {
       //       symbol: {
       //         type: 'string',
-      //         description: 'The symbol of the cryptocurrency, e.g., BTCUSDT.',
+      //         description: `The cryptocurrency symbol or coin name. Accepts either the symbol (e.g., BTCUSDT, etc) or the coin name (e.g., "Bitcoin", "Ripple", "Solana", "سولانا", "ریپل", etc) in any language. The name will be automatically mapped to its corresponding symbol.`
       //       },
       //       date: {
       //         type: 'string',
@@ -143,13 +144,126 @@ export class BotAIService implements OnModuleInit {
         "parameters": {
           "type": "object",
           "properties": {
-            "symbol": { "type": "string", "description": "The cryptocurrency symbol." },
+            "symbol": { "type": "string", "description": `The cryptocurrency symbol or coin name. Accepts either the symbol (e.g., BTCUSDT, etc) or the coin name (e.g., "Bitcoin", "Ripple", "Solana", "سولانا", "ریپل", etc) in any language. The name will be automatically mapped to its corresponding symbol.` },
             "date": { "type": "string", "description": "The date in YYYY-MM-DD format. if date is not given use today." },
-            "language": { "type": "string", "description": "The response language." },
+            "language": {
+              "type": "string",
+              description: 'The language of the user query, e.g., "en" for English, "fa" for Persian, etc.'
+            },
           },
           "required": ["symbol", "language"]
         }
       },
+      {
+        name: 'getEMAForDate',
+        description: 'Fetches the EMA data for a specific symbol on a specific date.',
+        parameters: {
+          type: 'object',
+          properties: {
+            symbol: { type: 'string', description: `The cryptocurrency symbol or coin name. Accepts either the symbol (e.g., BTCUSDT, etc) or the coin name (e.g., "Bitcoin", "Ripple", "Solana", "سولانا", "ریپل", etc) in any language. The name will be automatically mapped to its corresponding symbol.` },
+            date: { type: 'string', description: 'The date in YYYY-MM-DD format. If not provided, use today.' },
+            language: {
+              type: 'string',
+              description: 'The language of the user query, e.g., "en" for English, "fa" for Persian, etc.'
+            },
+          },
+          required: ['symbol', 'language'],
+        },
+      },
+      {
+        name: 'getSMAForDate',
+        description: 'Fetches the SMA data for a specific symbol on a specific date.',
+        parameters: {
+          type: 'object',
+          properties: {
+            symbol: {
+              type: 'string', description: `The cryptocurrency symbol or coin name. Accepts either the symbol (e.g., BTCUSDT, etc) or the coin name (e.g., "Bitcoin", "Ripple", "Solana", "سولانا", "ریپل", etc) in any language. The name will be automatically mapped to its corresponding symbol.`
+            },
+            date: { type: 'string', description: 'The date in YYYY-MM-DD format. If not provided, use today.' },
+            language: {
+              type: 'string',
+              description: 'The language of the user query, e.g., "en" for English, "fa" for Persian, etc.'
+            },
+          },
+          required: ['symbol', 'language'],
+        },
+      },
+      {
+        name: 'getStochasticForDate',
+        description: 'Fetches the Stochastic data for a specific symbol on a specific date.',
+        parameters: {
+          type: 'object',
+          properties: {
+            symbol: { type: 'string', description: `The cryptocurrency symbol or coin name. Accepts either the symbol (e.g., BTCUSDT, etc) or the coin name (e.g., "Bitcoin", "Ripple", "Solana", "سولانا", "ریپل", etc) in any language. The name will be automatically mapped to its corresponding symbol.` },
+            date: { type: 'string', description: 'The date in YYYY-MM-DD format. If not provided, use today.' },
+            language: {
+              type: 'string',
+              description: 'The language of the user query, e.g., "en" for English, "fa" for Persian, etc.'
+            },
+          },
+          required: ['symbol', 'language'],
+        },
+      },
+      {
+        name: 'getCCIForDate',
+        description: 'Fetches the CCI data for a specific symbol on a specific date.',
+        parameters: {
+          type: 'object',
+          properties: {
+            symbol: { type: 'string', description: `The cryptocurrency symbol or coin name. Accepts either the symbol (e.g., BTCUSDT, etc) or the coin name (e.g., "Bitcoin", "Ripple", "Solana", "سولانا", "ریپل", etc) in any language. The name will be automatically mapped to its corresponding symbol.` },
+            date: { type: 'string', description: 'The date in YYYY-MM-DD format. If not provided, use today.' },
+            language: {
+              type: 'string',
+              description: 'The language of the user query, e.g., "en" for English, "fa" for Persian, etc.'
+            },
+          },
+          required: ['symbol', 'language'],
+        },
+      },
+      {
+        name: 'getADXForDate',
+        description: 'Fetches the ADX data for a specific symbol on a specific date.',
+        parameters: {
+          type: 'object',
+          properties: {
+            symbol: {
+              type: 'string',
+              description: `The cryptocurrency symbol or coin name. Accepts either the symbol (e.g., BTCUSDT, etc) or the coin name (e.g., "Bitcoin", "Ripple", "Solana", "سولانا", "ریپل", etc) in any language. The name will be automatically mapped to its corresponding symbol.`
+            },
+            date: {
+              type: 'string',
+              description: 'The date for which to retrieve the ADX data, in YYYY-MM-DD format.',
+            },
+            language: {
+              type: 'string',
+              description: 'The language of the user query, e.g., "en" for English, "fa" for Persian, etc.',
+            },
+          },
+          required: ['symbol', 'language'],
+        },
+      },
+      // {
+      //   name: 'getTopNADXCryptos',
+      //   description: 'Fetches the top N cryptocurrencies based on their ADX value for a specific date.',
+      //   parameters: {
+      //     type: 'object',
+      //     properties: {
+      //       n: {
+      //         type: 'number',
+      //         description: 'Number of top cryptocurrencies to return based on ADX.',
+      //       },
+      //       date: {
+      //         type: 'string',
+      //         description: 'The date (YYYY-MM-DD) for which to retrieve the top ADX cryptos.',
+      //       },
+      //       language: {
+      //         type: 'string',
+      //         description: 'The language of the user query, e.g., "en" for English, "fa" for Persian, etc.',
+      //       },
+      //     },
+      //     required: ['n', 'language'],
+      //   },
+      // },      
       {
         name: 'getRSIForMultipleSymbolsOnDate',
         description: 'Fetches the RSI data for multiple symbols on a specific date.',
@@ -160,7 +274,7 @@ export class BotAIService implements OnModuleInit {
               type: 'array',
               items: {
                 type: 'string',
-                description: 'A cryptocurrency symbol, e.g., BTCUSDT.'
+                description: `The cryptocurrency symbol or coin name. Accepts either the symbol (e.g., BTCUSDT, etc) or the coin name (e.g., "Bitcoin", "Ripple", "Solana", "سولانا", "ریپل", etc) in any language. The name will be automatically mapped to its corresponding symbol.`
               },
               description: 'An array of symbols for which RSI data is requested.'
             },
@@ -170,34 +284,35 @@ export class BotAIService implements OnModuleInit {
             },
             language: {
               type: 'string',
-              description: 'The language of the response, using ISO 639-1 codes (e.g., "en" for English, "fa" for Persian, "es" for Spanish, etc.).',
+              description: 'The language of the user query, e.g., "en" for English, "fa" for Persian, etc.',
             }
           },
           required: ['symbols', 'language'],
         },
       },
+      // {
+      //   name: 'getTopNRSICryptos',
+      //   description: 'Fetches the top N cryptocurrencies based on their RSI value for a specific date.',
+      //   parameters: {
+      //     type: 'object',
+      //     properties: {
+      //       n: {
+      //         type: 'number',
+      //         description: 'Number of top cryptocurrencies to return based on RSI.'
+      //       },
+      //       date: {
+      //         type: 'string',
+      //         description: 'The date (YYYY-MM-DD) for which to retrieve the top RSI cryptos. if date is not given use today.'
+      //       },
+      //       language: {
+      //         type: 'string',
+      //         description: 'The language of the user query, e.g., "en" for English, "fa" for Persian, etc.',
+      //       }
+      //     },
+      //     required: ['n', 'language'],
+      //   },
+      // }, 
       {
-        name: 'getTopNRSICryptos',
-        description: 'Fetches the top N cryptocurrencies based on their RSI value for a specific date.',
-        parameters: {
-          type: 'object',
-          properties: {
-            n: {
-              type: 'number',
-              description: 'Number of top cryptocurrencies to return based on RSI.'
-            },
-            date: {
-              type: 'string',
-              description: 'The date (YYYY-MM-DD) for which to retrieve the top RSI cryptos. if date is not given use today.'
-            },
-            language: {
-              type: 'string',
-              description: 'The language of the response, using ISO 639-1 codes (e.g., "en" for English, "fa" for Persian, "es" for Spanish, etc.).',
-            }
-          },
-          required: ['n', 'language'],
-        },
-      }, {
         name: 'getSortForSymbol',
         description: 'Fetches the requested sort metric value and the categories for a given symbol from the LunarCrush data.',
         parameters: {
@@ -205,7 +320,7 @@ export class BotAIService implements OnModuleInit {
           properties: {
             symbol: {
               type: 'string',
-              description: 'The symbol of the cryptocurrency, e.g., BTC, ETH, BTCUSDT.',
+              description: `The cryptocurrency symbol or coin name. Accepts either the symbol (e.g., BTCUSDT, etc) or the coin name (e.g., "Bitcoin", "Ripple", "Solana", "سولانا", "ریپل", etc) in any language. The name will be automatically mapped to its corresponding symbol.`
             },
             sort: {
               type: 'string',
@@ -213,7 +328,7 @@ export class BotAIService implements OnModuleInit {
             },
             language: {
               type: 'string',
-              description: 'The language of the response, using ISO 639-1 codes (e.g., "en" for English, "fa" for Persian, "es" for Spanish, etc.).',
+              description: 'The language of the user query, e.g., "en" for English, "fa" for Persian, etc.',
             },
           },
           required: ['symbol', 'sort', 'language'],
@@ -239,7 +354,7 @@ export class BotAIService implements OnModuleInit {
             },
             language: {
               type: 'string',
-              description: 'The language of the response, using ISO 639-1 codes (e.g., "en" for English, "fa" for Persian, "es" for Spanish, etc.).',
+              description: 'The language of the user query, e.g., "en" for English, "fa" for Persian, etc.',
             },
           },
           required: ['category', 'sort', 'language'],
@@ -261,7 +376,7 @@ export class BotAIService implements OnModuleInit {
             },
             language: {
               type: 'string',
-              description: 'The language of the response, using ISO 639-1 codes (e.g., "en" for English, "fa" for Persian, "es" for Spanish, etc.).',
+              description: 'The language of the user query, e.g., "en" for English, "fa" for Persian, etc.',
             },
           },
           required: ['sort', 'language'],
@@ -275,7 +390,7 @@ export class BotAIService implements OnModuleInit {
           properties: {
             symbol: {
               type: 'string',
-              description: 'The symbol of the cryptocurrency, e.g., BTCUSDT.',
+              description: `The cryptocurrency symbol or coin name. Accepts either the symbol (e.g., BTCUSDT, etc) or the coin name (e.g., "Bitcoin", "Ripple", "Solana", "سولانا", "ریپل", etc) in any language. The name will be automatically mapped to its corresponding symbol.`
             },
             date: {
               type: 'string',
@@ -283,7 +398,7 @@ export class BotAIService implements OnModuleInit {
             },
             language: {
               type: 'string',
-              description: 'The language of the response, using ISO 639-1 codes (e.g., "en" for English, "fa" for Persian, "es" for Spanish, etc.).',
+              description: 'The language of the user query, e.g., "en" for English, "fa" for Persian, etc.',
             },
           },
           required: ['symbol', 'language'],
@@ -299,7 +414,7 @@ export class BotAIService implements OnModuleInit {
               type: 'array',
               items: {
                 type: 'string',
-                description: 'A cryptocurrency symbol, e.g. BTCUSDT.'
+                description: `The cryptocurrency symbol or coin name. Accepts either the symbol (e.g., BTCUSDT, etc) or the coin name (e.g., "Bitcoin", "Ripple", "Solana", "سولانا", "ریپل", etc) in any language. The name will be automatically mapped to its corresponding symbol.`
               },
               description: 'An array of symbols for which MACD data is requested.'
             },
@@ -309,34 +424,34 @@ export class BotAIService implements OnModuleInit {
             },
             language: {
               type: 'string',
-              description: 'The language of the response, using ISO 639-1 codes (e.g., "en" for English, "fa" for Persian, "es" for Spanish, etc.).',
+              description: 'The language of the user query, e.g., "en" for English, "fa" for Persian, etc.',
             }
           },
           required: ['symbols', 'language'],
         },
       },
-      {
-        name: 'getTopNMACDCryptos',
-        description: 'Fetches the top N cryptocurrencies based on their MACD value for a specific date.',
-        parameters: {
-          type: 'object',
-          properties: {
-            n: {
-              type: 'number',
-              description: 'Number of top cryptocurrencies to return based on MACD.'
-            },
-            date: {
-              type: 'string',
-              description: 'The date (YYYY-MM-DD) for which to retrieve the top MACD cryptos. if date is not given use today.'
-            },
-            language: {
-              type: 'string',
-              description: 'The language of the response, using ISO 639-1 codes (e.g., "en" for English, "fa" for Persian, "es" for Spanish, etc.).',
-            }
-          },
-          required: ['n', 'language'],
-        },
-      },
+      // {
+      //   name: 'getTopNMACDCryptos',
+      //   description: 'Fetches the top N cryptocurrencies based on their MACD value for a specific date.',
+      //   parameters: {
+      //     type: 'object',
+      //     properties: {
+      //       n: {
+      //         type: 'number',
+      //         description: 'Number of top cryptocurrencies to return based on MACD.'
+      //       },
+      //       date: {
+      //         type: 'string',
+      //         description: 'The date (YYYY-MM-DD) for which to retrieve the top MACD cryptos. if date is not given use today.'
+      //       },
+      //       language: {
+      //         type: 'string',
+      //         description: 'The language of the user query, e.g., "en" for English, "fa" for Persian, etc.',
+      //       }
+      //     },
+      //     required: ['n', 'language'],
+      //   },
+      // },
       {
         name: 'getFngForDate',
         description: 'Fetches the Fear and Greed Index data for a specific date.',
@@ -363,7 +478,7 @@ export class BotAIService implements OnModuleInit {
           properties: {
             symbol: {
               type: 'string',
-              description: 'The symbol of the cryptocurrency, e.g., BTCUSDT.',
+              description: `The cryptocurrency symbol or coin name. Accepts either the symbol (e.g., BTCUSDT, etc) or the coin name (e.g., "Bitcoin", "Ripple", "Solana", "سولانا", "ریپل", etc) in any language. The name will be automatically mapped to its corresponding symbol.`
             },
             date: {
               type: 'string',
@@ -371,7 +486,7 @@ export class BotAIService implements OnModuleInit {
             },
             language: {
               type: 'string',
-              description: 'The language of the response, using ISO 639-1 codes (e.g., "en" for English, "fa" for Persian, "es" for Spanish, etc.).',
+              description: 'The language of the user query, e.g., "en" for English, "fa" for Persian, etc.',
             },
           },
           required: ['symbol', 'language'],
@@ -386,7 +501,7 @@ export class BotAIService implements OnModuleInit {
             symbols: {
               type: 'array',
               items: { type: 'string' },
-              description: 'The list of cryptocurrency symbols, e.g., ["BTCUSDT", "ETHUSDT"].',
+              description: `The cryptocurrency symbol or coin name. Accepts either the symbol (e.g., BTCUSDT, etc) or the coin name (e.g., "Bitcoin", "Ripple", "Solana", "سولانا", "ریپل", etc) in any language. The name will be automatically mapped to its corresponding symbol.`,
             },
             date: {
               type: 'string',
@@ -394,7 +509,7 @@ export class BotAIService implements OnModuleInit {
             },
             language: {
               type: 'string',
-              description: 'The language of the response, using ISO 639-1 codes (e.g., "en" for English, "fa" for Persian, "es" for Spanish, etc.).',
+              description: 'The language of the user query, e.g., "en" for English, "fa" for Persian, etc.',
             },
           },
           required: ['symbols', 'language'],
@@ -416,7 +531,7 @@ export class BotAIService implements OnModuleInit {
             },
             language: {
               type: 'string',
-              description: 'The language of the response, using ISO 639-1 codes (e.g., "en" for English, "fa" for Persian, "es" for Spanish, etc.).',
+              description: 'The language of the user query, e.g., "en" for English, "fa" for Persian, etc.',
             },
           },
           required: ['limit', 'language'],
@@ -436,7 +551,7 @@ export class BotAIService implements OnModuleInit {
             },
             language: {
               type: 'string',
-              description: 'The language of the response, using ISO 639-1 codes (e.g., "en" for English, "fa" for Persian, "es" for Spanish, etc.).',
+              description: 'The language of the user query, e.g., "en" for English, "fa" for Persian, etc.',
             },
           },
           required: ['symbols', 'language'],
@@ -450,7 +565,7 @@ export class BotAIService implements OnModuleInit {
           properties: {
             language: {
               type: 'string',
-              description: 'The language of the response, using ISO 639-1 codes (e.g., "en" for English, "fa" for Persian, "es" for Spanish, etc.).',
+              description: 'The language of the user query, e.g., "en" for English, "fa" for Persian, etc.',
             },
             unrelatedTopic: {
               type: 'string',
@@ -472,11 +587,11 @@ export class BotAIService implements OnModuleInit {
           properties: {
             limit: {
               type: 'number',
-              description: 'Number of news articles to retrieve (default 5, max 50).'
+              description: 'Number of news articles to retrieve (default 5, max 10).'
             },
             language: {
               type: 'string',
-              description: 'The language of the response, using ISO 639-1 codes (e.g., "en" for English, "fa" for Persian, "es" for Spanish, etc.).',
+              description: 'The language of the user query, e.g., "en" for English, "fa" for Persian, etc.',
             }
           },
           required: ['language']
@@ -490,11 +605,11 @@ export class BotAIService implements OnModuleInit {
           properties: {
             limit: {
               type: 'number',
-              description: 'Number of news articles to retrieve (default 5, max 50).'
+              description: 'Number of news articles to retrieve (default 5, max 10).'
             },
             language: {
               type: 'string',
-              description: 'The language of the response, using ISO 639-1 codes (e.g., "en" for English, "fa" for Persian, "es" for Spanish, etc.).',
+              description: 'The language of the user query, e.g., "en" for English, "fa" for Persian, etc.',
             }
           },
           required: ['language']
@@ -508,15 +623,19 @@ export class BotAIService implements OnModuleInit {
           properties: {
             title: {
               type: 'string',
-              description: 'Keyword to search for in the news titles.'
+              description: 'Keyword to search for in the news titles.please automatically converts the title to symbol if can, and send symbol (e.g., Ripple -> XRP, سولانا -> SOL, ریپل -> XRP, etc).'
+            },
+            symbol: {
+              type: 'string',
+              description: `The cryptocurrency symbol or coin name. Accepts either the symbol (e.g., BTCUSDT, etc) or the coin name (e.g., "Bitcoin", "Ripple", "Solana", "سولانا", "ریپل", etc) in any language. The name will be automatically mapped to its corresponding symbol.`
             },
             limit: {
               type: 'number',
-              description: 'Number of news articles to retrieve (default 5, max 50).'
+              description: 'Number of news articles to retrieve (default 5, max 10).'
             },
             language: {
               type: 'string',
-              description: 'The language of the response, using ISO 639-1 codes (e.g., "en" for English, "fa" for Persian, "es" for Spanish, etc.).',
+              description: 'The language of the user query, e.g., "en" for English, "fa" for Persian, etc.',
             }
           },
           required: ['title', 'language']
@@ -534,7 +653,7 @@ export class BotAIService implements OnModuleInit {
             },
             language: {
               type: 'string',
-              description: 'The language of the response, using ISO 639-1 codes (e.g., "en" for English, "fa" for Persian, "es" for Spanish, etc.).',
+              description: 'The language of the user query, e.g., "en" for English, "fa" for Persian, etc.',
             },
           },
           required: ['language'],
@@ -555,13 +674,19 @@ export class BotAIService implements OnModuleInit {
       const stream = await this.openai.chat.completions.create({
         messages: [
           {
-            role: "system", content:
-              "You are personal asistance for crypto and blockchain," +
-              " if user ask question in persian you must answer in persian and if user ask in english you answer english." +
-              " as personal asistance you are very helpful and intractive with customer." +
-              "if user ask question in persian but with english characters that called" +
-              " finglish you answer customer with persian language." +
-              + "" + datePrompt
+            role: "system",
+            content:
+              "You are 'Nabzar,' a personal assistant for cryptocurrencies and blockchains. " +
+              "'Nabzar' is a Persian name made from the combination of 'Nabz' (pulse) and 'Bazar' (market), symbolizing the heartbeat of the market, نبضار. every time ask for your name return your name with meaning of it. " +
+              "As 'Nabzar,' you embody the characteristics of being kind, friendly, and approachable, ensuring users feel comfortable seeking your help. " +
+              "You are eager to help users, always providing clear and detailed answers in a way they can easily understand. " +
+              "You also encourage curiosity and learning by engaging with users in an interactive and supportive manner. " +
+              "If a user asks a question in Persian, you must answer in Persian, and if a user asks in English, you answer in English. " +
+              "If a user asks a question in Persian but with English characters (Finglish), you answer in Persian language. " +
+              "Your tone is always polite, engaging, and professional, but you remain approachable and relatable to users of all experience levels." +
+              "If the user asks questions like 'Do I buy Bitcoin or sell Bitcoin now' or other similar queries, you must analyze the requested symbol and generate trading signals using the analyzeAndCreateSignals function. " +
+              "You are committed to guiding users step-by-step, offering them insights, explanations, and knowledge about crypto and blockchain in a way that enhances their confidence and understanding." +
+              datePrompt
           },
           //          { role: 'system', content: systemMessage },
           { role: "user", content: prompt }
@@ -574,28 +699,6 @@ export class BotAIService implements OnModuleInit {
 
       // Check if ChatGPT suggested a function call
       if (message.function_call) {
-        // const functionName = message.function_call.name;
-        // const parameters = JSON.parse(message.function_call.arguments || '{}');
-
-        // // Log the parsed parameters for debugging
-
-
-        // // Check if the function exists on the service
-        // if (typeof this[functionName] === 'function') {
-
-        //    // Convert the date string to a Unix timestamp
-
-        //    //const timestamp =  Math.floor(Date.now() / 1000);
-        //   const timestamp = new Date(parameters.timestamp).getTime() / 1000;
-        //   const functionResponse = await this[functionName](timestamp);
-        //   this.conversationHistory.push({ role: 'function', name: functionName, content: functionResponse });
-        //   return functionResponse;
-
-
-        // } else {
-        //   this.logger.error(`Function ${functionName} is not defined.`);
-        //   return 'Requested function is not available.';
-        // }
 
         const functionName = message.function_call.name;
         const parameters = JSON.parse(message.function_call.arguments || '{}');
@@ -605,20 +708,6 @@ export class BotAIService implements OnModuleInit {
         let functionResponse;
 
         switch (functionName) {
-
-
-          // case 'getTopCryptosByVolatility': {
-          //   const response = await this.getTopCryptosByVolatility(parameters.limit);
-          //   this.conversationHistory.push({ role: 'function', name: functionName, content: response });
-          //   return response;
-          // }
-
-          // case 'getTopCryptosByGalaxyScore': {
-          //   return await this.getTopCryptosByGalaxyScore(parameters.limit);
-          // }
-          // case 'getTopCryptosByAltRank': {
-          //   return await this.getTopCryptosByAltRank(parameters.limit);
-          // }
 
           case 'getTopCryptosByCategoryAndSort': {
             const { category, sort, limit = 10, language } = parameters;
@@ -698,26 +787,177 @@ export class BotAIService implements OnModuleInit {
               languague: language,
             };
           }
+          case 'getEMAForDate': {
+            const effectiveDate = parameters.date || new Date().toISOString().split('T')[0];
+            const timestamp = new Date(effectiveDate).getTime() / 1000;
+            const mappedSymbol = mapSymbol(parameters.symbol, 'pair');
+            const emaData = await this.dataRepository.getEMABySymbolAndDate(mappedSymbol, timestamp);
+            const his = await this.dataRepository.getLast7DaysDailyIndicator(mappedSymbol,'EMA', timestamp);
+            return {
+              responseText: await this.getDynamicInterpretation(his, prompt, emaData, 'EMA', mappedSymbol, parameters.date, parameters.language),
+              queryType,
+              newParameters,
+              languague: parameters.language,
+            };
+          }
+
+          case 'getTopNEMACryptos': {
+            const { n, date, language } = parameters;
+            const effectiveDate = date || new Date().toISOString().split('T')[0];
+            const timestamp = new Date(effectiveDate).getTime() / 1000;
+            const topEMACryptos = await this.dataRepository.getTopNByIndicator('EMA', n, timestamp);
+
+            return {
+              responseText: topEMACryptos.length > 0
+                ? topEMACryptos.map((crypto, index) => `${index + 1}. ${crypto.symbol}: EMA ${crypto.ema_value}`).join('\n')
+                : 'No EMA data available.',
+              queryType,
+              newParameters,
+              languague: language,
+            };
+          }
+
+          case 'getSMAForDate': {
+            const effectiveDate = parameters.date || new Date().toISOString().split('T')[0];
+            const timestamp = new Date(effectiveDate).getTime() / 1000;
+            const mappedSymbol = mapSymbol(parameters.symbol, 'pair');
+            const smaData = await this.dataRepository.getSMABySymbolAndDate(mappedSymbol, timestamp);
+            const his = await this.dataRepository.getLast7DaysDailyIndicator(mappedSymbol,'SMA', timestamp);
+            return {
+              responseText: await this.getDynamicInterpretation(his, prompt, smaData, 'SMA', mappedSymbol, parameters.date, parameters.language),
+              queryType,
+              newParameters,
+              languague: parameters.language,
+            };
+          }
+
+          case 'getTopNSMACryptos': {
+            const { n, date, language } = parameters;
+            const effectiveDate = date || new Date().toISOString().split('T')[0];
+            const timestamp = new Date(effectiveDate).getTime() / 1000;
+            const topSMACryptos = await this.dataRepository.getTopNByIndicator('SMA', n, timestamp);
+
+            return {
+              responseText: topSMACryptos.length > 0
+                ? topSMACryptos.map((crypto, index) => `${index + 1}. ${crypto.symbol}: SMA ${crypto.sma_value}`).join('\n')
+                : 'No SMA data available.',
+              queryType,
+              newParameters,
+              languague: language,
+            };
+          }
+
+          case 'getStochasticForDate': {
+            const effectiveDate = parameters.date || new Date().toISOString().split('T')[0];
+            const timestamp = new Date(effectiveDate).getTime() / 1000;
+            const mappedSymbol = mapSymbol(parameters.symbol, 'pair');
+            const stochasticData = await this.dataRepository.getStochasticBySymbolAndDate(mappedSymbol, timestamp);
+            const his = await this.dataRepository.getLast7DaysDailyIndicator(mappedSymbol,'Stochastic', timestamp);
+            return {
+              responseText: await this.getDynamicInterpretation(his, prompt, stochasticData, 'Stochastic', mappedSymbol, parameters.date, parameters.language),
+              queryType,
+              newParameters,
+              languague: parameters.language,
+            };
+          }
+
+          case 'getTopNStochasticCryptos': {
+            const { n, date, language } = parameters;
+            const effectiveDate = date || new Date().toISOString().split('T')[0];
+            const timestamp = new Date(effectiveDate).getTime() / 1000;
+            const topStochasticCryptos = await this.dataRepository.getTopNByIndicator('Stochastic', n, timestamp);
+
+            return {
+              responseText: topStochasticCryptos.length > 0
+                ? topStochasticCryptos.map(
+                  (crypto, index) => `${index + 1}. ${crypto.symbol}: K ${crypto.k_value}, D ${crypto.d_value}`
+                ).join('\n')
+                : 'No Stochastic data available.',
+              queryType,
+              newParameters,
+              languague: language,
+            };
+          }
+
+          case 'getCCIForDate': {
+            const effectiveDate = parameters.date || new Date().toISOString().split('T')[0];
+            const timestamp = new Date(effectiveDate).getTime() / 1000;
+            const mappedSymbol = mapSymbol(parameters.symbol, 'pair');
+            const cciData = await this.dataRepository.getCCIBySymbolAndDate(mappedSymbol, timestamp);
+            const his = await this.dataRepository.getLast7DaysDailyIndicator(mappedSymbol,'CCI', timestamp);
+            return {
+              responseText: await this.getDynamicInterpretation(his, prompt, cciData, 'CCI', mappedSymbol, parameters.date, parameters.language),
+              queryType,
+              newParameters,
+              languague: parameters.language,
+            };
+          }
+
+          case 'getTopNCCICryptos': {
+            const { n, date, language } = parameters;
+            const effectiveDate = date || new Date().toISOString().split('T')[0];
+            const timestamp = new Date(effectiveDate).getTime() / 1000;
+            const topCCICryptos = await this.dataRepository.getTopNByIndicator('CCI', n, timestamp);
+
+            return {
+              responseText: topCCICryptos.length > 0
+                ? topCCICryptos.map((crypto, index) => `${index + 1}. ${crypto.symbol}: CCI ${crypto.cci_value}`).join('\n')
+                : 'No CCI data available.',
+              queryType,
+              newParameters,
+              languague: language,
+            };
+          }
+
+          case 'getADXForDate': {
+            const effectiveDate = parameters.date || new Date().toISOString().split('T')[0];
+            const timestamp = new Date(effectiveDate).getTime() / 1000;
+            const mappedSymbol = mapSymbol(parameters.symbol, 'pair');
+            const adxData = await this.dataRepository.getADXBySymbolAndDate(mappedSymbol, timestamp);
+            const his = await this.dataRepository.getLast7DaysDailyIndicator(mappedSymbol,'ADX', timestamp);
+            return {
+              responseText: await this.getDynamicInterpretation(his, prompt, adxData, 'ADX', mappedSymbol, parameters.date, parameters.language),
+              queryType,
+              newParameters,
+              languague: parameters.language,
+            };
+          }
+
+          case 'getTopNADXCryptos': {
+            const { n, date, language } = parameters;
+            const effectiveDate = date || new Date().toISOString().split('T')[0];
+            const timestamp = new Date(effectiveDate).getTime() / 1000;
+            const topADXCryptos = await this.dataRepository.getTopNByIndicator('ADX', n, timestamp);
+
+            return {
+              responseText: topADXCryptos.length > 0
+                ? topADXCryptos.map((crypto, index) => `${index + 1}. ${crypto.symbol}: ADX ${crypto.adx_value}`).join('\n')
+                : 'No ADX data available.',
+              queryType,
+              newParameters,
+              languague: language,
+            };
+          }
+
 
           case 'getRSIForDate': {
             // Set the default date if not provided
             const effectiveDate = parameters.date || new Date().toISOString().split('T')[0];
             const timestamp1 = new Date(effectiveDate).getTime() / 1000;
-
-            // Call the actual function
-            functionResponse = await this.getRSIForDate(parameters.symbol, timestamp1);
+            const mappedSymbol = mapSymbol(parameters.symbol, 'pair');
+            functionResponse = await this.getRSIForDate(mappedSymbol, timestamp1);
 
             // // Identify new or unexpected parameters
             // const allowedParameters = ['symbol', 'date', 'language'];
             // const newParameters = Object.keys(parameters).filter(
             //   (key) => !allowedParameters.includes(key)
             // );
-
+            const his = await this.dataRepository.getLast7DaysDailyIndicator(mappedSymbol,'RSI', timestamp1);
             // Generate AI response using getDynamicInterpretation
-            const aiResponse = await this.getDynamicInterpretation(
+            const aiResponse = await this.getDynamicInterpretation(his, prompt,
               functionResponse,
               'RSI',
-              parameters.symbol,
+              mappedSymbol,
               effectiveDate,
               parameters.language
             );
@@ -733,36 +973,42 @@ export class BotAIService implements OnModuleInit {
           case 'getMACDForDate':
             const ddd = parameters.date || new Date().toISOString().split('T')[0];
             const timestamp2 = new Date(ddd).getTime() / 1000;
-            functionResponse = await this.getMACDForDate(parameters.symbol, timestamp2);
+            const mappedSymbol = mapSymbol(parameters.symbol, 'pair');
+            functionResponse = await this.getMACDForDate(mappedSymbol, timestamp2);
+            const his = await this.dataRepository.getLast7DaysDailyIndicator(mappedSymbol,'MACD', timestamp2);
             return {
-              responseText: await this.getDynamicInterpretation(functionResponse, 'MACD', parameters.symbol, parameters.date, parameters.language),
+              responseText: await this.getDynamicInterpretation(his, prompt, functionResponse, 'MACD', mappedSymbol, parameters.date, parameters.language),
               queryType,
               newParameters,
               languague: parameters.language,
             };
 
           case 'getFngForDate':
+            {
             const dd = parameters.date || new Date().toISOString().split('T')[0];
             const timesta = new Date(dd).getTime() / 1000;
             functionResponse = await this.getFngForDate(timesta);
+            const his = await this.dataRepository.getLast7DaysFngData(timesta);
             return {
-              responseText: await this.getDynamicInterpretation(functionResponse, 'FNG', "", parameters.timestamp, parameters.language),
+              responseText: await this.getDynamicInterpretation(his, prompt, functionResponse, 'FNG', "", parameters.timestamp, parameters.language),
               queryType,
               newParameters,
               languague: parameters.language,
             };
-
-          case 'getCryptoPrice':
+          }
+          case 'getCryptoPrice': {
             const effectiveDate = parameters.date || new Date().toISOString().split('T')[0];
             const timestamp1 = new Date(effectiveDate).getTime() / 1000;
-            functionResponse = await this.getCryptoPrice(parameters.symbol, timestamp1);
+            const mappedSymbol = mapSymbol(parameters.symbol, 'pair');
+            functionResponse = await this.getCryptoPrice(mappedSymbol, timestamp1);
+            const his = await this.dataRepository.getLast7DaysDailyPrice(mappedSymbol, timestamp1);
             return {
-              responseText: await this.getDynamicInterpretation(functionResponse, 'Crypto Price', parameters.symbol, parameters.date, parameters.language),
+              responseText: await this.getDynamicInterpretation(his, prompt, functionResponse, 'Crypto Price', mappedSymbol, parameters.date, parameters.language),
               queryType,
               newParameters,
               languague: parameters.language,
             };
-
+          }
 
           case 'getTopCryptosByPrice': {
             const effectiveDate = parameters.date || new Date().toISOString().split('T')[0];
@@ -865,10 +1111,11 @@ export class BotAIService implements OnModuleInit {
               };
             }
 
-            const { categories, sortValue } = await this.dataRepository.getSortValueForSymbol(symbol, sort);
+            const mappedSymbol = mapSymbol(parameters.symbol, 'plain');
+            const { categories, sortValue } = await this.dataRepository.getSortValueForSymbol(mappedSymbol, sort);
 
             if (!categories && sortValue === null) {
-              const errorMas = `No data found for symbol ${symbol} with the requested sort parameter.`;
+              const errorMas = `No data found for symbol ${mappedSymbol} with the requested sort parameter.`;
               return {
                 responseText: errorMas,
                 queryType,
@@ -877,7 +1124,7 @@ export class BotAIService implements OnModuleInit {
               };
             }
 
-            const err = `Category for ${symbol}: ${categories}\n${sort} value for this symbol: ${sortValue}`;
+            const err = `Category for ${mapSymbol}: ${categories}\n${sort} value for this symbol: ${sortValue}`;
             return {
               responseText: err,
               queryType,
@@ -910,8 +1157,14 @@ export class BotAIService implements OnModuleInit {
           }
 
           case 'searchNewsByTitle': {
-            const { title, limit = 5, language } = parameters; // Include language
-            const news = await this.dataRepository.searchNewsByTitle(title, limit);
+            const { title, limit = 5, language, symbol } = parameters; // Include language
+            let news;
+            const mappedSymbol = mapSymbol(parameters.symbol, 'plain');
+            console.log("symbole : ", mappedSymbol);
+            if (mappedSymbol)
+              news = await this.dataRepository.searchNewsByTitle(mappedSymbol, limit);
+            else
+              news = await this.dataRepository.searchNewsByTitle(title, limit);
             return {
               responseText: await this.formatNewsResponse(news, language),
               queryType,
@@ -996,71 +1249,71 @@ export class BotAIService implements OnModuleInit {
   }
 
   async analyzeAndCreateSignals(symbols: string[], language: string): Promise<string> {
+    let sym;
     if (symbols.length > 1) {
-      return `Please provide a single symbol. You provided ${symbols.length}.`;
+      sym = symbols[0];
     }
-  
+
     const fngData = await this.dataRepository.findFngByDate();
     const fng = fngData
       ? { value: fngData.value || "0", value_classification: fngData.value_classification || "Neutral" }
       : { value: "0", value_classification: "Neutral" };
-  
+
     let responseText = `🔍 **Trading Analysis Results** 📊\n\n`;
-  
-    for (const symbol of symbols) {
-      const [indicators, sorts, macdData, adx] = await Promise.all([
-        this.dataRepository.getRSIBySymbolAndDate(symbol),
-        this.dataRepository.getAllSortsForSymbol(symbol),
-        this.dataRepository.getMACDBySymbolAndDate(symbol),
-        this.dataRepository.getADXBySymbolAndDate(symbol),
-      ]);
-  
-      if (!indicators || Object.keys(sorts).length === 0 || !macdData || !adx) {
-        return `⚠️ Insufficient data (RSI, MACD, ADX, or sorts) for ${symbol}.`;
-      }
-  
-      const indicatorsWithADX = { ...indicators, MACD: macdData, ADX: adx.adx_value };
-  
-      // Generate dynamic analyze prompt
-      const prompt = await this.generateDynamicAnalyzePrompt(symbol, sorts, indicatorsWithADX, fng, language);
-  
-      try {
-        const response = await this.openai.chat.completions.create({
-          messages: [
-            {
-              role: "system",
-              content: `You are a crypto assistant that provides detailed technical analysis and trading insights based on the given data.`,
-            },
-            {
-              role: "user",
-              content: prompt,
-            },
-          ],
-          model: "gpt-4o-mini-2024-07-18",
-        });
-  
-        const analysis = response.choices[0].message.content.trim();
-  
-        // Append the formatted analysis to the response text
-        responseText += `💡 **${symbol} Analysis**:\n${this.formatAnalysis(analysis)}\n\n`;
-      } catch (error) {
-        console.error("Error fetching analysis from ChatGPT:", error);
-        responseText += `❌ **${symbol}**: Error generating analysis. Please try again later.\n\n`;
-      }
+    const symbol = mapSymbol(sym, 'pair');
+    const [indicators, sorts, macdData, adx] = await Promise.all([
+      this.dataRepository.getRSIBySymbolAndDate(symbol),
+      this.dataRepository.getAllSortsForSymbol(symbol),
+      this.dataRepository.getMACDBySymbolAndDate(symbol),
+      this.dataRepository.getADXBySymbolAndDate(symbol),
+    ]);
+
+    if (!indicators || Object.keys(sorts).length === 0 || !macdData || !adx) {
+      return `⚠️ Insufficient data (RSI, MACD, ADX, or sorts) for ${symbol}.`;
     }
-  
+
+    const indicatorsWithADX = { ...indicators, MACD: macdData, ADX: adx.adx_value };
+
+    // Generate dynamic analyze prompt
+    const prompt = await this.generateDynamicAnalyzePrompt(symbol, sorts, indicatorsWithADX, fng, language);
+
+    try {
+      const response = await this.openai.chat.completions.create({
+        messages: [
+          {
+            role: "system",
+            content: `You are a crypto assistant that provides detailed technical analysis and trading insights based on the given data.`,
+          },
+          {
+            role: "user",
+            content: prompt,
+          },
+        ],
+        model: "gpt-4o-mini-2024-07-18",
+      });
+
+      const analysis = response.choices[0].message.content.trim();
+
+      // Append the formatted analysis to the response text
+      responseText += `💡 **${symbol} Analysis**:\n${this.formatAnalysis(analysis)}\n\n`;
+    } catch (error) {
+      console.error("Error fetching analysis from ChatGPT:", error);
+      responseText += `❌ **${symbol}**: Error generating analysis. Please try again later.\n\n`;
+    }
+
+
     return responseText;
   }
-  
+
   private formatAnalysis(rawAnalysis: string): string {
     return rawAnalysis
       .replace(/###/g, "🔹") // Replace section headers with a bullet icon
       .replace(/\*\*(.*?)\*\*/g, "🌟 $1") // Highlight bolded text with a star emoji
       .replace(/- /g, "➡️ "); // Use an arrow for list items
-      
+
   }
-  
-  
+
+
 
   async generateDynamicAnalyzePrompt(
     symbol: string,
@@ -1090,11 +1343,10 @@ export class BotAIService implements OnModuleInit {
 
   ### **Indicators**
   - **RSI**: ${indicators.RSI ? `Value: ${indicators.RSI}` : "No data available"}
-  - **MACD**: ${
-      indicators.MACD
+  - **MACD**: ${indicators.MACD
         ? `MACD: ${indicators.MACD.MACD}, Signal: ${indicators.MACD.Signal}, Histogram: ${indicators.MACD.Histogram}`
         : "No data available"
-    }
+      }
   - **ADX**: ${indicators.ADX ? `Value: ${indicators.ADX}` : "No data available"}
   
   ### **Sentiment**
@@ -1123,11 +1375,11 @@ export class BotAIService implements OnModuleInit {
 - **Alt Rank (Prev)**: ${sorts.alt_rank_previous || "No data"}
 - **Sentiment**: ${sorts.sentiment || "No data"} 
 `;
-  
+
     return prompt;
   }
-  
-  
+
+
 
   private async getTranslatedText(
     id: string,
@@ -1171,14 +1423,32 @@ export class BotAIService implements OnModuleInit {
   }
 
 
-  async getDynamicInterpretation(data: any, topic: string, symbol: string, date: string, language: string): Promise<string> {
-    const additionalPrompt = `
-      Provide an discription of the following ${topic} data for ${symbol} on ${date}:
-      ${JSON.stringify(data)}
-      Please include an explanation of what this ${topic} data implies in terms of market conditions and trading strategy.
-       Answer in ${language}.
-    `;
+  async getDynamicInterpretation(historicalData: any[], prompt: string, data: any, topic: string, symbol: string, date: string, language: string): Promise<string> {
+    
+    // const historicalDataString = historicalData.length
+    // ? `Here is the historical ${topic} data for the past 7 days:\n${historicalData
+    //     .map((entry, index) => `Day ${index + 1}: ${JSON.stringify(entry)}`)
+    //     .join("\n")}`
+    // : `No historical data available for ${topic}.`;
+    const historicalDataString = historicalData.length
+    ? `Here is the historical ${topic} data for the past 7 days:\n${[...historicalData]
+        .reverse() // Reverse the array to show the latest data first
+        .map((entry, index) => `Day ${index + 1}: ${JSON.stringify(entry)}`)
+        .join("\n")}`
+    : `No historical data available for ${topic}.`;
+    
+    // Updated prompt to include historical data
+  const additionalPrompt = `
+  The user asked the following: "${prompt}".
+  Provide a detailed interpretation of the following ${topic} data for ${symbol} on ${date}:
+  ${JSON.stringify(data)}.
 
+  ${historicalDataString}
+
+  Please include an explanation of what this ${topic} data and show time with data and use the historical trends imply in terms of market conditions and trading strategy.
+  Answer in ${language}.
+`;
+console.log('additionalPrompt :' , additionalPrompt)
     try {
       const response = await this.openai.chat.completions.create({
         messages: [
@@ -1211,7 +1481,8 @@ export class BotAIService implements OnModuleInit {
     // Fetch the latest price for each symbol
     const prices = await Promise.all(
       symbols.map(async (symbol) => {
-        const latestPrice = await this.dataRepository.getLatestPriceBySymbol(symbol, date);
+        const mappedSymbol = mapSymbol(symbol, 'pair');
+        const latestPrice = await this.dataRepository.getLatestPriceBySymbol(mappedSymbol, date);
         if (latestPrice) {
           return `${latestPrice.symbol}: ${latestPrice.price} USDT`;
         } else {
@@ -1241,36 +1512,12 @@ export class BotAIService implements OnModuleInit {
     }
   }
 
-  async getCryptoPrice(symbol: string, date: number): Promise<string> {
-    // Map common names to symbols
-    const symbolMapping: { [key: string]: string } = {
-      bitcoin: 'BTCUSDT',
-      ethereum: 'ETHUSDT',
-      ripple: 'XRPUSDT',
-      binancecoin: 'BNBUSDT',
-      cardano: 'ADAUSDT',
-      solana: 'SOLUSDT',
-      dogecoin: 'DOGEUSDT',
-      polkadot: 'DOTUSDT',
-      tron: 'TRXUSDT',
-      shiba: 'SHIBUSDT',
-      litecoin: 'LTCUSDT',
-      uniswap: 'UNIUSDT',
-      chainlink: 'LINKUSDT',
-      toncoin: 'TONUSDT',
-      floki: 'FLOKIUSDT',
-      pepe: 'PEPEUSDT',
-      cosmos: 'ATOMUSDT',
-      dai: 'DAIUSDT',
-      wrappedbitcoin: 'WBTCUSDT',
-      usdcoin: 'USDC',
-      //1mbabydoge: '1MBABYDOGEUSDT'
-      // Add more mappings as needed based on other entries in your collection
-    };
-    const mappedSymbol = symbolMapping[symbol.toLowerCase()] || symbol;
 
-    const priceData = await this.dataRepository.getLatestPriceBySymbol(mappedSymbol, date);
-    return priceData ? `The latest price of ${mappedSymbol} is ${priceData.price} USDT` : `No data found for symbol ${symbol}`;
+
+  async getCryptoPrice(symbol: string, date: number): Promise<string> {
+
+    const priceData = await this.dataRepository.getLatestPriceBySymbol(symbol, date);
+    return priceData ? `The latest price of ${symbol} is ${priceData.price} USDT` : `No data found for symbol ${symbol}`;
   }
 
   async getTopCryptosByPrice(limit: number, date: number): Promise<string> {
@@ -1360,6 +1607,8 @@ export class BotAIService implements OnModuleInit {
 
 
   async getRSIForDate(symbol: string, date: number) {
+    // Map common names to symbols
+    //const mappedSymbol = mapSymbol(symbol, 'pair');
     const functionResponse = await this.dataRepository.getRSIBySymbolAndDate(symbol, date);
     return functionResponse
       ? `The RSI for ${symbol} on ${date} was ${functionResponse.RSI}.`
@@ -1428,6 +1677,7 @@ export class BotAIService implements OnModuleInit {
 
 
   async getMACDForDate(symbol: string, date: number) {
+
     const functionResponse = await this.dataRepository.getMACDBySymbolAndDate(symbol, date);
     if (functionResponse) {
       return `The MACD data for ${symbol} on ${date}:\n- MACD: ${functionResponse.MACD}\n- Signal: ${functionResponse.Signal}\n- Histogram: ${functionResponse.Histogram}.`;
@@ -1441,11 +1691,13 @@ export class BotAIService implements OnModuleInit {
     // TODO: Implement logic to fetch RSI for multiple symbols
     // Example:
     const results = await Promise.all(symbols.map(async (sym) => {
-      const data = await this.dataRepository.getRSIBySymbolAndDate(sym, date);
+      // Map common names to symbols
+      const mappedSymbol = mapSymbol(sym, 'pair');
+      const data = await this.dataRepository.getRSIBySymbolAndDate(mappedSymbol, date);
       if (data && data.RSI) {
-        return `${sym}: RSI ${data.RSI}`;
+        return `${mappedSymbol}: RSI ${data.RSI}`;
       } else {
-        return `${sym}: No RSI data.`;
+        return `${mappedSymbol}: No RSI data.`;
       }
     }));
     return results.join('\n');
@@ -1462,11 +1714,13 @@ export class BotAIService implements OnModuleInit {
   async getMACDForMultipleSymbolsOnDate(symbols: string[], date: number, language: string): Promise<string> {
     // TODO: Implement logic to fetch MACD for multiple symbols
     const results = await Promise.all(symbols.map(async (sym) => {
-      const data = await this.dataRepository.getMACDBySymbolAndDate(sym, date);
+      // Map common names to symbols
+      const mappedSymbol = mapSymbol(sym, 'pair');
+      const data = await this.dataRepository.getMACDBySymbolAndDate(mappedSymbol, date);
       if (data) {
-        return `${sym}: MACD: ${data.MACD}, Signal: ${data.Signal}, Histogram: ${data.Histogram}`;
+        return `${mappedSymbol}: MACD: ${data.MACD}, Signal: ${data.Signal}, Histogram: ${data.Histogram}`;
       } else {
-        return `${sym}: No MACD data.`;
+        return `${mappedSymbol}: No MACD data.`;
       }
     }));
     return results.join('\n');
@@ -1620,7 +1874,7 @@ export class BotAIService implements OnModuleInit {
         return;
       }
 
-      
+
       // Handle help command
       if (msg.text === '/help') {
         const inlineKeyboard = this.prompts.map((prompt, index) => [{
@@ -1655,10 +1909,8 @@ export class BotAIService implements OnModuleInit {
           await this.bot.sendMessage(chatId, 'Insufficient balance for this request. Please recharge to continue.');
         }
 
-        if (this.userBalance < 20) {
-          await this.bot.sendMessage(chatId, 'Insufficient balance for this request. Please recharge to continue.');
+        if (this.userBalance < 20) 
           return;
-        }
 
         // Create a prompt with only the last and current asks
         const prompt = `
@@ -1681,7 +1933,7 @@ export class BotAIService implements OnModuleInit {
         const totalCost = inputCost + outputCost; // Total cost in USD
 
         // Convert to IRT
-        const conversionRateToIRT = 130_000; // Example conversion rate
+        const conversionRateToIRT = 160_000; // Example conversion rate
         const totalCostInIRT = Math.ceil(totalCost * conversionRateToIRT);
 
         // Check user balance

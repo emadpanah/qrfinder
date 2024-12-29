@@ -4,7 +4,7 @@ import { DataRepository } from '../database/repositories/data.repository';
 import { FngData } from '../database/schema/fng.schema';
 import { TradingViewAlertDto } from '../database/dto/traidingview-alert.dto';
 import { MACDDto } from '../database/dto/macd.dto';
-import { RSIDto } from '../database/dto/rsi.dto';
+import { CCIDto, EMADto, RSIDto, SMADto, StochasticDto } from '../database/dto/rsi.dto';
 import { RSIData } from '../database/schema/rsi.schema';
 import { MACDData } from '../database/schema/macd.schema';
 import { DominanceDto } from '../database/dto/dominance.dto';
@@ -88,6 +88,54 @@ export class DataService {
     await this.dataRepository.updateST1IsDone(id, isDone);
   }
   
+    // Save EMA Data
+    async saveEMAData(emaData: EMADto): Promise<void> {
+      const timestamp = new Date(emaData.time).getTime() / 1000;
+      const formattedData = {
+        symbol: emaData.symbol,
+        ema_value: emaData.ema_value,
+        price: emaData.price,
+        time: timestamp,
+      };
+      await this.dataRepository.createEMAData(formattedData);
+    }
+  
+    // Save SMA Data
+    async saveSMAData(smaData: SMADto): Promise<void> {
+      const timestamp = new Date(smaData.time).getTime() / 1000;
+      const formattedData = {
+        symbol: smaData.symbol,
+        sma_value: smaData.sma_value,
+        price: smaData.price,
+        time: timestamp,
+      };
+      await this.dataRepository.createSMAData(formattedData);
+    }
+  
+    // Save Stochastic Data
+    async saveStochasticData(stochasticData: StochasticDto): Promise<void> {
+      const timestamp = new Date(stochasticData.time).getTime() / 1000;
+      const formattedData = {
+        symbol: stochasticData.symbol,
+        k_value: stochasticData.k_value,
+        d_value: stochasticData.d_value,
+        price: stochasticData.price,
+        time: timestamp,
+      };
+      await this.dataRepository.createStochasticData(formattedData);
+    }
+  
+    // Save CCI Data
+    async saveCCIData(cciData: CCIDto): Promise<void> {
+      const timestamp = new Date(cciData.time).getTime() / 1000;
+      const formattedData = {
+        symbol: cciData.symbol,
+        cci_value: cciData.cci_value,
+        price: cciData.price,
+        time: timestamp,
+      };
+      await this.dataRepository.createCCIData(formattedData);
+    }
 
   async getDominanceData(symbol: string, date: number): Promise<DominanceDto | null> {
     const timestamp = new Date(date).getTime() / 1000;

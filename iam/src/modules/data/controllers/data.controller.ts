@@ -2,7 +2,7 @@
 import { Body, Controller, Get, Post, Query } from '@nestjs/common';
 import { TradingViewAlertDto } from '../database/dto/traidingview-alert.dto';
 import { DataService } from '../service/data.service';
-import { RSIDto } from '../database/dto/rsi.dto';
+import { CCIDto, EMADto, RSIDto, SMADto, StochasticDto } from '../database/dto/rsi.dto';
 import { MACDDto } from '../database/dto/macd.dto';
 import { DominanceDto } from '../database/dto/dominance.dto';
 import { ST1Dto } from '../database/dto/st1.dto';
@@ -47,6 +47,35 @@ async adxTicker(@Body() adxData: ADXDto) {
   await this.dataService.saveADXData(adxData);
   return { message: 'ADX data received and saved successfully' };
 }
+
+@Post('EMAticker')
+async emaTicker(@Body() emaData: EMADto) {
+  console.log('Received EMA Data:', emaData);
+  await this.dataService.saveEMAData(emaData);
+  return { message: 'EMA data received and saved successfully' };
+}
+
+@Post('SMAticker')
+async smaTicker(@Body() smaData: SMADto) {
+  console.log('Received SMA Data:', smaData);
+  await this.dataService.saveSMAData(smaData);
+  return { message: 'SMA data received and saved successfully' };
+}
+
+@Post('STOCHASTICticker')
+async stochasticTicker(@Body() stochasticData: StochasticDto) {
+  console.log('Received Stochastic Data:', stochasticData);
+  await this.dataService.saveStochasticData(stochasticData);
+  return { message: 'Stochastic data received and saved successfully' };
+}
+
+@Post('CCIticker')
+async cciTicker(@Body() cciData: CCIDto) {
+  console.log('Received CCI Data:', cciData);
+  await this.dataService.saveCCIData(cciData);
+  return { message: 'CCI data received and saved successfully' };
+}
+
 
 // @Post('EMAticker')
 // @Post('SMAticker')
