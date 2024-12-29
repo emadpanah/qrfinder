@@ -11,6 +11,7 @@ import { Types } from 'mongoose';
 import { BalanceService } from '../iam/services/iam-balance.service';
 import { Balance } from '../iam/database/schemas/iam-balance.schema';
 import { mapSymbol } from 'src/shared/helper';
+import { TradingViewAlertDto } from '../data/database/dto/traidingview-alert.dto';
 
 
 
@@ -38,7 +39,10 @@ export class BotAIService implements OnModuleInit {
     private readonly balanceService: BalanceService,
     private readonly dataRepository: DataRepository // Inject DataRepository
   ) {
-    this.bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, { polling: true });
+    this.bot = new TelegramBot(
+      //process.env.TELEGRAM_BOT_TOKEN,
+      process.env.NABZAR_BOT_TOKEN,
+      { polling: true });
   }
 
   // private readonly validCategories = [
@@ -539,7 +543,8 @@ export class BotAIService implements OnModuleInit {
       },
       {
         name: 'analyzeAndCreateSignals',
-        description: 'Analyzes RSI, MACD, and FNG data for up to 10 given symbols on a specified date and generates trading signals (e.g., Buy, Sell, Hold).',
+        description: 'Analyzing or technical Analyzing or trading signals generation (e.g., Buy, Sell, Hold, Target, Stop) for'
+        +'given symbols up to 10',
         parameters: {
           type: 'object',
           properties: {
@@ -792,7 +797,7 @@ export class BotAIService implements OnModuleInit {
             const timestamp = new Date(effectiveDate).getTime() / 1000;
             const mappedSymbol = mapSymbol(parameters.symbol, 'pair');
             const emaData = await this.dataRepository.getEMABySymbolAndDate(mappedSymbol, timestamp);
-            const his = await this.dataRepository.getLast7DaysDailyIndicator(mappedSymbol,'EMA', timestamp);
+            const his = await this.dataRepository.getLast7DaysDailyIndicator(mappedSymbol, 'EMA', timestamp);
             return {
               responseText: await this.getDynamicInterpretation(his, prompt, emaData, 'EMA', mappedSymbol, parameters.date, parameters.language),
               queryType,
@@ -822,7 +827,7 @@ export class BotAIService implements OnModuleInit {
             const timestamp = new Date(effectiveDate).getTime() / 1000;
             const mappedSymbol = mapSymbol(parameters.symbol, 'pair');
             const smaData = await this.dataRepository.getSMABySymbolAndDate(mappedSymbol, timestamp);
-            const his = await this.dataRepository.getLast7DaysDailyIndicator(mappedSymbol,'SMA', timestamp);
+            const his = await this.dataRepository.getLast7DaysDailyIndicator(mappedSymbol, 'SMA', timestamp);
             return {
               responseText: await this.getDynamicInterpretation(his, prompt, smaData, 'SMA', mappedSymbol, parameters.date, parameters.language),
               queryType,
@@ -852,7 +857,7 @@ export class BotAIService implements OnModuleInit {
             const timestamp = new Date(effectiveDate).getTime() / 1000;
             const mappedSymbol = mapSymbol(parameters.symbol, 'pair');
             const stochasticData = await this.dataRepository.getStochasticBySymbolAndDate(mappedSymbol, timestamp);
-            const his = await this.dataRepository.getLast7DaysDailyIndicator(mappedSymbol,'Stochastic', timestamp);
+            const his = await this.dataRepository.getLast7DaysDailyIndicator(mappedSymbol, 'Stochastic', timestamp);
             return {
               responseText: await this.getDynamicInterpretation(his, prompt, stochasticData, 'Stochastic', mappedSymbol, parameters.date, parameters.language),
               queryType,
@@ -884,7 +889,7 @@ export class BotAIService implements OnModuleInit {
             const timestamp = new Date(effectiveDate).getTime() / 1000;
             const mappedSymbol = mapSymbol(parameters.symbol, 'pair');
             const cciData = await this.dataRepository.getCCIBySymbolAndDate(mappedSymbol, timestamp);
-            const his = await this.dataRepository.getLast7DaysDailyIndicator(mappedSymbol,'CCI', timestamp);
+            const his = await this.dataRepository.getLast7DaysDailyIndicator(mappedSymbol, 'CCI', timestamp);
             return {
               responseText: await this.getDynamicInterpretation(his, prompt, cciData, 'CCI', mappedSymbol, parameters.date, parameters.language),
               queryType,
@@ -914,7 +919,7 @@ export class BotAIService implements OnModuleInit {
             const timestamp = new Date(effectiveDate).getTime() / 1000;
             const mappedSymbol = mapSymbol(parameters.symbol, 'pair');
             const adxData = await this.dataRepository.getADXBySymbolAndDate(mappedSymbol, timestamp);
-            const his = await this.dataRepository.getLast7DaysDailyIndicator(mappedSymbol,'ADX', timestamp);
+            const his = await this.dataRepository.getLast7DaysDailyIndicator(mappedSymbol, 'ADX', timestamp);
             return {
               responseText: await this.getDynamicInterpretation(his, prompt, adxData, 'ADX', mappedSymbol, parameters.date, parameters.language),
               queryType,
@@ -952,7 +957,7 @@ export class BotAIService implements OnModuleInit {
             // const newParameters = Object.keys(parameters).filter(
             //   (key) => !allowedParameters.includes(key)
             // );
-            const his = await this.dataRepository.getLast7DaysDailyIndicator(mappedSymbol,'RSI', timestamp1);
+            const his = await this.dataRepository.getLast7DaysDailyIndicator(mappedSymbol, 'RSI', timestamp1);
             // Generate AI response using getDynamicInterpretation
             const aiResponse = await this.getDynamicInterpretation(his, prompt,
               functionResponse,
@@ -975,7 +980,7 @@ export class BotAIService implements OnModuleInit {
             const timestamp2 = new Date(ddd).getTime() / 1000;
             const mappedSymbol = mapSymbol(parameters.symbol, 'pair');
             functionResponse = await this.getMACDForDate(mappedSymbol, timestamp2);
-            const his = await this.dataRepository.getLast7DaysDailyIndicator(mappedSymbol,'MACD', timestamp2);
+            const his = await this.dataRepository.getLast7DaysDailyIndicator(mappedSymbol, 'MACD', timestamp2);
             return {
               responseText: await this.getDynamicInterpretation(his, prompt, functionResponse, 'MACD', mappedSymbol, parameters.date, parameters.language),
               queryType,
@@ -985,17 +990,17 @@ export class BotAIService implements OnModuleInit {
 
           case 'getFngForDate':
             {
-            const dd = parameters.date || new Date().toISOString().split('T')[0];
-            const timesta = new Date(dd).getTime() / 1000;
-            functionResponse = await this.getFngForDate(timesta);
-            const his = await this.dataRepository.getLast7DaysFngData(timesta);
-            return {
-              responseText: await this.getDynamicInterpretation(his, prompt, functionResponse, 'FNG', "", parameters.timestamp, parameters.language),
-              queryType,
-              newParameters,
-              languague: parameters.language,
-            };
-          }
+              const dd = parameters.date || new Date().toISOString().split('T')[0];
+              const timesta = new Date(dd).getTime() / 1000;
+              functionResponse = await this.getFngForDate(timesta);
+              const his = await this.dataRepository.getLast7DaysFngData(timesta);
+              return {
+                responseText: await this.getDynamicInterpretation(his, prompt, functionResponse, 'FNG', "", parameters.timestamp, parameters.language),
+                queryType,
+                newParameters,
+                languague: parameters.language,
+              };
+            }
           case 'getCryptoPrice': {
             const effectiveDate = parameters.date || new Date().toISOString().split('T')[0];
             const timestamp1 = new Date(effectiveDate).getTime() / 1000;
@@ -1089,7 +1094,7 @@ export class BotAIService implements OnModuleInit {
           }
 
           case 'analyzeAndCreateSignals':
-            functionResponse = await this.analyzeAndCreateSignals(parameters.symbols, parameters.language);
+            functionResponse = await this.analyzeAndCreateSignals(parameters.symbols, parameters.language, prompt);
             return {
               responseText: functionResponse,
               queryType,
@@ -1248,12 +1253,16 @@ export class BotAIService implements OnModuleInit {
     }
   }
 
-  async analyzeAndCreateSignals(symbols: string[], language: string): Promise<string> {
+  async analyzeAndCreateSignals(symbols: string[], language: string, userPrompt: string): Promise<string> {
     let sym;
-    if (symbols.length > 1) {
+    if (symbols.length >= 1) {
       sym = symbols[0];
     }
+    const effectiveDate = new Date().toISOString().split('T')[0];
+    const timestamp1 = new Date(effectiveDate).getTime() / 1000;
 
+    console.log("Analyze symbol : ", sym);
+    // Fetch FNG data
     const fngData = await this.dataRepository.findFngByDate();
     const fng = fngData
       ? { value: fngData.value || "0", value_classification: fngData.value_classification || "Neutral" }
@@ -1261,28 +1270,143 @@ export class BotAIService implements OnModuleInit {
 
     let responseText = `🔍 **Trading Analysis Results** 📊\n\n`;
     const symbol = mapSymbol(sym, 'pair');
-    const [indicators, sorts, macdData, adx] = await Promise.all([
+
+    const [rsi, sorts, macd, adx, cci, stochastic, ema, price] = await Promise.all([
       this.dataRepository.getRSIBySymbolAndDate(symbol),
       this.dataRepository.getAllSortsForSymbol(symbol),
       this.dataRepository.getMACDBySymbolAndDate(symbol),
       this.dataRepository.getADXBySymbolAndDate(symbol),
+      this.dataRepository.getCCIBySymbolAndDate(symbol),
+      this.dataRepository.getStochasticBySymbolAndDate(symbol),
+      this.dataRepository.getEMABySymbolAndDate(symbol),
+      this.dataRepository.getLatestPriceBySymbol(symbol, timestamp1), // Raw price history
     ]);
 
-    if (!indicators || Object.keys(sorts).length === 0 || !macdData || !adx) {
-      return `⚠️ Insufficient data (RSI, MACD, ADX, or sorts) for ${symbol}.`;
+    // Transform priceHistoryRaw into the expected format
+    const priceHistory = await this.dataRepository.getLast7DaysDailyPrice(symbol, timestamp1);
+
+    // Validate data
+    if (!cci || !stochastic || !rsi || !ema || Object.keys(sorts).length === 0 || !macd || !adx || priceHistory.length === 0) {
+      return `⚠️ Insufficient data (RSI, MACD, ADX, sorts, or price history) for ${symbol}.`;
     }
 
-    const indicatorsWithADX = { ...indicators, MACD: macdData, ADX: adx.adx_value };
+    // Generate dynamic analyze prompt with historical data
+    const historicalData = {
+      priceHistory,
+      RSIHistory: await this.dataRepository.getLast7DaysDailyIndicator(symbol, 'RSI', timestamp1),
+      MACDHistory: await this.dataRepository.getLast7DaysDailyIndicator(symbol, 'MACD', timestamp1),
+      ADXHistory: await this.dataRepository.getLast7DaysDailyIndicator(symbol, 'ADX', timestamp1),
+      CCIHistory: await this.dataRepository.getLast7DaysDailyIndicator(symbol, 'CCI', timestamp1),
+      EMAHistory: await this.dataRepository.getLast7DaysDailyIndicator(symbol, 'EMA', timestamp1),
+      StochasticHistory: await this.dataRepository.getLast7DaysDailyIndicator(symbol, 'Stochastic', timestamp1),
+    };
 
-    // Generate dynamic analyze prompt
-    const prompt = await this.generateDynamicAnalyzePrompt(symbol, sorts, indicatorsWithADX, fng, language);
+    // Helper function to format historical data
+    function formatHistoricalData(historicalData: any[], label: string): string {
+      if (!historicalData || historicalData.length === 0) {
+        return `No ${label} data available for the last 7 days.`;
+      }
+      return historicalData
+        .map((entry, index) => `Day ${index + 1}: ${JSON.stringify(entry)}`)
+        .join('\n');
+    }
+
+    // Format individual indicators
+    const formattedRSIHistory = formatHistoricalData(historicalData.RSIHistory, 'RSI');
+    const formattedMACDHistory = formatHistoricalData(historicalData.MACDHistory, 'MACD');
+    const formattedADXHistory = formatHistoricalData(historicalData.ADXHistory, 'ADX');
+    const formattedCCIHistory = formatHistoricalData(historicalData.CCIHistory, 'CCI');
+    const formattedStochasticHistory = formatHistoricalData(historicalData.StochasticHistory, 'Stochastic');
+    const formattedEMAHistory = formatHistoricalData(historicalData.EMAHistory, 'EMA');
+    const formattedPriceHistory = formatHistoricalData(historicalData.priceHistory, 'Price');
+
+    const analyzeSorts = (sortLabel: string, current: any, previous: any = null) => {
+      if (current === "No data") {
+        return `${sortLabel}: No data available for analysis.`;
+      }
+      if (previous !== null) {
+        const trend = current > previous ? "an upward trend" : "a downward trend";
+        return `${sortLabel}: The current value is ${current}, showing ${trend} compared to the previous value (${previous}).`;
+      }
+      return `${sortLabel}: The current value is ${current}.`;
+    };
+    const currentPrice = historicalData.priceHistory?.[historicalData.priceHistory.length - 1]?.price || 0;
+
+    const prompt = `
+ As you are a trading assistant specializing in cryptocurrency analysis. Use the following methodologies, indicators, and data points to generate a comprehensive trading signal for the symbol ${symbol}:
+
+  ### **Price Data**
+- **Price Analysis**: The current price is ${currentPrice}. Historical data indicates:
+${formattedPriceHistory}
+
+### **Indicators Analysis**
+- **RSI Analysis**: Current RSI value is ${JSON.stringify(rsi)}. Historical data:
+${formattedRSIHistory}
+
+- **MACD Analysis**: Current MACD values are ${JSON.stringify(macd)}. Historical data:
+${formattedMACDHistory}
+
+- **ADX Analysis**: Current ADX value is ${JSON.stringify(adx)}. Historical data:
+${formattedADXHistory}
+
+- **CCI Analysis**: Current CCI value is ${JSON.stringify(cci)}. Historical data:
+${formattedCCIHistory}
+
+- **Stochastic Analysis**: Current Stochastic values are ${JSON.stringify(stochastic)}. Historical data:
+${formattedStochasticHistory}
+
+- **EMA Analysis**: Current EMA value is ${JSON.stringify(ema)}. Historical data:
+${formattedEMAHistory}
+   ### **Sentiment**
+  - **Fear and Greed Index (FNG)**: ${fng.value} (${fng.value_classification})
+
+   ### **Sorts data**
+  - ${analyzeSorts("Volume (24h)", sorts.volume_24h)}
+  - ${analyzeSorts("Volatility", sorts.volatility)}
+  - ${analyzeSorts("Circulating Supply", sorts.circulating_supply)}
+  - ${analyzeSorts("Max Supply", sorts.max_supply)}
+  - ${analyzeSorts("Market Cap", sorts.market_cap)}
+  - ${analyzeSorts("Market Cap Rank", sorts.market_cap_rank)}
+  - ${analyzeSorts(
+      "Market Dominance",
+      sorts.market_dominance,
+      sorts.market_dominance_prev
+    )}
+  - ${analyzeSorts(
+      "Galaxy Score",
+      sorts.galaxy_score,
+      sorts.galaxy_score_previous
+    )}
+  - ${analyzeSorts(
+      "Alt Rank",
+      sorts.alt_rank,
+      sorts.alt_rank_previous
+    )}
+  - ${analyzeSorts("Sentiment", sorts.sentiment)}
+
+   ### **Analysis Instructions**
+  Based on the above data and user prompt : ${userPrompt} analyze the market conditions for 
+  ${symbol}, Please format given data in friendly version and provide a detailed explanation on price along
+   price change in last 7 days and Provide a detailed explanation foreach indicators along analyzing current indicators 
+   values with historical data and also add details for each sort parameter along analyzing sorts parameters values 
+  and their changes and generate a trading action section for ("Buy", "Sell", "Hold", or "Strong Buy/Sell")
+   with providing : Target 1: +2% (currentPrice * 1.02)
+     Target 2: +5% (currentPrice * 1.05) and Stop Loss: -5%(currentPrice * 0.95). at end please
+   provide a detailed explanation and summery for your recommendation, incorporating all data points and 
+   trends and please send result in ${language} languague
+  `;
+
+    console.log("Analyze prompt:", prompt);
+
+
 
     try {
       const response = await this.openai.chat.completions.create({
         messages: [
           {
             role: "system",
-            content: `You are a crypto assistant that provides detailed technical analysis and trading insights based on the given data.`,
+            content: `You are a trading assistant specializing in cryptocurrency analysis.
+            you are a crypto assistant that provides detailed technical analysis and trading insights based on the given data.`,
           },
           {
             role: "user",
@@ -1305,6 +1429,8 @@ export class BotAIService implements OnModuleInit {
     return responseText;
   }
 
+
+
   private formatAnalysis(rawAnalysis: string): string {
     return rawAnalysis
       .replace(/###/g, "🔹") // Replace section headers with a bullet icon
@@ -1315,69 +1441,69 @@ export class BotAIService implements OnModuleInit {
 
 
 
-  async generateDynamicAnalyzePrompt(
-    symbol: string,
-    sorts: Record<string, any>,
-    indicators: { RSI?: number; MACD?: { MACD: number; Signal: number; Histogram: number }; ADX?: number },
-    fng: { value: string; value_classification: string },
-    language: string
-  ): Promise<string> {
-    const prompt = `
-  You are a trading assistant specializing in cryptocurrency analysis. Use the following methodologies, indicators, and data points to generate a comprehensive trading signal for the symbol ${symbol}:
-  
-   ### **Analysis Instructions**
-  1. **RSI**: Evaluate for overbought (>70) or oversold (<30) conditions.
-  2. **MACD**: Identify bullish or bearish crossovers.
-  3. **ADX**: Assess the trend's strength (e.g., ADX > 25 indicates a strong trend).
-  4. **FNG**: Factor in market sentiment (e.g., "Fear" indicates cautious trading; "Greed" suggests optimism).
-  5. **Sorts**: Use price, volume_24h, volatility, circulating_supply, max_supply, percent_change_1h, percent_change_24h, 
-  percent_change_7d, percent_change_30d, market_cap, market_cap_rank, interactions_24h, 
-  social_volume_24h, social_dominance, market_dominance, market_dominance_prev, galaxy_score, 
-  galaxy_score_previous, alt_rank, alt_rank_previous and sentiment, to refine the signal.
-  6. Combine these indicators to suggest a trading action: "Buy", "Sell", "Hold", or "Strong Buy/Sell".
-  7. Provide a detailed explanation for the signal, considering the above data points.
-  8. Respond in ${language} language.
-  
-  ### **Objective**
-  Deliver actionable insights to traders using these data points. Include a summary of the analysis and a clear recommendation.
+  //   async generateDynamicAnalyzePrompt(
+  //     symbol: string,
+  //     sorts: Record<string, any>,
+  //     indicators: { RSI?: number; MACD?: { MACD: number; Signal: number; Histogram: number }; ADX?: number },
+  //     fng: { value: string; value_classification: string },
+  //     language: string
+  //   ): Promise<string> {
+  //     const prompt = `
+  //   You are a trading assistant specializing in cryptocurrency analysis. Use the following methodologies, indicators, and data points to generate a comprehensive trading signal for the symbol ${symbol}:
 
-  ### **Indicators**
-  - **RSI**: ${indicators.RSI ? `Value: ${indicators.RSI}` : "No data available"}
-  - **MACD**: ${indicators.MACD
-        ? `MACD: ${indicators.MACD.MACD}, Signal: ${indicators.MACD.Signal}, Histogram: ${indicators.MACD.Histogram}`
-        : "No data available"
-      }
-  - **ADX**: ${indicators.ADX ? `Value: ${indicators.ADX}` : "No data available"}
-  
-  ### **Sentiment**
-  - **Fear and Greed Index (FNG)**: ${fng.value} (${fng.value_classification})
-  
-  ### **Sorts**
-- **Price**: ${sorts.price || "No data"}
-  - **Volume (24h)**: ${sorts.volume_24h || "No data"}
-- **Volatility**: ${sorts.volatility || "No data"}
-- **Circulating Supply**: ${sorts.circulating_supply || "No data"}
-- **Max Supply**: ${sorts.max_supply || "No data"}
-- **Percent Change (1h)**: ${sorts.percent_change_1h || "No data"}
-- **Percent Change (24h)**: ${sorts.percent_change_24h || "No data"}
-- **Percent Change (7d)**: ${sorts.percent_change_7d || "No data"}
-- **Percent Change (30d)**: ${sorts.percent_change_30d || "No data"}
-- **Market Cap**: ${sorts.market_cap || "No data"}
-- **Market Cap Rank**: ${sorts.market_cap_rank || "No data"}
-- **Interactions (24h)**: ${sorts.interactions_24h || "No data"}
-- **Social Volume (24h)**: ${sorts.social_volume_24h || "No data"}
-- **Social Dominance**: ${sorts.social_dominance || "No data"}
-- **Market Dominance**: ${sorts.market_dominance || "No data"}
-- **Market Dominance (Prev)**: ${sorts.market_dominance_prev || "No data"}
-- **Galaxy Score**: ${sorts.galaxy_score || "No data"}
-- **Galaxy Score (Prev)**: ${sorts.galaxy_score_previous || "No data"}
-- **Alt Rank**: ${sorts.alt_rank || "No data"}
-- **Alt Rank (Prev)**: ${sorts.alt_rank_previous || "No data"}
-- **Sentiment**: ${sorts.sentiment || "No data"} 
-`;
+  //    ### **Analysis Instructions**
+  //   1. **RSI**: Evaluate for overbought (>70) or oversold (<30) conditions.
+  //   2. **MACD**: Identify bullish or bearish crossovers.
+  //   3. **ADX**: Assess the trend's strength (e.g., ADX > 25 indicates a strong trend).
+  //   4. **FNG**: Factor in market sentiment (e.g., "Fear" indicates cautious trading; "Greed" suggests optimism).
+  //   5. **Sorts**: Use price, volume_24h, volatility, circulating_supply, max_supply, percent_change_1h, percent_change_24h, 
+  //   percent_change_7d, percent_change_30d, market_cap, market_cap_rank, interactions_24h, 
+  //   social_volume_24h, social_dominance, market_dominance, market_dominance_prev, galaxy_score, 
+  //   galaxy_score_previous, alt_rank, alt_rank_previous and sentiment, to refine the signal.
+  //   6. Combine these indicators to suggest a trading action: "Buy", "Sell", "Hold", or "Strong Buy/Sell".
+  //   7. Provide a detailed explanation for the signal, considering the above data points.
+  //   8. Respond in ${language} language.
 
-    return prompt;
-  }
+  //   ### **Objective**
+  //   Deliver actionable insights to traders using these data points. Include a summary of the analysis and a clear recommendation.
+
+  //   ### **Indicators**
+  //   - **RSI**: ${indicators.RSI ? `Value: ${indicators.RSI}` : "No data available"}
+  //   - **MACD**: ${indicators.MACD
+  //         ? `MACD: ${indicators.MACD.MACD}, Signal: ${indicators.MACD.Signal}, Histogram: ${indicators.MACD.Histogram}`
+  //         : "No data available"
+  //       }
+  //   - **ADX**: ${indicators.ADX ? `Value: ${indicators.ADX}` : "No data available"}
+
+  //   ### **Sentiment**
+  //   - **Fear and Greed Index (FNG)**: ${fng.value} (${fng.value_classification})
+
+  //   ### **Sorts**
+  // - **Price**: ${sorts.price || "No data"}
+  //   - **Volume (24h)**: ${sorts.volume_24h || "No data"}
+  // - **Volatility**: ${sorts.volatility || "No data"}
+  // - **Circulating Supply**: ${sorts.circulating_supply || "No data"}
+  // - **Max Supply**: ${sorts.max_supply || "No data"}
+  // - **Percent Change (1h)**: ${sorts.percent_change_1h || "No data"}
+  // - **Percent Change (24h)**: ${sorts.percent_change_24h || "No data"}
+  // - **Percent Change (7d)**: ${sorts.percent_change_7d || "No data"}
+  // - **Percent Change (30d)**: ${sorts.percent_change_30d || "No data"}
+  // - **Market Cap**: ${sorts.market_cap || "No data"}
+  // - **Market Cap Rank**: ${sorts.market_cap_rank || "No data"}
+  // - **Interactions (24h)**: ${sorts.interactions_24h || "No data"}
+  // - **Social Volume (24h)**: ${sorts.social_volume_24h || "No data"}
+  // - **Social Dominance**: ${sorts.social_dominance || "No data"}
+  // - **Market Dominance**: ${sorts.market_dominance || "No data"}
+  // - **Market Dominance (Prev)**: ${sorts.market_dominance_prev || "No data"}
+  // - **Galaxy Score**: ${sorts.galaxy_score || "No data"}
+  // - **Galaxy Score (Prev)**: ${sorts.galaxy_score_previous || "No data"}
+  // - **Alt Rank**: ${sorts.alt_rank || "No data"}
+  // - **Alt Rank (Prev)**: ${sorts.alt_rank_previous || "No data"}
+  // - **Sentiment**: ${sorts.sentiment || "No data"} 
+  // `;
+
+  //     return prompt;
+  //   }
 
 
 
@@ -1424,21 +1550,21 @@ export class BotAIService implements OnModuleInit {
 
 
   async getDynamicInterpretation(historicalData: any[], prompt: string, data: any, topic: string, symbol: string, date: string, language: string): Promise<string> {
-    
+
     // const historicalDataString = historicalData.length
     // ? `Here is the historical ${topic} data for the past 7 days:\n${historicalData
     //     .map((entry, index) => `Day ${index + 1}: ${JSON.stringify(entry)}`)
     //     .join("\n")}`
     // : `No historical data available for ${topic}.`;
     const historicalDataString = historicalData.length
-    ? `Here is the historical ${topic} data for the past 7 days:\n${[...historicalData]
+      ? `Here is the historical ${topic} data for the past 7 days:\n${[...historicalData]
         .reverse() // Reverse the array to show the latest data first
         .map((entry, index) => `Day ${index + 1}: ${JSON.stringify(entry)}`)
         .join("\n")}`
-    : `No historical data available for ${topic}.`;
-    
+      : `No historical data available for ${topic}.`;
+
     // Updated prompt to include historical data
-  const additionalPrompt = `
+    const additionalPrompt = `
   The user asked the following: "${prompt}".
   Provide a detailed interpretation of the following ${topic} data for ${symbol} on ${date}:
   ${JSON.stringify(data)}.
@@ -1448,7 +1574,7 @@ export class BotAIService implements OnModuleInit {
   Please include an explanation of what this ${topic} data and show time with data and use the historical trends imply in terms of market conditions and trading strategy.
   Answer in ${language}.
 `;
-console.log('additionalPrompt :' , additionalPrompt)
+    console.log('additionalPrompt :', additionalPrompt)
     try {
       const response = await this.openai.chat.completions.create({
         messages: [
@@ -1821,7 +1947,7 @@ console.log('additionalPrompt :' , additionalPrompt)
       // Register or login the user
       const userInsertDto = {
         telegramID,
-        mobile: '',
+        mobile: msg.contact ? msg.contact.phone_number : '',
         chatId: chatId,
         telegramUserName,
         telegramFirstName,
@@ -1862,17 +1988,34 @@ console.log('additionalPrompt :' , additionalPrompt)
           catch (err) {
             this.logger.warn('trial added once', err.message);
           }
-          await this.bot.sendMessage(
-            chatId,
-            `*Welcome to Trade AI Bot!* 🎉\n\nYour current balance is: *${this.userBalance.toLocaleString()} Tomans* 💰`,
-            { parse_mode: 'Markdown' }
-          );
+        }
+        var userCh = await this.iamService.getUser(userId);
+        console.log('userCh.mobile', userCh.mobile);
+        if (!userCh.mobile) {
+          // Ask the user to share their contact
+          await this.bot.sendMessage(chatId, 'Please share your contact to use the bot:', {
+            reply_markup: {
+              keyboard: [
+                [
+                  {
+                    text: '📞 Share Contact',
+                    request_contact: true, // Requests the user's contact information
+                  },
+                ],
+              ],
+              resize_keyboard: true, // Adjust keyboard size for better display
+              one_time_keyboard: true, // Hides the keyboard after interaction
+            },
+          });
+          return;
         }
 
       } catch (error) {
         this.logger.error('Error during user registration/login:', error.message);
         return;
       }
+
+
 
 
       // Handle help command
@@ -1909,7 +2052,7 @@ console.log('additionalPrompt :' , additionalPrompt)
           await this.bot.sendMessage(chatId, 'Insufficient balance for this request. Please recharge to continue.');
         }
 
-        if (this.userBalance < 20) 
+        if (this.userBalance < 20)
           return;
 
         // Create a prompt with only the last and current asks
@@ -1975,9 +2118,27 @@ console.log('additionalPrompt :' , additionalPrompt)
         }
 
 
-        this.bot.sendMessage(chatId, responseText.responseText).catch((err) => {
-          this.logger.error('Failed to send message', err);
-        });
+        this.bot.sendMessage(chatId, responseText.responseText)
+          .catch((err) => {
+            if (err.code === 'ETELEGRAM' && err.message.includes('message is too long')) {
+              this.logger.error('Message too long, splitting and sending in parts.');
+
+              // Split the response text into chunks of 1000 characters
+              const maxLength = 1000;
+              const messageParts = responseText.responseText.match(new RegExp(`.{1,${maxLength}}`, 'g'));
+
+              if (messageParts) {
+                // Send each part sequentially
+                messageParts.reduce((promise, part) => {
+                  return promise.then(() => this.bot.sendMessage(chatId, part));
+                }, Promise.resolve()).catch((err) => {
+                  this.logger.error('Failed to send split messages', err);
+                });
+              }
+            } else {
+              this.logger.error('Failed to send message', err);
+            }
+          });
       }
     });
 

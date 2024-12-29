@@ -42,12 +42,30 @@ export class IamService {
     return bcrypt.hash(password, salt);
   }
 
+  async updateUser(user: UserDto): Promise<UserDto> {
+    try {
+      const ret = await this.iamRepository.updateUser(user.telegramID, user.telegramUserName, user.mobile);
+      return ret;
+    } catch (error) {
+      throw error;
+    }
+  }
+  async getUser(userId: string): Promise<UserDto> {
+    try {
+      const obj = new Types.ObjectId(userId);
+      let user = await this.iamRepository.findUserById(obj);
+      return user;
+    } catch (error) {
+      throw error;
+    }
+  }
+
   async registerOrLogin(
     dto: UserInsertDto,
   ): Promise<{ token: string; isNewToken: boolean; userId: string }> {
     try {
       console.log('registering started ');
-      
+
       if (process.env.NEXT_PUBLIC_APP_SECRET !== dto.clientSecret) {
         throw new UnauthorizedException();
       }
@@ -58,15 +76,14 @@ export class IamService {
       if (user) {
         // User exists, check if there is a valid token
         if (
-          user.telegramUserName != dto.telegramUserName
+          user.telegramUserName != dto.telegramUserName ||
+          (user.mobile != dto.mobile && dto.mobile != '')
         ) {
-          await this.iamRepository
-            .updateUser(user.telegramID, dto.telegramUserName)
-            .then((newuser) => {
-              user = newuser;
-            });
+          console.log("updating .....");
+          user = await this.iamRepository
+            .updateUser(user.telegramID, dto.telegramUserName, dto.mobile);
         }
-        console.log('user - last login repo ');
+        console.log('user updated - ', user);
         const existingLoginInfo =
           await this.userLoginRepository.findLatestLoginByUserId(user._id);
         console.log('latestlogin - ', existingLoginInfo);
