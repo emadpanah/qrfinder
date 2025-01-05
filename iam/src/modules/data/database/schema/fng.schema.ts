@@ -3,8 +3,6 @@ import { Document } from 'mongoose';
 
 @Schema({ timestamps: true, collection: '_fngdata' })
 export class FngData {
-  @Prop()
-  name: string;
 
   @Prop()
   value: string;
@@ -14,14 +12,6 @@ export class FngData {
 
   @Prop()
   timestamp: number;
-
-  @Prop()
-  time_until_update?: string;
-
-  @Prop({ type: Object, default: { error: null } })
-  metadata: {
-    error: any;
-  };
 }
 
 export type FngDataDocument = FngData & Document;

@@ -19,6 +19,9 @@ import { StochasticData } from '../schema/stochastic.schema';
 import { EMAData } from '../schema/ema.schema';
 import { SMAData } from '../schema/sma.schema';
 import { CCIData } from '../schema/cci.schema';
+import { CCIDto, EMADto, RSIDto, StochasticDto } from '../dto/rsi.dto';
+import { MACDDto } from '../dto/macd.dto';
+import { ADXDto } from '../dto/adx.dto';
 
 @Injectable()
 export class DataRepository {
@@ -41,6 +44,7 @@ export class DataRepository {
 
   constructor(@InjectConnection('service') private readonly connection: Connection) { }
 
+  
   // Save FNG data point in MongoDB
   async create(fngData: Partial<FngData>): Promise<FngData> {
     const collection = this.connection.collection(this.fngCollectionName);
@@ -55,37 +59,85 @@ export class DataRepository {
   }
 
 
-  async getLast7DaysFngData(endDate: number): Promise<FngData[]> {
+  // async getLast7DaysFngData(endDate: number): Promise<FngData[]> {
+  //   const collection = this.connection.collection(this.fngCollectionName);
+  //   const results: FngData[] = [];
+  
+  //   for (let i = 0; i < 7; i++) {
+  //     const targetDateStart = endDate - i * 24 * 60 * 60; // Start of the target day
+  //     const targetDateEnd = targetDateStart + 24 * 60 * 60; // End of the target day
+  
+  //     // Query the latest FNG value within the day
+  //     const result = await collection
+  //       .find({
+  //         timestamp: { $gte: targetDateStart, $lt: targetDateEnd },
+  //       })
+  //       .sort({ timestamp: -1 }) // Sort by timestamp descending
+  //       .limit(1) // Get only the latest record for the day
+  //       .toArray();
+  
+  //     if (result.length > 0) {
+  //       const fngRecord = result[0];
+  //       results.push({
+  //         value: fngRecord.value ?? '0',
+  //         value_classification: fngRecord.value_classification ?? 'Neutral',
+  //         timestamp: fngRecord.timestamp ?? 0,
+  //         metadata: fngRecord.metadata ?? {},
+  //       } as FngData);
+  //     }
+  //   }
+  
+  //   return results;
+  // }
+  
+  async getLast7DaysFngDataOptimized(endDate: number): Promise<FngData[]> {
     const collection = this.connection.collection(this.fngCollectionName);
-    const results: FngData[] = [];
   
-    for (let i = 0; i < 7; i++) {
-      const targetDateStart = endDate - i * 24 * 60 * 60; // Start of the target day
-      const targetDateEnd = targetDateStart + 24 * 60 * 60; // End of the target day
+    const startOfRange = endDate - 6 * 24 * 60 * 60; // Calculate the start of the range (7 days back)
+    const data = await collection
+      .aggregate([
+        {
+          $match: {
+            timestamp: { $gte: startOfRange, $lte: endDate }, // Filter records in the last 7 days
+          },
+        },
+        {
+          $group: {
+            _id: {
+              day: { $dayOfYear: { $toDate: { $multiply: ['$timestamp', 1000] } } },
+            },
+            latestTimestamp: { $max: '$timestamp' }, // Get the latest timestamp for each day
+          },
+        },
+        {
+          $lookup: {
+            from: '_fngdata',
+            localField: 'latestTimestamp',
+            foreignField: 'timestamp',
+            as: 'data',
+          },
+        },
+        {
+          $unwind: '$data', // Flatten the result
+        },
+        {
+          $replaceRoot: { newRoot: '$data' }, // Replace the root with the actual data
+        },
+        {
+          $sort: { timestamp: -1 }, // Sort the results by timestamp (optional)
+        },
+      ])
+      .toArray();
   
-      // Query the latest FNG value within the day
-      const result = await collection
-        .find({
-          timestamp: { $gte: targetDateStart, $lt: targetDateEnd },
-        })
-        .sort({ timestamp: -1 }) // Sort by timestamp descending
-        .limit(1) // Get only the latest record for the day
-        .toArray();
-  
-      if (result.length > 0) {
-        const fngRecord = result[0];
-        results.push({
-          value: fngRecord.value ?? '0',
-          value_classification: fngRecord.value_classification ?? 'Neutral',
-          timestamp: fngRecord.timestamp ?? 0,
-          metadata: fngRecord.metadata ?? {},
-        } as FngData);
-      }
-    }
-  
-    return results;
+    // Map the data to match the FngData structure
+    return data.map((doc) => ({
+      value: doc.value || '0',
+      value_classification: doc.value_classification || 'Neutral',
+      timestamp: doc.timestamp || 0,
+    }));
   }
   
+   
 
   async findFngByDate(targetDate?: number): Promise<FngData | null> {
     const collection = this.connection.collection(this.fngCollectionName);
@@ -171,39 +223,53 @@ export class DataRepository {
     const result = await collection.find(query).sort({ time: -1 }).limit(1).toArray();
     return result.length > 0 ? result[0] : null;
   }
-
-
-  async getLast7DaysDailyPrice(symbol: string, endDate: number): Promise<TradingViewAlertDto[]> {
+  
+  async getLast7DaysDailyPriceOptimized(symbol: string, endDate: number): Promise<TradingViewAlertDto[]> {
     const collection = this.connection.collection(this.tickerCollectionName);
   
-    const results: TradingViewAlertDto[] = [];
+    const startOfRange = endDate - 6 * 24 * 60 * 60; // 7 days in seconds
   
-    // Loop through the last 7 days
-    for (let i = 0; i < 7; i++) {
-      const targetDateStart = endDate - i * 24 * 60 * 60; // Start of the target day
-      const targetDateEnd = targetDateStart + 24 * 60 * 60; // End of the target day
+    // Fetch the latest record per day for the given symbol and time range
+    const data = await collection
+      .aggregate([
+        {
+          $match: {
+            symbol,
+            time: { $gte: startOfRange, $lte: endDate },
+          },
+        },
+        {
+          $addFields: {
+            day: { $dateToString: { format: "%Y-%m-%d", date: { $toDate: { $multiply: ["$time", 1000] } } } },
+          },
+        },
+        {
+          $sort: { time: -1 }, // Sort by time descending to get the latest record per day
+        },
+        {
+          $group: {
+            _id: "$day",
+            latest: { $first: "$$ROOT" }, // Pick the first record for each group (latest)
+          },
+        },
+        {
+          $replaceRoot: { newRoot: "$latest" }, // Unwrap the latest field
+        },
+        {
+          $sort: { time: 1 }, // Sort by time ascending for chronological order
+        },
+      ])
+      .toArray();
   
-      // Get the last recorded price within the target day
-      const result = await collection
-        .find({
-          symbol,
-          time: { $gte: targetDateStart, $lt: targetDateEnd } // Filter records within the target day
-        })
-        .sort({ time: -1 }) // Sort by time descending
-        .limit(1) // Get only the latest record for the day
-        .toArray();
-  
-      if (result.length > 0) {
-        const { symbol, price, time, exchange } = result[0];
-        results.push({ symbol, price, time, exchange });
-      }
-    }
-  
-    return results;
+    return data.map(({ symbol, price, time, exchange }) => ({
+      symbol,
+      price,
+      time,
+      exchange,
+    }));
   }
   
-  
-  // Get latest price by symbol in USDT
+
   async getLatestPriceBySymbol(symbol: string, date: number): Promise<TradingViewAlertDto | null> {
     const collection = this.connection.collection(this.tickerCollectionName);
 
@@ -464,28 +530,130 @@ export class DataRepository {
       { upsert: true }
     );
   }
-
-  async getSortValueForSymbol(symbol: string, sort: string): Promise<{ categories: string; sortValue: number | null }> {
+  async getSortValueForSymbol(symbol: string, sort: string): Promise<LunarCrushPublicCoinDto | null> {
     const collection = this.connection.collection(this.lunarPubCoinCollectionName);
-
+  
     // Find the latest document for this symbol with the requested sort parameter
     const result = await collection
       .find({ symbol: symbol.toUpperCase(), fetched_sort: sort })
       .sort({ fetched_at: -1 })
       .limit(1)
       .toArray();
-
+  
     if (result.length === 0) {
-      return { categories: '', sortValue: null };
+      return null;
     }
-
+  
     const doc = result[0];
+  
     return {
-      categories: doc.categories || '',
-      sortValue: doc[sort] !== undefined ? doc[sort] : null,
+      id: doc.id,
+      symbol: doc.symbol,
+      name: doc.name,
+      price: doc.price,
+      price_btc: doc.price_btc,
+      volume_24h: doc.volume_24h,
+      volatility: doc.volatility,
+      circulating_supply: doc.circulating_supply,
+      max_supply: doc.max_supply,
+      percent_change_1h: doc.percent_change_1h,
+      percent_change_24h: doc.percent_change_24h,
+      percent_change_7d: doc.percent_change_7d,
+      market_cap: doc.market_cap,
+      market_cap_rank: doc.market_cap_rank,
+      interactions_24h: doc.interactions_24h,
+      social_volume_24h: doc.social_volume_24h,
+      social_dominance: doc.social_dominance,
+      market_dominance: doc.market_dominance,
+      galaxy_score: doc.galaxy_score,
+      galaxy_score_previous: doc.galaxy_score_previous,
+      alt_rank: doc.alt_rank,
+      alt_rank_previous: doc.alt_rank_previous,
+      sentiment: doc.sentiment,
+      categories: doc.categories,
+      blockchains: doc.blockchains,
+      percent_change_30d: doc.percent_change_30d,
+      last_updated_price: doc.last_updated_price,
+      topic: doc.topic,
+      logo: doc.logo,
+      fetched_sort: doc.fetched_sort,
+      fetched_at: doc.fetched_at,
     };
   }
 
+  async getSortValueForSymbols(
+    symbols: string[],
+    sort: string
+): Promise<(LunarCrushPublicCoinDto | null)[]> {
+    const collection = this.connection.collection(this.lunarPubCoinCollectionName);
+
+    // Convert symbols to uppercase for consistent querying
+    const upperSymbols = symbols.map((s) => s.toUpperCase());
+
+    // Query all symbols in one go, fetching the latest document for each symbol
+    const pipeline = [
+        { $match: { symbol: { $in: upperSymbols }, fetched_sort: sort } },
+        { $sort: { symbol: 1, fetched_at: -1 } },
+        {
+            $group: {
+                _id: "$symbol",
+                doc: { $first: "$$ROOT" },
+            },
+        },
+    ];
+
+    const docs = await collection.aggregate(pipeline).toArray();
+
+    // Create a map for quick lookup
+    const docMap: { [symbol: string]: any } = {};
+    docs.forEach((d) => {
+        docMap[d._id] = d.doc;
+    });
+
+    // Map results to the required format
+    return symbols.map((symbol) => {
+        const upperSymbol = symbol.toUpperCase();
+        const doc = docMap[upperSymbol];
+        if (!doc) {
+            return null;
+        }
+        return {
+            id: doc.id,
+            symbol: doc.symbol,
+            name: doc.name,
+            price: doc.price,
+            price_btc: doc.price_btc,
+            volume_24h: doc.volume_24h,
+            volatility: doc.volatility,
+            circulating_supply: doc.circulating_supply,
+            max_supply: doc.max_supply,
+            percent_change_1h: doc.percent_change_1h,
+            percent_change_24h: doc.percent_change_24h,
+            percent_change_7d: doc.percent_change_7d,
+            market_cap: doc.market_cap,
+            market_cap_rank: doc.market_cap_rank,
+            interactions_24h: doc.interactions_24h,
+            social_volume_24h: doc.social_volume_24h,
+            social_dominance: doc.social_dominance,
+            market_dominance: doc.market_dominance,
+            galaxy_score: doc.galaxy_score,
+            galaxy_score_previous: doc.galaxy_score_previous,
+            alt_rank: doc.alt_rank,
+            alt_rank_previous: doc.alt_rank_previous,
+            sentiment: doc.sentiment,
+            categories: doc.categories || '',
+            blockchains: doc.blockchains || [],
+            percent_change_30d: doc.percent_change_30d,
+            last_updated_price: doc.last_updated_price,
+            topic: doc.topic,
+            logo: doc.logo,
+            fetched_sort: doc.fetched_sort,
+            fetched_at: doc.fetched_at,
+        };
+    });
+}
+  
+  //this method is for analyzing 
   async getAllSortsForSymbol(symbol: string): Promise<Record<string, any>> {
     const transformedSymbol = symbol.replace(/USDT$/, ''); // Remove 'USDT' from the symbol
     const collection = this.connection.collection(this.lunarPubCoinCollectionName);
@@ -526,57 +694,442 @@ export class DataRepository {
     };
   }
 
-  async getLast7DaysDailyIndicator(
-    symbol: string,
-    indicator: 'RSI' | 'MACD' | 'ADX' | 'EMA' | 'SMA' | 'Stochastic' | 'CCI',
-    endDate: number
-  ): Promise<{ value: number | object; time: number }[]> {
-    let collectionName: string;
+  // async getLast7DaysDailyIndicator(
+  //   symbol: string,
+  //   indicator: 'RSI' | 'MACD' | 'ADX' | 'EMA' | 'SMA' | 'Stochastic' | 'CCI',
+  //   endDate: number
+  // ): Promise<{ value: number | object; time: number }[]> {
+  //   let collectionName: string;
   
-    // Determine the collection name based on the indicator type
-    if (indicator === 'RSI') {
-      collectionName = this.rsiCollectionName;
-    } else if (indicator === 'MACD') {
-      collectionName = this.macdCollectionName;
-    } else if (indicator === 'ADX') {
-      collectionName = this.adxCollectionName;
-    } else if (indicator === 'EMA') {
-      collectionName = this.emaCollectionName;
-    } else if (indicator === 'SMA') {
-      collectionName = this.smaCollectionName;
-    } else if (indicator === 'Stochastic') {
-      collectionName = this.stochasticCollectionName;
-    } else if (indicator === 'CCI') {
-      collectionName = this.cciCollectionName;
-    } else {
-      throw new Error(`Unsupported indicator: ${indicator}`);
-    }
+  //   // Determine the collection name based on the indicator type
+  //   if (indicator === 'RSI') {
+  //     collectionName = this.rsiCollectionName;
+  //   } else if (indicator === 'MACD') {
+  //     collectionName = this.macdCollectionName;
+  //   } else if (indicator === 'ADX') {
+  //     collectionName = this.adxCollectionName;
+  //   } else if (indicator === 'EMA') {
+  //     collectionName = this.emaCollectionName;
+  //   } else if (indicator === 'SMA') {
+  //     collectionName = this.smaCollectionName;
+  //   } else if (indicator === 'Stochastic') {
+  //     collectionName = this.stochasticCollectionName;
+  //   } else if (indicator === 'CCI') {
+  //     collectionName = this.cciCollectionName;
+  //   } else {
+  //     throw new Error(`Unsupported indicator: ${indicator}`);
+  //   }
   
-    const collection = this.connection.collection(collectionName);
-    const results: { value: number | object; time: number }[] = [];
+  //   const collection = this.connection.collection(collectionName);
+  //   const results: { value: number | object; time: number }[] = [];
   
-    // Loop through the last 7 days
-    for (let i = 0; i < 7; i++) {
-      const targetDateStart = endDate - i * 24 * 60 * 60; // Start of the target day
-      const targetDateEnd = targetDateStart + 24 * 60 * 60; // End of the target day
+  //   // Loop through the last 7 days
+  //   for (let i = 0; i < 7; i++) {
+  //     const targetDateStart = endDate - i * 24 * 60 * 60; // Start of the target day
+  //     const targetDateEnd = targetDateStart + 24 * 60 * 60; // End of the target day
   
-      // Get the last recorded indicator value within the target day
-      const result = await collection
-        .find({
-          symbol,
-          time: { $gte: targetDateStart, $lt: targetDateEnd }, // Filter records within the target day
-        })
-        .sort({ time: -1 }) // Sort by time descending
-        .limit(1) // Get only the latest record for the day
-        .toArray();
+  //     // Get the last recorded indicator value within the target day
+  //     const result = await collection
+  //       .find({
+  //         symbol,
+  //         time: { $gte: targetDateStart, $lt: targetDateEnd }, // Filter records within the target day
+  //       })
+  //       .sort({ time: -1 }) // Sort by time descending
+  //       .limit(1) // Get only the latest record for the day
+  //       .toArray();
   
-      if (result.length > 0) {
-        const { time, ...rest } = result[0]; // Exclude unnecessary fields
-        results.push({ value: rest[indicator.toLowerCase()] || rest, time });
-      }
-    }
+  //     if (result.length > 0) {
+  //       const { time, ...rest } = result[0]; // Exclude unnecessary fields
+  //       results.push({ value: rest[indicator.toLowerCase()] || rest, time });
+  //     }
+  //   }
   
-    return results;
+  //   return results;
+  // }
+
+  // async getLast7DaysDailyIndicator(
+  //   symbol: string,
+  //   indicator: 'RSI' | 'MACD' | 'ADX' | 'EMA' | 'SMA' | 'Stochastic' | 'CCI',
+  //   endDate: number
+  // ): Promise<{ value: number | object; time: number }[]> {
+  //   const collectionMap: Record<string, string> = {
+  //     RSI: this.rsiCollectionName,
+  //     MACD: this.macdCollectionName,
+  //     ADX: this.adxCollectionName,
+  //     EMA: this.emaCollectionName,
+  //     SMA: this.smaCollectionName,
+  //     Stochastic: this.stochasticCollectionName,
+  //     CCI: this.cciCollectionName,
+  //   };
+  
+  //   const collectionName = collectionMap[indicator];
+  //   if (!collectionName) {
+  //     throw new Error(`Unsupported indicator: ${indicator}`);
+  //   }
+  
+  //   const collection = this.connection.collection(collectionName);
+  //   const startDate = endDate - 6 * 24 * 60 * 60; // Calculate start date for the range
+  
+  //   // MongoDB aggregation pipeline
+  //   const results = await collection
+  //     .aggregate([
+  //       {
+  //         $match: {
+  //           symbol,
+  //           time: { $gte: startDate, $lt: endDate + 24 * 60 * 60 }, // Range filter
+  //         },
+  //       },
+  //       {
+  //         $addFields: {
+  //           day: {
+  //             $dateToString: { format: "%Y-%m-%d", date: { $toDate: { $multiply: ["$time", 1000] } } },
+  //           },
+  //         },
+  //       },
+  //       {
+  //         $sort: { time: -1 }, // Sort by time descending
+  //       },
+  //       {
+  //         $group: {
+  //           _id: "$day",
+  //           latestRecord: { $first: "$$ROOT" }, // Get the latest record per day
+  //         },
+  //       },
+  //       {
+  //         $replaceRoot: { newRoot: "$latestRecord" }, // Flatten the result structure
+  //       },
+  //       {
+  //         $project: {
+  //           value: `$${indicator.toLowerCase()}`,
+  //           time: 1,
+  //         },
+  //       },
+  //       { $sort: { time: -1 } }, // Ensure results are sorted by time
+  //     ])
+  //     .toArray();
+  
+  //   return results;
+  // }
+
+  
+  // async getLast7DaysDailyIndicator(
+  //   symbol: string,
+  //   indicator: 'RSI' | 'MACD' | 'ADX' | 'EMA' | 'SMA' | 'Stochastic' | 'CCI',
+  //   endDate: number
+  // ): Promise<IndicatorResult[]> {
+  //   const collectionMap: Record<string, string> = {
+  //     RSI: this.rsiCollectionName,
+  //     MACD: this.macdCollectionName,
+  //     ADX: this.adxCollectionName,
+  //     EMA: this.emaCollectionName,
+  //     SMA: this.smaCollectionName,
+  //     Stochastic: this.stochasticCollectionName,
+  //     CCI: this.cciCollectionName,
+  //   };
+  
+  //   const collectionName = collectionMap[indicator];
+  //   if (!collectionName) {
+  //     throw new Error(`Unsupported indicator: ${indicator}`);
+  //   }
+  
+  //   const collection = this.connection.collection(collectionName);
+  //   const startDate = endDate - 6 * 24 * 60 * 60; // Calculate start date for the range
+  
+  //   const results = await collection
+  //     .aggregate([
+  //       {
+  //         $match: {
+  //           symbol,
+  //           time: { $gte: startDate, $lt: endDate + 24 * 60 * 60 }, // Range filter
+  //         },
+  //       },
+  //       {
+  //         $addFields: {
+  //           day: {
+  //             $dateToString: { format: "%Y-%m-%d", date: { $toDate: { $multiply: ["$time", 1000] } } },
+  //           },
+  //         },
+  //       },
+  //       {
+  //         $sort: { time: -1 }, // Sort by time descending
+  //       },
+  //       {
+  //         $group: {
+  //           _id: "$day",
+  //           latestRecord: { $first: "$$ROOT" }, // Get the latest record per day
+  //         },
+  //       },
+  //       {
+  //         $replaceRoot: { newRoot: "$latestRecord" }, // Flatten the result structure
+  //       },
+  //       {
+  //         $project: {
+  //           value: `$${indicator.toLowerCase()}`,
+  //           time: 1,
+  //         },
+  //       },
+  //       { $sort: { time: -1 } }, // Ensure results are sorted by time
+  //     ])
+  //     .toArray();
+  
+  //   // Typecast results to match the expected type
+  //   return results as IndicatorResult[];
+  // }
+
+  async getLast7DaysRSI(symbol: string, endDate: number): Promise<RSIDto[]> {
+    const collection = this.connection.collection(this.rsiCollectionName);
+    const startOfRange = endDate - 6 * 24 * 60 * 60; // 7 days in seconds
+  
+    const data = await collection
+      .aggregate([
+        {
+          $match: {
+            symbol,
+            time: { $gte: startOfRange, $lte: endDate },
+          },
+        },
+        {
+          $addFields: {
+            day: { $dateToString: { format: "%Y-%m-%d", date: { $toDate: { $multiply: ["$time", 1000] } } } },
+          },
+        },
+        {
+          $sort: { time: -1 },
+        },
+        {
+          $group: {
+            _id: "$day",
+            latest: { $first: "$$ROOT" },
+          },
+        },
+        {
+          $replaceRoot: { newRoot: "$latest" },
+        },
+        {
+          $sort: { time: 1 },
+        },
+      ])
+      .toArray();
+  
+    return data.map(({ time, RSI, symbol}) => ({
+      time,
+      RSI,
+      symbol
+    }));
+  }
+  
+  async getLast7DaysMACD(symbol: string, endDate: number): Promise<MACDDto[]> {
+    const collection = this.connection.collection(this.macdCollectionName);
+    const startOfRange = endDate - 6 * 24 * 60 * 60;
+  
+    const data = await collection
+      .aggregate([
+        {
+          $match: {
+            symbol,
+            time: { $gte: startOfRange, $lte: endDate },
+          },
+        },
+        {
+          $addFields: {
+            day: { $dateToString: { format: "%Y-%m-%d", date: { $toDate: { $multiply: ["$time", 1000] } } } },
+          },
+        },
+        {
+          $sort: { time: -1 },
+        },
+        {
+          $group: {
+            _id: "$day",
+            latest: { $first: "$$ROOT" },
+          },
+        },
+        {
+          $replaceRoot: { newRoot: "$latest" },
+        },
+        {
+          $sort: { time: 1 },
+        },
+      ])
+      .toArray();
+  
+    return data.map(({ time, MACD, Signal, Histogram,symbol  }) => ({
+      time,
+      MACD, Signal, Histogram,symbol
+    }));
+  }
+  
+  async getLast7DaysADX(symbol: string, endDate: number): Promise<ADXDto[]> {
+    const collection = this.connection.collection(this.adxCollectionName);
+    const startOfRange = endDate - 6 * 24 * 60 * 60;
+  
+    const data = await collection
+      .aggregate([
+        {
+          $match: {
+            symbol,
+            time: { $gte: startOfRange, $lte: endDate },
+          },
+        },
+        {
+          $addFields: {
+            day: { $dateToString: { format: "%Y-%m-%d", date: { $toDate: { $multiply: ["$time", 1000] } } } },
+          },
+        },
+        {
+          $sort: { time: -1 },
+        },
+        {
+          $group: {
+            _id: "$day",
+            latest: { $first: "$$ROOT" },
+          },
+        },
+        {
+          $replaceRoot: { newRoot: "$latest" },
+        },
+        {
+          $sort: { time: 1 },
+        },
+      ])
+      .toArray();
+  
+    return data.map(({ time, adx_value, price, symbol }) => ({
+      time,
+      adx_value,
+      price,
+      symbol
+    }));
+  }
+  
+  async getLast7DaysEMA(symbol: string, endDate: number): Promise<EMADto[]> {
+    const collection = this.connection.collection(this.emaCollectionName);
+    const startOfRange = endDate - 6 * 24 * 60 * 60;
+  
+    const data = await collection
+      .aggregate([
+        {
+          $match: {
+            symbol,
+            time: { $gte: startOfRange, $lte: endDate },
+          },
+        },
+        {
+          $addFields: {
+            day: { $dateToString: { format: "%Y-%m-%d", date: { $toDate: { $multiply: ["$time", 1000] } } } },
+          },
+        },
+        {
+          $sort: { time: -1 },
+        },
+        {
+          $group: {
+            _id: "$day",
+            latest: { $first: "$$ROOT" },
+          },
+        },
+        {
+          $replaceRoot: { newRoot: "$latest" },
+        },
+        {
+          $sort: { time: 1 },
+        },
+      ])
+      .toArray();
+  
+    return data.map(({ time, ema_value, symbol, price }) => ({
+      time,
+      ema_value,
+      price,
+      symbol
+    }));
+  }
+  async getLast7DaysStochastic(symbol: string, endDate: number): Promise<StochasticDto[]> {
+    const collection = this.connection.collection(this.stochasticCollectionName);
+    const startOfRange = endDate - 6 * 24 * 60 * 60;
+  
+    const data = await collection
+      .aggregate([
+        {
+          $match: {
+            symbol,
+            time: { $gte: startOfRange, $lte: endDate },
+          },
+        },
+        {
+          $addFields: {
+            day: { $dateToString: { format: "%Y-%m-%d", date: { $toDate: { $multiply: ["$time", 1000] } } } },
+          },
+        },
+        {
+          $sort: { time: -1 },
+        },
+        {
+          $group: {
+            _id: "$day",
+            latest: { $first: "$$ROOT" },
+          },
+        },
+        {
+          $replaceRoot: { newRoot: "$latest" },
+        },
+        {
+          $sort: { time: 1 },
+        },
+      ])
+      .toArray();
+  
+    return data.map(({ time, k_value, d_value, symbol, price }) => ({
+      time,
+      k_value, 
+      d_value,
+      symbol,
+      price
+    }));
+  }
+  
+  
+  async getLast7DaysCCI(symbol: string, endDate: number): Promise<CCIDto[]> {
+    const collection = this.connection.collection(this.cciCollectionName);
+    const startOfRange = endDate - 6 * 24 * 60 * 60; // 7 days in seconds
+  
+    const data = await collection
+      .aggregate([
+        {
+          $match: {
+            symbol,
+            time: { $gte: startOfRange, $lte: endDate },
+          },
+        },
+        {
+          $addFields: {
+            day: { $dateToString: { format: "%Y-%m-%d", date: { $toDate: { $multiply: ["$time", 1000] } } } },
+          },
+        },
+        {
+          $sort: { time: -1 },
+        },
+        {
+          $group: {
+            _id: "$day",
+            latest: { $first: "$$ROOT" },
+          },
+        },
+        {
+          $replaceRoot: { newRoot: "$latest" },
+        },
+        {
+          $sort: { time: 1 },
+        },
+      ])
+      .toArray();
+  
+    return data.map(({ time, cci_value, price, symbol }) => ({
+      time,
+      cci_value,
+      price,
+      symbol
+    }));
   }
   
 
@@ -662,28 +1215,37 @@ export class DataRepository {
   // Method to create LunarCrush news documents
   async createLunarNews(newsData: Partial<LunarCrushNewsDto>): Promise<void> {
     const collection = this.connection.collection(this.lunarNewsCollectionName);
-    // Upsert the news item by its id
-    await collection.updateOne(
-      { id: newsData.id },
-      { $set: { ...newsData } },
-      { upsert: true }
-    );
+    // // Upsert the news item by its id
+    // await collection.updateOne(
+    //   { id: newsData.id },
+    //   { $set: { ...newsData } },
+    //   { upsert: true }
+    // );
+    await collection.insertOne(newsData);
   }
 
   // src/modules/data/database/repositories/data.repository.ts
-  async getLatestNews(limit = 50): Promise<any[]> {
+  async getLatestNews(limit = 50, title: string): Promise<any[]> {
     const collection = this.connection.collection(this.lunarNewsCollectionName);
+    
+    // Regular expression to match substrings within words, e.g., "doge" or "dogecoin"
+    const regex = new RegExp(`\\b${title}`, 'i'); // '\\b' ensures word boundary matching
+
     return await collection
-      .find()
+    .find({ post_title: { $regex: regex } }) // Case-insensitive search
       .sort({ post_created: -1 }) // Sort by creation date descending
       .limit(Math.min(limit, 10)) // Enforce max limit = 10
       .toArray();
   }
 
-  async getTopNewsByInteractions(limit = 50): Promise<any[]> {
+  async getTopNewsByInteractions(limit = 50, title: string): Promise<any[]> {
     const collection = this.connection.collection(this.lunarNewsCollectionName);
+    
+    // Regular expression to match substrings within words, e.g., "doge" or "dogecoin"
+    const regex = new RegExp(`\\b${title}`, 'i'); // '\\b' ensures word boundary matching
+
     return await collection
-      .find()
+    .find({ post_title: { $regex: regex } }) // Case-insensitive search
       .sort({ interactions_24h: -1 }) // Sort by interactions descending
       .limit(Math.min(limit, 10))
       .toArray();
@@ -702,10 +1264,12 @@ export class DataRepository {
       .toArray();
   }
 
-  async getNewsWithHighSentiment(limit = 50): Promise<any[]> {
+  async getNewsWithHighSentiment(limit = 50, title : string): Promise<any[]> {
     const collection = this.connection.collection(this.lunarNewsCollectionName);
+    // Regular expression to match substrings within words, e.g., "doge" or "dogecoin"
+    const regex = new RegExp(`\\b${title}`, 'i'); // '\\b' ensures word boundary matching
     return await collection
-      .find({}) // No filter condition, fetch all
+    .find({ post_title: { $regex: regex } }) // Case-insensitive search
       .sort({ post_sentiment: -1 }) // Sort by sentiment descending
       .limit(Math.min(limit, 10)) // Limit results to 10 max
       .toArray();
@@ -727,7 +1291,9 @@ export class DataRepository {
     await collection.insertOne(log);
   }
 
-  async getChatHistory(telegramId: string, limit: number = 20): Promise<UserChatLogDto[]> {
+  
+
+  async getChatHistory(telegramId: string, limit: number = 3): Promise<UserChatLogDto[]> {
     const collection = this.connection.collection('this.userchatlogCollectionName');
     const results = await collection
       .find({ telegramId })
@@ -813,3 +1379,4 @@ export class DataRepository {
   }
 
 }
+ 
