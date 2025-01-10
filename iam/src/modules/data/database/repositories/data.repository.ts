@@ -44,7 +44,7 @@ export class DataRepository {
 
   constructor(@InjectConnection('service') private readonly connection: Connection) { }
 
-  
+
   // Save FNG data point in MongoDB
   async create(fngData: Partial<FngData>): Promise<FngData> {
     const collection = this.connection.collection(this.fngCollectionName);
@@ -62,11 +62,11 @@ export class DataRepository {
   // async getLast7DaysFngData(endDate: number): Promise<FngData[]> {
   //   const collection = this.connection.collection(this.fngCollectionName);
   //   const results: FngData[] = [];
-  
+
   //   for (let i = 0; i < 7; i++) {
   //     const targetDateStart = endDate - i * 24 * 60 * 60; // Start of the target day
   //     const targetDateEnd = targetDateStart + 24 * 60 * 60; // End of the target day
-  
+
   //     // Query the latest FNG value within the day
   //     const result = await collection
   //       .find({
@@ -75,7 +75,7 @@ export class DataRepository {
   //       .sort({ timestamp: -1 }) // Sort by timestamp descending
   //       .limit(1) // Get only the latest record for the day
   //       .toArray();
-  
+
   //     if (result.length > 0) {
   //       const fngRecord = result[0];
   //       results.push({
@@ -86,13 +86,13 @@ export class DataRepository {
   //       } as FngData);
   //     }
   //   }
-  
+
   //   return results;
   // }
-  
+
   async getLast7DaysFngDataOptimized(endDate: number): Promise<FngData[]> {
     const collection = this.connection.collection(this.fngCollectionName);
-  
+
     const startOfRange = endDate - 6 * 24 * 60 * 60; // Calculate the start of the range (7 days back)
     const data = await collection
       .aggregate([
@@ -128,7 +128,7 @@ export class DataRepository {
         },
       ])
       .toArray();
-  
+
     // Map the data to match the FngData structure
     return data.map((doc) => ({
       value: doc.value || '0',
@@ -136,8 +136,8 @@ export class DataRepository {
       timestamp: doc.timestamp || 0,
     }));
   }
-  
-   
+
+
 
   async findFngByDate(targetDate?: number): Promise<FngData | null> {
     const collection = this.connection.collection(this.fngCollectionName);
@@ -175,17 +175,17 @@ export class DataRepository {
     const collection = this.connection.collection(this.emaCollectionName);
     await collection.insertOne(emaData);
   }
-  
+
   async createSMAData(smaData: Partial<SMAData>): Promise<void> {
     const collection = this.connection.collection(this.smaCollectionName);
     await collection.insertOne(smaData);
   }
-  
+
   async createStochasticData(stochasticData: Partial<StochasticData>): Promise<void> {
     const collection = this.connection.collection(this.stochasticCollectionName);
     await collection.insertOne(stochasticData);
   }
-  
+
   async createCCIData(cciData: Partial<CCIData>): Promise<void> {
     const collection = this.connection.collection(this.cciCollectionName);
     await collection.insertOne(cciData);
@@ -195,22 +195,22 @@ export class DataRepository {
     const collection = this.connection.collection(this.emaCollectionName);
     return this.getIndicatorBySymbolAndDate<EMAData>(collection, symbol, date);
   }
-  
+
   async getSMABySymbolAndDate(symbol: string, date?: number): Promise<SMAData | null> {
     const collection = this.connection.collection(this.smaCollectionName);
     return this.getIndicatorBySymbolAndDate<SMAData>(collection, symbol, date);
   }
-  
+
   async getStochasticBySymbolAndDate(symbol: string, date?: number): Promise<StochasticData | null> {
     const collection = this.connection.collection(this.stochasticCollectionName);
     return this.getIndicatorBySymbolAndDate<StochasticData>(collection, symbol, date);
   }
-  
+
   async getCCIBySymbolAndDate(symbol: string, date?: number): Promise<CCIData | null> {
     const collection = this.connection.collection(this.cciCollectionName);
     return this.getIndicatorBySymbolAndDate<CCIData>(collection, symbol, date);
   }
-  
+
   // Helper for common fetch logic
   private async getIndicatorBySymbolAndDate<T>(
     collection: any,
@@ -219,16 +219,16 @@ export class DataRepository {
   ): Promise<T | null> {
     const query: Record<string, any> = { symbol };
     if (date) query.time = { $lte: date };
-  
+
     const result = await collection.find(query).sort({ time: -1 }).limit(1).toArray();
     return result.length > 0 ? result[0] : null;
   }
-  
+
   async getLast7DaysDailyPriceOptimized(symbol: string, endDate: number): Promise<TradingViewAlertDto[]> {
     const collection = this.connection.collection(this.tickerCollectionName);
-  
+
     const startOfRange = endDate - 6 * 24 * 60 * 60; // 7 days in seconds
-  
+
     // Fetch the latest record per day for the given symbol and time range
     const data = await collection
       .aggregate([
@@ -260,7 +260,7 @@ export class DataRepository {
         },
       ])
       .toArray();
-  
+
     return data.map(({ symbol, price, time, exchange }) => ({
       symbol,
       price,
@@ -268,7 +268,7 @@ export class DataRepository {
       exchange,
     }));
   }
-  
+
 
   async getLatestPriceBySymbol(symbol: string, date: number): Promise<TradingViewAlertDto | null> {
     const collection = this.connection.collection(this.tickerCollectionName);
@@ -460,7 +460,7 @@ export class DataRepository {
 
     const results = await collection
       //.find({ categories: category, fetched_sort: sort }) // Match the category and sort
-      .find({ categories: { $in: [category] }, fetched_sort: sort })
+      .find({ categories: { $regex: category }, fetched_sort: sort })
       .sort({ [sort]: -1, fetched_at: -1 }) // Sort by the sort field and the latest fetch time
       .limit(limit) // Limit the number of results
       .toArray();
@@ -532,20 +532,20 @@ export class DataRepository {
   }
   async getSortValueForSymbol(symbol: string, sort: string): Promise<LunarCrushPublicCoinDto | null> {
     const collection = this.connection.collection(this.lunarPubCoinCollectionName);
-  
+
     // Find the latest document for this symbol with the requested sort parameter
     const result = await collection
       .find({ symbol: symbol.toUpperCase(), fetched_sort: sort })
       .sort({ fetched_at: -1 })
       .limit(1)
       .toArray();
-  
+
     if (result.length === 0) {
       return null;
     }
-  
+
     const doc = result[0];
-  
+
     return {
       id: doc.id,
       symbol: doc.symbol,
@@ -584,7 +584,7 @@ export class DataRepository {
   async getSortValueForSymbols(
     symbols: string[],
     sort: string
-): Promise<(LunarCrushPublicCoinDto | null)[]> {
+  ): Promise<(LunarCrushPublicCoinDto | null)[]> {
     const collection = this.connection.collection(this.lunarPubCoinCollectionName);
 
     // Convert symbols to uppercase for consistent querying
@@ -592,14 +592,14 @@ export class DataRepository {
 
     // Query all symbols in one go, fetching the latest document for each symbol
     const pipeline = [
-        { $match: { symbol: { $in: upperSymbols }, fetched_sort: sort } },
-        { $sort: { symbol: 1, fetched_at: -1 } },
-        {
-            $group: {
-                _id: "$symbol",
-                doc: { $first: "$$ROOT" },
-            },
+      { $match: { symbol: { $in: upperSymbols }, fetched_sort: sort } },
+      { $sort: { symbol: 1, fetched_at: -1 } },
+      {
+        $group: {
+          _id: "$symbol",
+          doc: { $first: "$$ROOT" },
         },
+      },
     ];
 
     const docs = await collection.aggregate(pipeline).toArray();
@@ -607,52 +607,52 @@ export class DataRepository {
     // Create a map for quick lookup
     const docMap: { [symbol: string]: any } = {};
     docs.forEach((d) => {
-        docMap[d._id] = d.doc;
+      docMap[d._id] = d.doc;
     });
 
     // Map results to the required format
     return symbols.map((symbol) => {
-        const upperSymbol = symbol.toUpperCase();
-        const doc = docMap[upperSymbol];
-        if (!doc) {
-            return null;
-        }
-        return {
-            id: doc.id,
-            symbol: doc.symbol,
-            name: doc.name,
-            price: doc.price,
-            price_btc: doc.price_btc,
-            volume_24h: doc.volume_24h,
-            volatility: doc.volatility,
-            circulating_supply: doc.circulating_supply,
-            max_supply: doc.max_supply,
-            percent_change_1h: doc.percent_change_1h,
-            percent_change_24h: doc.percent_change_24h,
-            percent_change_7d: doc.percent_change_7d,
-            market_cap: doc.market_cap,
-            market_cap_rank: doc.market_cap_rank,
-            interactions_24h: doc.interactions_24h,
-            social_volume_24h: doc.social_volume_24h,
-            social_dominance: doc.social_dominance,
-            market_dominance: doc.market_dominance,
-            galaxy_score: doc.galaxy_score,
-            galaxy_score_previous: doc.galaxy_score_previous,
-            alt_rank: doc.alt_rank,
-            alt_rank_previous: doc.alt_rank_previous,
-            sentiment: doc.sentiment,
-            categories: doc.categories || '',
-            blockchains: doc.blockchains || [],
-            percent_change_30d: doc.percent_change_30d,
-            last_updated_price: doc.last_updated_price,
-            topic: doc.topic,
-            logo: doc.logo,
-            fetched_sort: doc.fetched_sort,
-            fetched_at: doc.fetched_at,
-        };
+      const upperSymbol = symbol.toUpperCase();
+      const doc = docMap[upperSymbol];
+      if (!doc) {
+        return null;
+      }
+      return {
+        id: doc.id,
+        symbol: doc.symbol,
+        name: doc.name,
+        price: doc.price,
+        price_btc: doc.price_btc,
+        volume_24h: doc.volume_24h,
+        volatility: doc.volatility,
+        circulating_supply: doc.circulating_supply,
+        max_supply: doc.max_supply,
+        percent_change_1h: doc.percent_change_1h,
+        percent_change_24h: doc.percent_change_24h,
+        percent_change_7d: doc.percent_change_7d,
+        market_cap: doc.market_cap,
+        market_cap_rank: doc.market_cap_rank,
+        interactions_24h: doc.interactions_24h,
+        social_volume_24h: doc.social_volume_24h,
+        social_dominance: doc.social_dominance,
+        market_dominance: doc.market_dominance,
+        galaxy_score: doc.galaxy_score,
+        galaxy_score_previous: doc.galaxy_score_previous,
+        alt_rank: doc.alt_rank,
+        alt_rank_previous: doc.alt_rank_previous,
+        sentiment: doc.sentiment,
+        categories: doc.categories || '',
+        blockchains: doc.blockchains || [],
+        percent_change_30d: doc.percent_change_30d,
+        last_updated_price: doc.last_updated_price,
+        topic: doc.topic,
+        logo: doc.logo,
+        fetched_sort: doc.fetched_sort,
+        fetched_at: doc.fetched_at,
+      };
     });
-}
-  
+  }
+
   //this method is for analyzing 
   async getAllSortsForSymbol(symbol: string): Promise<Record<string, any>> {
     const transformedSymbol = symbol.replace(/USDT$/, ''); // Remove 'USDT' from the symbol
@@ -700,7 +700,7 @@ export class DataRepository {
   //   endDate: number
   // ): Promise<{ value: number | object; time: number }[]> {
   //   let collectionName: string;
-  
+
   //   // Determine the collection name based on the indicator type
   //   if (indicator === 'RSI') {
   //     collectionName = this.rsiCollectionName;
@@ -719,15 +719,15 @@ export class DataRepository {
   //   } else {
   //     throw new Error(`Unsupported indicator: ${indicator}`);
   //   }
-  
+
   //   const collection = this.connection.collection(collectionName);
   //   const results: { value: number | object; time: number }[] = [];
-  
+
   //   // Loop through the last 7 days
   //   for (let i = 0; i < 7; i++) {
   //     const targetDateStart = endDate - i * 24 * 60 * 60; // Start of the target day
   //     const targetDateEnd = targetDateStart + 24 * 60 * 60; // End of the target day
-  
+
   //     // Get the last recorded indicator value within the target day
   //     const result = await collection
   //       .find({
@@ -737,13 +737,13 @@ export class DataRepository {
   //       .sort({ time: -1 }) // Sort by time descending
   //       .limit(1) // Get only the latest record for the day
   //       .toArray();
-  
+
   //     if (result.length > 0) {
   //       const { time, ...rest } = result[0]; // Exclude unnecessary fields
   //       results.push({ value: rest[indicator.toLowerCase()] || rest, time });
   //     }
   //   }
-  
+
   //   return results;
   // }
 
@@ -761,15 +761,15 @@ export class DataRepository {
   //     Stochastic: this.stochasticCollectionName,
   //     CCI: this.cciCollectionName,
   //   };
-  
+
   //   const collectionName = collectionMap[indicator];
   //   if (!collectionName) {
   //     throw new Error(`Unsupported indicator: ${indicator}`);
   //   }
-  
+
   //   const collection = this.connection.collection(collectionName);
   //   const startDate = endDate - 6 * 24 * 60 * 60; // Calculate start date for the range
-  
+
   //   // MongoDB aggregation pipeline
   //   const results = await collection
   //     .aggregate([
@@ -807,11 +807,11 @@ export class DataRepository {
   //       { $sort: { time: -1 } }, // Ensure results are sorted by time
   //     ])
   //     .toArray();
-  
+
   //   return results;
   // }
 
-  
+
   // async getLast7DaysDailyIndicator(
   //   symbol: string,
   //   indicator: 'RSI' | 'MACD' | 'ADX' | 'EMA' | 'SMA' | 'Stochastic' | 'CCI',
@@ -826,15 +826,15 @@ export class DataRepository {
   //     Stochastic: this.stochasticCollectionName,
   //     CCI: this.cciCollectionName,
   //   };
-  
+
   //   const collectionName = collectionMap[indicator];
   //   if (!collectionName) {
   //     throw new Error(`Unsupported indicator: ${indicator}`);
   //   }
-  
+
   //   const collection = this.connection.collection(collectionName);
   //   const startDate = endDate - 6 * 24 * 60 * 60; // Calculate start date for the range
-  
+
   //   const results = await collection
   //     .aggregate([
   //       {
@@ -871,7 +871,7 @@ export class DataRepository {
   //       { $sort: { time: -1 } }, // Ensure results are sorted by time
   //     ])
   //     .toArray();
-  
+
   //   // Typecast results to match the expected type
   //   return results as IndicatorResult[];
   // }
@@ -879,7 +879,7 @@ export class DataRepository {
   async getLast7DaysRSI(symbol: string, endDate: number): Promise<RSIDto[]> {
     const collection = this.connection.collection(this.rsiCollectionName);
     const startOfRange = endDate - 6 * 24 * 60 * 60; // 7 days in seconds
-  
+
     const data = await collection
       .aggregate([
         {
@@ -910,18 +910,18 @@ export class DataRepository {
         },
       ])
       .toArray();
-  
-    return data.map(({ time, RSI, symbol}) => ({
+
+    return data.map(({ time, RSI, symbol }) => ({
       time,
       RSI,
       symbol
     }));
   }
-  
+
   async getLast7DaysMACD(symbol: string, endDate: number): Promise<MACDDto[]> {
     const collection = this.connection.collection(this.macdCollectionName);
     const startOfRange = endDate - 6 * 24 * 60 * 60;
-  
+
     const data = await collection
       .aggregate([
         {
@@ -952,17 +952,17 @@ export class DataRepository {
         },
       ])
       .toArray();
-  
-    return data.map(({ time, MACD, Signal, Histogram,symbol  }) => ({
+
+    return data.map(({ time, MACD, Signal, Histogram, symbol }) => ({
       time,
-      MACD, Signal, Histogram,symbol
+      MACD, Signal, Histogram, symbol
     }));
   }
-  
+
   async getLast7DaysADX(symbol: string, endDate: number): Promise<ADXDto[]> {
     const collection = this.connection.collection(this.adxCollectionName);
     const startOfRange = endDate - 6 * 24 * 60 * 60;
-  
+
     const data = await collection
       .aggregate([
         {
@@ -993,7 +993,7 @@ export class DataRepository {
         },
       ])
       .toArray();
-  
+
     return data.map(({ time, adx_value, price, symbol }) => ({
       time,
       adx_value,
@@ -1001,11 +1001,11 @@ export class DataRepository {
       symbol
     }));
   }
-  
+
   async getLast7DaysEMA(symbol: string, endDate: number): Promise<EMADto[]> {
     const collection = this.connection.collection(this.emaCollectionName);
     const startOfRange = endDate - 6 * 24 * 60 * 60;
-  
+
     const data = await collection
       .aggregate([
         {
@@ -1036,7 +1036,7 @@ export class DataRepository {
         },
       ])
       .toArray();
-  
+
     return data.map(({ time, ema_value, symbol, price }) => ({
       time,
       ema_value,
@@ -1047,7 +1047,7 @@ export class DataRepository {
   async getLast7DaysStochastic(symbol: string, endDate: number): Promise<StochasticDto[]> {
     const collection = this.connection.collection(this.stochasticCollectionName);
     const startOfRange = endDate - 6 * 24 * 60 * 60;
-  
+
     const data = await collection
       .aggregate([
         {
@@ -1078,21 +1078,21 @@ export class DataRepository {
         },
       ])
       .toArray();
-  
+
     return data.map(({ time, k_value, d_value, symbol, price }) => ({
       time,
-      k_value, 
+      k_value,
       d_value,
       symbol,
       price
     }));
   }
-  
-  
+
+
   async getLast7DaysCCI(symbol: string, endDate: number): Promise<CCIDto[]> {
     const collection = this.connection.collection(this.cciCollectionName);
     const startOfRange = endDate - 6 * 24 * 60 * 60; // 7 days in seconds
-  
+
     const data = await collection
       .aggregate([
         {
@@ -1123,7 +1123,7 @@ export class DataRepository {
         },
       ])
       .toArray();
-  
+
     return data.map(({ time, cci_value, price, symbol }) => ({
       time,
       cci_value,
@@ -1131,7 +1131,7 @@ export class DataRepository {
       symbol
     }));
   }
-  
+
 
   async getTopNByIndicator(
     indicator: 'RSI' | 'MACD' | 'ADX' | 'EMA' | 'SMA' | 'Stochastic' | 'CCI',
@@ -1140,7 +1140,7 @@ export class DataRepository {
   ): Promise<any[]> {
     let collectionName: string;
     let sortField: string;
-  
+
     if (indicator === 'RSI') {
       collectionName = this.rsiCollectionName;
       sortField = 'RSI';
@@ -1165,15 +1165,20 @@ export class DataRepository {
     } else {
       throw new Error(`Unsupported indicator: ${indicator}`);
     }
-  
+    const lim = limit || 10; // Default limit to 10 if not provided
     const collection = this.connection.collection(collectionName);
+
+    // Build the query
+    const query = date ? { time: { $lte: date } } : {};
+
+    // Fetch data, sorted by time (descending) and indicator value (descending)
     return collection
-      .find({ time: { $lte: date } })
-      .sort({ [sortField]: -1 })
-      .limit(limit)
+      .find(query)
+      .sort({ time: -1, [sortField]: -1 })
+      .limit(lim)
       .toArray();
   }
-  
+
 
   /**
    * Get top N cryptos by RSI on or before the specified date.
@@ -1227,12 +1232,12 @@ export class DataRepository {
   // src/modules/data/database/repositories/data.repository.ts
   async getLatestNews(limit = 50, title: string): Promise<any[]> {
     const collection = this.connection.collection(this.lunarNewsCollectionName);
-    
+
     // Regular expression to match substrings within words, e.g., "doge" or "dogecoin"
     const regex = new RegExp(`\\b${title}`, 'i'); // '\\b' ensures word boundary matching
 
     return await collection
-    .find({ post_title: { $regex: regex } }) // Case-insensitive search
+      .find({ post_title: { $regex: regex } }) // Case-insensitive search
       .sort({ post_created: -1 }) // Sort by creation date descending
       .limit(Math.min(limit, 10)) // Enforce max limit = 10
       .toArray();
@@ -1240,12 +1245,12 @@ export class DataRepository {
 
   async getTopNewsByInteractions(limit = 50, title: string): Promise<any[]> {
     const collection = this.connection.collection(this.lunarNewsCollectionName);
-    
+
     // Regular expression to match substrings within words, e.g., "doge" or "dogecoin"
     const regex = new RegExp(`\\b${title}`, 'i'); // '\\b' ensures word boundary matching
 
     return await collection
-    .find({ post_title: { $regex: regex } }) // Case-insensitive search
+      .find({ post_title: { $regex: regex } }) // Case-insensitive search
       .sort({ interactions_24h: -1 }) // Sort by interactions descending
       .limit(Math.min(limit, 10))
       .toArray();
@@ -1264,12 +1269,12 @@ export class DataRepository {
       .toArray();
   }
 
-  async getNewsWithHighSentiment(limit = 50, title : string): Promise<any[]> {
+  async getNewsWithHighSentiment(limit = 50, title: string): Promise<any[]> {
     const collection = this.connection.collection(this.lunarNewsCollectionName);
     // Regular expression to match substrings within words, e.g., "doge" or "dogecoin"
     const regex = new RegExp(`\\b${title}`, 'i'); // '\\b' ensures word boundary matching
     return await collection
-    .find({ post_title: { $regex: regex } }) // Case-insensitive search
+      .find({ post_title: { $regex: regex } }) // Case-insensitive search
       .sort({ post_sentiment: -1 }) // Sort by sentiment descending
       .limit(Math.min(limit, 10)) // Limit results to 10 max
       .toArray();
@@ -1291,27 +1296,29 @@ export class DataRepository {
     await collection.insertOne(log);
   }
 
-  
+  async getChatHistory(telegramId: string, limit: number = 5): Promise<UserChatLogDto[]> {
+    try {
+      const collection = this.connection.collection(this.userchatlogCollectionName);
+      const results = await collection
+        .find({ telegramId })
+        .sort({ save_at: -1 }) // Most recent chats first
+        .limit(limit)
+        .toArray();
 
-  async getChatHistory(telegramId: string, limit: number = 3): Promise<UserChatLogDto[]> {
-    const collection = this.connection.collection('this.userchatlogCollectionName');
-    const results = await collection
-      .find({ telegramId })
-      .sort({ save_at: -1 }) // Most recent chats first
-      .limit(limit) // Limit the number of results
-      .toArray();
-
-    // Map the results to the UserChatLogDto type
-    return results.map((result) => ({
-      telegramId: result.telegramId as string,
-      query: result.query as string,
-      response: result.response as string,
-      calledFunction: result.calledFunction as string,
-      parameters: result.parameters as Record<string, any>,
-      newParameters: result.newParameters as Record<string, any>,
-      queryType: result.queryType as 'in-scope' | 'out-of-scope',
-      save_at: result.save_at as number,
-    }));
+      return results.map((result) => ({
+        telegramId: result.telegramId as string,
+        query: result.query as string,
+        response: result.response as string,
+        calledFunction: result.calledFunction as string,
+        parameters: result.parameters as Record<string, any>,
+        newParameters: result.newParameters as Record<string, any>,
+        queryType: result.queryType as 'in-scope' | 'out-of-scope',
+        save_at: result.save_at as number,
+      }));
+    } catch (error) {
+      this.logger.error('Failed to retrieve chat history:', error);
+      throw error;
+    }
   }
 
   async createADXData(adxData: Partial<ADXData>): Promise<void> {
@@ -1379,4 +1386,3 @@ export class DataRepository {
   }
 
 }
- 

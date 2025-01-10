@@ -114,6 +114,9 @@ export class DataService {
   
     // Save Stochastic Data
     async saveStochasticData(stochasticData: StochasticDto): Promise<void> {
+      if(!stochasticData.k_value || stochasticData.d_value) {
+        return;
+      }
       const timestamp = new Date(stochasticData.time).getTime() / 1000;
       const formattedData = {
         symbol: stochasticData.symbol,

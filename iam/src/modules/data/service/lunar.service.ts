@@ -206,7 +206,7 @@ export class LunarCrushService {
 
     const sentiment = newsItem.post_sentiment;
     let sentimentIcon = '⚪ Neutral';
-    if (sentiment > 3) {
+    if (sentiment > 3.1) {
       sentimentIcon = '🟢 Positive';
     } else if (sentiment < 2) {
       sentimentIcon = '🔴 Negative';

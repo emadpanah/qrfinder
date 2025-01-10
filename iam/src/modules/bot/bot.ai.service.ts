@@ -10,7 +10,7 @@ import { IamService } from '../iam/services/iam.service';
 import { Types } from 'mongoose';
 import { BalanceService } from '../iam/services/iam-balance.service';
 import { Balance } from '../iam/database/schemas/iam-balance.schema';
-import { mapSymbol } from 'src/shared/helper';
+import { formatNumber, mapSymbol, sanitizeString, truncateText } from 'src/shared/helper';
 import { TradingViewAlertDto } from '../data/database/dto/traidingview-alert.dto';
 import { title } from 'process';
 
@@ -25,15 +25,136 @@ export class BotAIService implements OnModuleInit {
   private openai = new OpenAI({ apiKey: this.apiKey });
   private botUsername: string;
   private currentTelegramId: string;
+  private currentUserAlias: string;
   private userId: Types.ObjectId;
   private userLastAsk: Record<string, string> = {};
   private curId: Types.ObjectId;
   private userBalance: number;
 
+  private readonly categories = {
+    'اندیکاتور های تکنیکال': [
+      'تحلیل حرفه ای RSI بیت‌کوین',
+      'تحلیل MACD اتریوم',
+      'بررسی EMA سولانا',
+      'بررسی Stochastic بیت‌کوین',
+      'بررسی CCI اتریوم',
+      'بررسی ADX ریپل',
+      ' برترین ارزهای دیجیتال امروز بر اساس RSI',
+      ' برترین ارزهای دیجیتال امروز بر اساس MACD',
+      ' برترین ارزهای دیجیتال امروز بر اساس EMA',
+      ' برترین ارزهای دیجیتال امروز بر اساس Stochastic',
+      ' برترین ارزهای دیجیتال امروز بر اساس CCI',
+      ' برترین ارزهای دیجیتال امروز بر اساس ADX',
+    ],
+    'داده های مارکت': [
+      'قیمت بیت‌کوین امروز',
+      'قیمت اتریوم امروز',
+      'قیمت BTC, ETH, SOL امروز',
+      'برترین ارزهای دیجیتال امروز بر اساس قیمت',
+      'برترین ارزهای دیجیتال امروز بر اساس حجم',
+      'برترین ارزهای دیجیتال امروز بر اساس ارزش بازار',
+      'تسلط بازار بیت‌کوین امروز',
+      'شاخص ترس و طمع (FNG) امروز',
+      'بررسی قیمت بیت‌کوین  براساس داده‌های تاریخی',
+      'داده‌های تاریخی RSI اتریوم',
+    ],
+    'داده های سوشال': [
+      'سوشال دامیننس بیت کوین',
+      'بررسی بیت کوین بر اساس پارامترهای سوشال',
+      'بررسی اتریوم بر اساس امتیاز گلکسی',
+      'بررسی سولانا بر اساس امتیاز altRank',
+      'برترین ارزهای دیجیتال بر اساس امتیاز گلکسی',
+      'برترین ارزهای دیجیتال بر اساس altRank',
+      'برترین ارزهای دیجیتال memecoin بر اساس امتیاز گلکسی',
+      'برترین ارزهای دیجیتال layer2 بر اساس امتیاز گلکسی',
+      'برترین ارزهای دیجیتال AI بر اساس امتیاز گلکسی',
+      'برترین ارزهای دیجیتال NFT بر اساس امتیاز گلکسی',
+    ],
+    'تکنولوژی': [
+      'برترین ارزهای دیجیتال در حوزه DeFi',
+      'برترین ارزهای دیجیتال در حوزه AI',
+      'برترین ارزهای دیجیتال در حوزه NFT',
+      'برترین ارزهای دیجیتال در حوزه Gaming',
+      'برترین ارزهای دیجیتال در حوزه Stablecoin',
+      'برترین ارزهای دیجیتال در حوزه Real-World Assets',
+      'برترین ارزهای دیجیتال در حوزه Bitcoin Ecosystem',
+      'برترین ارزهای دیجیتال در حوزه Layer 1',
+      'برترین ارزهای دیجیتال در حوزه Layer 2',
+      'برترین ارزهای دیجیتال در حوزه MemeCoin',
+      'برترین ارزهای دیجیتال در حوزه SocialFi',
+      'برترین ارزهای دیجیتال در حوزه DAO',
+      'برترین ارزهای دیجیتال در حوزه Sports',
+      'برترین ارزهای دیجیتال در حوزه Gambling',
+      'برترین ارزهای دیجیتال در حوزه Fan Tokens',
+    ],
+    'اخبار': [
+      'آخرین اخبار بیت‌کوین',
+      'آخرین اخبار NFT',
+      'آخرین اخبار memecoin',
+      'آخرین اخبار های ریپل',
+      ' اخبار بر اساس تعاملات بالا',
+      'اخبار مربوط به اتریوم',
+      'اخبار با احساسات مثبت برای بیت‌کوین',
+      'تحلیل دقیق بیت‌کوین با توجه به اخبار',
+    ],
+    'تنظیمات کاربری': [
+      //'تنظیم نام مستعار',
+      'دریافت نام مستعار',
+      'دریافت موجودی کاربر',
+    ],
+  };
 
-  private prompts = [
-    // Existing prompts...
-  ];
+
+  //   'تحلیل و اخبار بیت‌کوین امروز',
+  //   'بررسی روندهای اتریوم امروز',
+  //   'قیمت بیت‌کوین امروز',
+  //   'قیمت اتریوم امروز',
+  //   'قیمت چند ارز دیجیتال امروز',
+  //   'برترین ارزهای دیجیتال امروز بر اساس قیمت',
+  //   'RSI بیت‌کوین امروز',
+  //   'MACD اتریوم امروز',
+  //   'EMA سولانا امروز',
+  //   'Stochastic بیت‌کوین امروز',
+  //   'CCI اتریوم امروز',
+  //   'ADX بیت‌کوین امروز',
+  //   'برترین ارزهای دیجیتال امروز بر اساس RSI',
+  //   'برترین ارزهای دیجیتال امروز بر اساس MACD',
+  //   'برترین ارزهای دیجیتال امروز بر اساس EMA',
+  //   'برترین ارزهای دیجیتال امروز بر اساس Stochastic',
+  //   'برترین ارزهای دیجیتال امروز بر اساس CCI',
+  //   'برترین ارزهای دیجیتال امروز بر اساس ADX',
+  //   'تسلط بازار بیت‌کوین امروز',
+  //   'Galaxy Score اتریوم امروز',
+  //   'Alt Rank سولانا امروز',
+  //   'احساسات بازار بیت‌کوین امروز',
+  //   'آخرین اخبار بیت‌کوین امروز',
+  //   'برترین اخبار امروز بر اساس تعاملات',
+  //   'جستجوی اخبار مربوط به اتریوم امروز',
+  //   'اخبار با احساسات مثبت برای بیت‌کوین امروز',
+  //   'تولید سیگنال‌های معاملاتی برای اتریوم امروز',
+  //   'تحلیل دقیق بیت‌کوین امروز',
+  //   'شاخص ترس و طمع (FNG) امروز',
+  //   'داده‌های تاریخی قیمت بیت‌کوین امروز',
+  //   'داده‌های تاریخی RSI اتریوم امروز',
+  //   'برترین ارزهای دیجیتال امروز بر اساس حجم',
+  //   'برترین ارزهای دیجیتال امروز بر اساس ارزش بازار',
+  //   'برترین ارزهای دیجیتال امروز در حوزه DeFi',
+  //   'برترین ارزهای دیجیتال امروز در حوزه AI',
+  //   'برترین ارزهای دیجیتال امروز در حوزه NFT',
+  //   'برترین ارزهای دیجیتال امروز در حوزه Gaming',
+  //   'برترین ارزهای دیجیتال امروز در حوزه Stablecoin',
+  //   'برترین ارزهای دیجیتال امروز در حوزه Real-World Assets',
+  //   'برترین ارزهای دیجیتال امروز در حوزه Bitcoin Ecosystem',
+  //   'برترین ارزهای دیجیتال امروز در حوزه Layer 1',
+  //   'برترین ارزهای دیجیتال امروز در حوزه Layer 2',
+  //   'برترین ارزهای دیجیتال امروز در حوزه MemeCoin',
+  //   'برترین ارزهای دیجیتال امروز در حوزه SocialFi',
+  //   'برترین ارزهای دیجیتال امروز در حوزه DAO',
+  //   'برترین ارزهای دیجیتال امروز در حوزه Sports',
+  //   'برترین ارزهای دیجیتال امروز در حوزه Gambling',
+  //   'برترین ارزهای دیجیتال امروز در حوزه Real Estate',
+  //   'برترین ارزهای دیجیتال امروز در حوزه Fan Tokens',
+  // ];
 
   constructor(
     private readonly iamService: IamService,
@@ -44,6 +165,8 @@ export class BotAIService implements OnModuleInit {
       process.env.TELEGRAM_BOT_TOKEN,
       //process.env.NABZAR_BOT_TOKEN,
       { polling: true });
+
+
   }
 
   // private readonly validCategories = [
@@ -113,12 +236,48 @@ export class BotAIService implements OnModuleInit {
   // Always ensure the user input matches one of these categories or sorting parameters. If the user query does not match,
   //  politely ask them to select from the available options. ${datePrompt}`;}
 
+  // Inside your BotAIService class
 
-  async getChatGptResponse(prompt: string): Promise<{ responseText: string; calledFunc:string; queryType: string; newParameters?: string[]; languague: string }> {
+  // Function to construct the system prompt
+  private constructSystemPrompt(alias: string): string {
+    let basePrompt = '';
+    basePrompt = `
+    You are 'Nabzar,' a personal assistant for cryptocurrencies and blockchains. 
+    'Nabzar' is a Persian name made from the combination of 'Nabz' (pulse) and 'Bazar' (market), symbolizing the heartbeat of the market, نبضار.
+    As 'Nabzar,' you embody the characteristics of being kind, friendly, and approachable, ensuring users feel comfortable seeking your help.
+    You are eager to help users, always providing clear and detailed answers in a way they can easily understand.
+    You also encourage curiosity and learning by engaging with users in an interactive and supportive manner.
+    If a user asks a question in Persian, you must answer in Persian, and if a user asks in English, you answer in English.
+    If a user asks a question in Persian but with English characters (Finglish), you answer in Persian language.
+    Your tone is always polite, engaging, and professional, but you remain approachable and relatable to users of all experience levels.
+    If the user asks questions like 'Do I buy Bitcoin or sell Bitcoin now' or other similar queries, you must analyze the requested symbol and generate trading signals using the analyzeAndCreateSignals function.
+    You are committed to guiding users step-by-step, offering them insights, explanations, and knowledge about crypto and blockchain in a way that enhances their confidence and understanding.
+    Today's date is ${new Date().toLocaleDateString('en-US', {
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric'
+    })}.
+  `;
+
+    //   if(!alias) {
+    //     basePrompt = `${basePrompt} 
+    // The user has not set a preferred alias yet. Please ask them to set a preferred alias. for seeting their 
+    // alias they must use sentences like this " may name is [alias]" or "call me [alias]" or "set my alias to [alias]".`;
+    //   }
+
+    return basePrompt;
+  }
+
+
+  async getChatGptResponse(prompt: string, chatId: string): Promise<{
+    responseText?: string; calledFunc: string; queryType: string;
+    newParameters?: string[]; language: string, advertingMsgId: string, responseArray?: string[]
+  }> {
 
     let queryType = 'in-scope'; // Default to in-scope
     let newParameters: string[] = [];
     let calledFunc: string = '';
+    let advertingMsgId = '';
 
 
     const functions = [
@@ -144,6 +303,52 @@ export class BotAIService implements OnModuleInit {
       //     required: ['symbol', 'date', 'language'],
       //   },
       // },
+      {
+        name: 'getUserAlias',
+        description: 'Retrieves the user\'s preferred name or alias.',
+        parameters: {
+          type: 'object',
+          properties: {
+            language: {
+              type: 'string',
+              description: 'The language of the user query, e.g., "en" for English, "fa" for Persian, etc.'
+            },
+          },
+          required: ['language'],
+        },
+      },
+      {
+        name: 'setUserAlias',
+        description: 'When user ask for updating or setting the user\'s preferred name or alias.',
+        parameters: {
+          type: 'object',
+          properties: {
+            alias: {
+              type: 'string',
+              description: 'The preferred name or alias the user wants to set.',
+            },
+            language: {
+              type: 'string',
+              description: 'The language of the user query, e.g., "en" for English, "fa" for Persian, etc.',
+            },
+          },
+          required: ['alias', 'language'],
+        },
+      },
+      {
+        name: 'getUserBalance',
+        description: 'Retrieves the user\'s current balance in their preferred currency.',
+        parameters: {
+          type: 'object',
+          properties: {
+            language: {
+              type: 'string',
+              description: 'The language of the user query, e.g., "en" for English, "fa" for Persian, etc.'
+            },
+          },
+          required: ['language'],
+        },
+      },
       {
         "name": "getRSIForDate",
         "description": "Fetches the RSI data for a specific symbol on a specific date.",
@@ -267,7 +472,7 @@ export class BotAIService implements OnModuleInit {
               description: 'The language of the user query, e.g., "en" for English, "fa" for Persian, etc.',
             },
           },
-          required: ['n', 'language'],
+          required: ['language'],
         },
       },
       {
@@ -289,7 +494,7 @@ export class BotAIService implements OnModuleInit {
               description: 'The language of the user query, e.g., "en" for English, "fa" for Persian, etc.',
             },
           },
-          required: ['n', 'language'],
+          required: ['language'],
         },
       },
       {
@@ -311,7 +516,7 @@ export class BotAIService implements OnModuleInit {
               description: 'The language of the user query, e.g., "en" for English, "fa" for Persian, etc.',
             },
           },
-          required: ['n', 'language'],
+          required: ['language'],
         },
       },
       {
@@ -333,7 +538,7 @@ export class BotAIService implements OnModuleInit {
               description: 'The language of the user query, e.g., "en" for English, "fa" for Persian, etc.',
             },
           },
-          required: ['n', 'language'],
+          required: ['language'],
         },
       },
       {
@@ -407,9 +612,9 @@ export class BotAIService implements OnModuleInit {
               description: 'The language of the user query, e.g., "en" for English, "fa" for Persian, etc.',
             }
           },
-          required: ['n', 'language'],
+          required: ['language'],
         },
-      }, 
+      },
       {
         name: 'getSortForSymbols',
         description: 'Fetches the requested sort metric values and categories for multiple symbols from the LunarCrush data.',
@@ -554,28 +759,28 @@ export class BotAIService implements OnModuleInit {
           required: ['symbols', 'language'],
         },
       },
-      // {
-      //   name: 'getTopNMACDCryptos',
-      //   description: 'Fetches the top N cryptocurrencies based on their MACD value for a specific date.',
-      //   parameters: {
-      //     type: 'object',
-      //     properties: {
-      //       n: {
-      //         type: 'number',
-      //         description: 'Number of top cryptocurrencies to return based on MACD.'
-      //       },
-      //       date: {
-      //         type: 'string',
-      //         description: 'The date (YYYY-MM-DD) for which to retrieve the top MACD cryptos. if date is not given use today.'
-      //       },
-      //       language: {
-      //         type: 'string',
-      //         description: 'The language of the user query, e.g., "en" for English, "fa" for Persian, etc.',
-      //       }
-      //     },
-      //     required: ['n', 'language'],
-      //   },
-      // },
+      {
+        name: 'getTopNMACDCryptos',
+        description: 'Fetches the top N cryptocurrencies based on their MACD value for a specific date.',
+        parameters: {
+          type: 'object',
+          properties: {
+            n: {
+              type: 'number',
+              description: 'Number of top cryptocurrencies to return based on MACD.'
+            },
+            date: {
+              type: 'string',
+              description: 'The date (YYYY-MM-DD) for which to retrieve the top MACD cryptos. if date is not given use today.'
+            },
+            language: {
+              type: 'string',
+              description: 'The language of the user query, e.g., "en" for English, "fa" for Persian, etc.',
+            }
+          },
+          required: ['language'],
+        },
+      },
       {
         name: 'getFngForDate',
         description: 'Fetches the Fear and Greed Index data for a specific date.',
@@ -591,7 +796,7 @@ export class BotAIService implements OnModuleInit {
               description: 'The language of the user query, e.g., "en" for English, "fa" for Persian, etc.',
             },
           },
-          required: ['timestamp', 'language'],
+          required: ['language'],
         },
       },
       {
@@ -658,7 +863,7 @@ export class BotAIService implements OnModuleInit {
               description: 'The language of the user query, e.g., "en" for English, "fa" for Persian, etc.',
             },
           },
-          required: ['limit', 'language'],
+          required: ['language'],
         },
       },
       {
@@ -705,14 +910,14 @@ export class BotAIService implements OnModuleInit {
         },
       },
       {
-        name: 'getLatestNewsByTitle',
-        description: 'Fetches the latest N news articles about cryptocurrencies by given title.',
+        name: 'getLatestNewsBySymbol',
+        description: 'Fetches the latest N news articles about cryptocurrencies by given symbol.',
         parameters: {
           type: 'object',
           properties: {
-            title: {
+            symbol: {
               type: 'string',
-              description: 'Keyword to search for in the news titles.'
+              description: `The cryptocurrency symbol or coin name. Accepts either the symbol (e.g., BTCUSDT, etc) or the coin name (e.g., "Bitcoin", "Ripple", "Solana", "سولانا", "ریپل", etc) in any language. The name will be automatically mapped to its corresponding symbol.`
             },
             limit: {
               type: 'number',
@@ -750,17 +955,13 @@ export class BotAIService implements OnModuleInit {
       },
       {
         name: 'searchNewsByTitle',
-        description: 'Fetches the latest N news articles containing a specific keyword in the news title. if given title contains any token or coin name replace it by realted symbol (e.g., Ripple -> XRP, سولانا -> SOL, ریپل -> XRP, etc)',
+        description: 'Fetches N news articles containing a specific keyword in the news title. if given title contains any token or coin name replace it by realted symbol (e.g., Ripple -> XRP, سولانا -> SOL, ریپل -> XRP, etc)',
         parameters: {
           type: 'object',
           properties: {
             title: {
               type: 'string',
               description: 'Keyword to search for in the news titles.'
-            },
-            symbol: {
-              type: 'string',
-              description: `The cryptocurrency symbol or coin name. Accepts either the symbol (e.g., BTCUSDT, etc) or the coin name (e.g., "Bitcoin", "Ripple", "Solana", "سولانا", "ریپل", etc) in any language. The name will be automatically mapped to its corresponding symbol.`
             },
             limit: {
               type: 'number',
@@ -798,32 +999,15 @@ export class BotAIService implements OnModuleInit {
       },
 
     ];
-
-    //const systemMessage = this.generateSystemMessage();
-
-    const today = new Date().toLocaleDateString('en-US', {
-      month: 'long', day: 'numeric', year: 'numeric'
-    });
-
-    //   // Include the current date in the initial message
-    const datePrompt = `Today's date is ${today}.`;
+    const systemPrompt = this.constructSystemPrompt(this.currentUserAlias);
+    console.log('systemPrompt Base : ', systemPrompt);
+    console.log('userPrompt Base : ', prompt);
     try {
       const stream = await this.openai.chat.completions.create({
         messages: [
           {
             role: "system",
-            content:
-              "You are 'Nabzar,' a personal assistant for cryptocurrencies and blockchains. " +
-              "'Nabzar' is a Persian name made from the combination of 'Nabz' (pulse) and 'Bazar' (market), symbolizing the heartbeat of the market, نبضار. every time ask for your name return your name with meaning of it. " +
-              "As 'Nabzar,' you embody the characteristics of being kind, friendly, and approachable, ensuring users feel comfortable seeking your help. " +
-              "You are eager to help users, always providing clear and detailed answers in a way they can easily understand. " +
-              "You also encourage curiosity and learning by engaging with users in an interactive and supportive manner. " +
-              "If a user asks a question in Persian, you must answer in Persian, and if a user asks in English, you answer in English. " +
-              "If a user asks a question in Persian but with English characters (Finglish), you answer in Persian language. " +
-              "Your tone is always polite, engaging, and professional, but you remain approachable and relatable to users of all experience levels." +
-              "If the user asks questions like 'Do I buy Bitcoin or sell Bitcoin now' or other similar queries, you must analyze the requested symbol and generate trading signals using the analyzeAndCreateSignals function. " +
-              "You are committed to guiding users step-by-step, offering them insights, explanations, and knowledge about crypto and blockchain in a way that enhances their confidence and understanding." +
-              datePrompt
+            content: systemPrompt
           },
           //          { role: 'system', content: systemMessage },
           { role: "user", content: prompt }
@@ -836,8 +1020,31 @@ export class BotAIService implements OnModuleInit {
 
       // Check if ChatGPT suggested a function call
       if (message.function_call) {
-
+        //sending advertise msg 
         calledFunc = message.function_call.name;
+        const allowedFunctions = new Set(["getUserAlias", "setUserAlias", "getUserBalance"]);
+        if (!allowedFunctions.has(calledFunc)) {
+          const analysisMsg = await this.bot.sendMessage(
+            chatId,
+            `🚀 <b>در حال پردازش درخواست شما...</b>\n\n✨ از <a href="https://trade-ai.bot/">برترین پلتفرم ایران</a> برای خرید ربات‌های معامله‌گر و دستیاران حرفه‌ای تریدر استفاده کنید! 🌟`,
+            {
+              parse_mode: 'HTML',
+              reply_markup: {
+                inline_keyboard: [
+                  [
+                    {
+                      text: 'بازدید از اسپانسر',
+                      url: 'https://trade-ai.bot/',
+                    },
+                  ],
+                ],
+              },
+            }
+          );
+          advertingMsgId = analysisMsg.message_id;
+        }
+
+
         const parameters = JSON.parse(message.function_call.arguments || '{}');
 
         this.logger.log(`Parsed function call: ${calledFunc} with parameters: ${JSON.stringify(parameters)}`);
@@ -846,8 +1053,137 @@ export class BotAIService implements OnModuleInit {
 
         switch (calledFunc) {
 
+          case 'setUserAlias': {
+            const { alias, language } = parameters;
+
+            try {
+              // Sanitize the alias
+              const sanitizedAlias = sanitizeString(alias, 30);
+
+              // Use IamService to set the user's alias
+              await this.iamService.setUserAlias(this.currentTelegramId, sanitizedAlias);
+
+              // Prepare response
+              const functionResponse = language === 'fa'
+                ? `نام شما با موفقیت به "${sanitizedAlias}" تنظیم شد.`
+                : `Your name has been successfully set to "${sanitizedAlias}".`;
+
+              return {
+                responseText: functionResponse,
+                calledFunc,
+                queryType,
+                newParameters,
+                language,
+                advertingMsgId
+              };
+            } catch (error) {
+              this.logger.error('Error setting user alias:', error);
+              return {
+                responseText: language === 'fa'
+                  ? 'خطایی در تنظیم نام شما رخ داده است.'
+                  : 'An error occurred while setting your name.',
+                calledFunc,
+                queryType,
+                language,
+                advertingMsgId
+              };
+            }
+          }
+
+          case 'getUserAlias': {
+            const { language } = parameters;
+
+            try {
+              // Use IamService to retrieve user profile
+              console.log('this.userId : ', this.userId);
+              const userProfile = await this.iamService.getUser(this.userId);
+
+              if (!userProfile || !userProfile.alias) {
+                functionResponse = language === 'fa'
+                  ? 'شما هنوز نام مستعاری تنظیم نکرده‌اید.'
+                  : 'You have not set a preferred name yet.';
+              } else {
+                functionResponse = language === 'fa'
+                  ? `نام شما ${userProfile.alias} است.`
+                  : `Your name is ${userProfile.alias}.`;
+              }
+
+              return {
+                responseText: functionResponse,
+                calledFunc,
+                queryType,
+                newParameters,
+                language,
+                advertingMsgId
+              };
+            } catch (error) {
+              this.logger.error('Error retrieving user name:', error);
+              return {
+                responseText: language === 'fa'
+                  ? 'خطایی در بازیابی نام شما رخ داده است.'
+                  : 'An error occurred while retrieving your name.',
+                calledFunc,
+                queryType,
+                language,
+                advertingMsgId
+              };
+            }
+          }
+
+
+          case 'getUserBalance': {
+            const { language } = parameters;
+
+            try {
+              // Use BalanceService to retrieve user balance
+              console.log('this.userId : ', this.userId);
+              const balance = await this.balanceService.getUserBalance(this.userId, this.curId);
+
+              if (balance === null || balance === undefined) {
+                functionResponse = language === 'fa'
+                  ? 'موجودی شما یافت نشد.'
+                  : 'Your balance could not be retrieved.';
+              } else {
+                const numericBalance = typeof balance === 'number' ? balance : parseFloat(balance);
+
+                if (isNaN(numericBalance)) {
+                  functionResponse = language === 'fa'
+                    ? 'موجودی شما نامعتبر است.'
+                    : 'Your balance is invalid.';
+                } else {
+                  const formattedBalance = formatNumber(numericBalance, language);
+
+                  functionResponse = language === 'fa'
+                    ? `موجودی شما ${formattedBalance} تومان است.`
+                    : `Your balance is ${formattedBalance} Tomans.`;
+                }
+              }
+
+              return {
+                responseText: functionResponse,
+                calledFunc,
+                queryType,
+                newParameters,
+                language,
+                advertingMsgId
+              };
+            } catch (error) {
+              this.logger.error('Error retrieving user balance:', error);
+              return {
+                responseText: language === 'fa'
+                  ? 'خطایی در بازیابی موجودی شما رخ داده است.'
+                  : 'An error occurred while retrieving your balance.',
+                calledFunc,
+                queryType,
+                language,
+                advertingMsgId
+              };
+            }
+          }
+
+
           case 'getTopCryptosByCategoryAndSort': {
-            const { category, sort, limit = 10, language } = parameters;
+            const { category, sort = 'galaxy_score', limit = 10, language } = parameters;
             // Validate category
             if (!this.validCategories.includes(category)) {
               const errorMsg = `Invalid category: "${category}". Please choose from: ${this.validCategories.join(', ')}.`;
@@ -856,7 +1192,8 @@ export class BotAIService implements OnModuleInit {
                 calledFunc,
                 queryType,
                 newParameters,
-                languague: language,
+                language,
+                advertingMsgId
               };
             }
 
@@ -868,17 +1205,19 @@ export class BotAIService implements OnModuleInit {
                 calledFunc,
                 queryType,
                 newParameters,
-                languague: language,
+                language,
+                advertingMsgId
               };
             }
 
             const response = await this.getTopCoinsByCategoryAndAnySort(category, sort, limit, language);
             return {
-              responseText:  await this.getDynamicInterpretation(null, prompt, response, `Top Cryptocurrency in selected category ${category} sorted by ${sort}`, '', parameters.date, parameters.language),
+              responseText: await this.getDynamicInterpretation(null, prompt, response, `Top Cryptocurrency in selected category ${category} sorted by ${sort}`, '', parameters.date, parameters.language),
               calledFunc,
               queryType,
               newParameters,
-              languague: language,
+              language,
+              advertingMsgId
             };
           }
 
@@ -896,18 +1235,20 @@ export class BotAIService implements OnModuleInit {
                 calledFunc,
                 queryType,
                 newParameters,
-                languague: language,
+                language,
+                advertingMsgId
               };
             }
 
             // Now retrieve data from the repository
             const response = await this.getTopCryptosByAnySort(sort, limit, language);
             return {
-              responseText:  await this.getDynamicInterpretation(null, prompt, response, `Top Cryptocurrency sorted by ${sort}`, '', parameters.date, parameters.language),
+              responseText: await this.getDynamicInterpretation(null, prompt, response, `Top Cryptocurrency sorted by ${sort}`, '', parameters.date, parameters.language),
               calledFunc,
               queryType,
               newParameters,
-              languague: language,
+              language,
+              advertingMsgId
             };
           }
 
@@ -927,7 +1268,9 @@ export class BotAIService implements OnModuleInit {
               calledFunc,
               queryType,
               newParameters,
-              languague: language,
+
+              language,
+              advertingMsgId
             };
           }
           case 'getEMAForDate': {
@@ -941,7 +1284,8 @@ export class BotAIService implements OnModuleInit {
               calledFunc,
               queryType,
               newParameters,
-              languague: parameters.language,
+              language: parameters.language,
+              advertingMsgId
             };
           }
 
@@ -956,21 +1300,24 @@ export class BotAIService implements OnModuleInit {
               calledFunc,
               queryType,
               newParameters,
-              languague: language,
+
+              language,
+              advertingMsgId
             };
           }
 
-          // case 'getSMAForDate': {
-          //   const effectiveDate = parameters.date || new Date().toISOString().split('T')[0];
-          //   const timestamp = new Date(effectiveDate).getTime() / 1000;
-          //   const mappedSymbol = mapSymbol(parameters.symbol, 'pair');
-          //   const smaData = await this.dataRepository.getSMABySymbolAndDate(mappedSymbol, timestamp);
-          //   const his = await this.dataRepository.getLast7Days(mappedSymbol, 'SMA', timestamp);
-          //   return {
-          //     responseText: await this.getDynamicInterpretation(his, prompt, smaData, 'SMA', mappedSymbol, parameters.date, parameters.language),
-          //     queryType,
-          //     newParameters,
-          //     languague: parameters.language,
+            // case 'getSMAForDate': {
+            //   const effectiveDate = parameters.date || new Date().toISOString().split('T')[0];
+            //   const timestamp = new Date(effectiveDate).getTime() / 1000;
+            //   const mappedSymbol = mapSymbol(parameters.symbol, 'pair');
+            //   const smaData = await this.dataRepository.getSMABySymbolAndDate(mappedSymbol, timestamp);
+            //   const his = await this.dataRepository.getLast7Days(mappedSymbol, 'SMA', timestamp);
+            //   return {
+            //     responseText: await this.getDynamicInterpretation(his, prompt, smaData, 'SMA', mappedSymbol, parameters.date, parameters.language),
+            //     queryType,
+            //     newParameters,
+            //     language: parameters.language,
+            advertingMsgId
           //   };
           // }
 
@@ -987,7 +1334,9 @@ export class BotAIService implements OnModuleInit {
           //       calledFunc,
           //     queryType,
           //     newParameters,
-          //     languague: language,
+          //     
+          //    language,
+          //  advertingMsgId
           //   };
           // }
 
@@ -1002,22 +1351,25 @@ export class BotAIService implements OnModuleInit {
               calledFunc,
               queryType,
               newParameters,
-              languague: parameters.language,
+              language: parameters.language,
+              advertingMsgId
             };
           }
 
           case 'getTopNStochasticCryptos': {
-            const { n, date, language } = parameters;
+            const { n = 10, date, language } = parameters;
             const effectiveDate = date || new Date().toISOString().split('T')[0];
             const timestamp = new Date(effectiveDate).getTime() / 1000;
             const topStochasticCryptos = await this.dataRepository.getTopNByIndicator('Stochastic', n, timestamp);
 
             return {
-              responseText: await this.getDynamicInterpretation(null, prompt, topStochasticCryptos, `Top Cryptocurrency by EMA andicator`, '', parameters.date, parameters.language),
-                calledFunc,
+              responseText: await this.getDynamicInterpretation(null, prompt, topStochasticCryptos, `Top Cryptocurrency by Stochastic andicator`, '', parameters.date, parameters.language),
+              calledFunc,
               queryType,
               newParameters,
-              languague: language,
+
+              language,
+              advertingMsgId
             };
           }
 
@@ -1032,22 +1384,25 @@ export class BotAIService implements OnModuleInit {
               calledFunc,
               queryType,
               newParameters,
-              languague: parameters.language,
+              language: parameters.language,
+              advertingMsgId
             };
           }
 
           case 'getTopNCCICryptos': {
-            const { n, date, language } = parameters;
+            const { n = 10, date, language } = parameters;
             const effectiveDate = date || new Date().toISOString().split('T')[0];
             const timestamp = new Date(effectiveDate).getTime() / 1000;
             const topCCICryptos = await this.dataRepository.getTopNByIndicator('CCI', n, timestamp);
 
             return {
               responseText: await this.getDynamicInterpretation(null, prompt, topCCICryptos, `Top Cryptocurrency by CCI andicator`, '', parameters.date, parameters.language),
-                calledFunc,
+              calledFunc,
               queryType,
               newParameters,
-              languague: language,
+
+              language,
+              advertingMsgId
             };
           }
 
@@ -1062,7 +1417,8 @@ export class BotAIService implements OnModuleInit {
               calledFunc,
               queryType,
               newParameters,
-              languague: parameters.language,
+              language: parameters.language,
+              advertingMsgId
             };
           }
 
@@ -1111,23 +1467,26 @@ export class BotAIService implements OnModuleInit {
               calledFunc,
               queryType,
               newParameters,
-              languague: parameters.language,
+              language: parameters.language,
+              advertingMsgId
             };
           }
 
 
           case 'getTopNADXCryptos': {
-            const { n, date, language } = parameters;
+            const { n = 10, date, language } = parameters;
             const effectiveDate = date || new Date().toISOString().split('T')[0];
             const timestamp = new Date(effectiveDate).getTime() / 1000;
             const topADXCryptos = await this.dataRepository.getTopNByIndicator('ADX', n, timestamp);
 
             return {
               responseText: await this.getDynamicInterpretation(null, prompt, topADXCryptos, `Top Cryptocurrency by ADX andicator`, '', parameters.date, parameters.language),
-                calledFunc,
+              calledFunc,
               queryType,
               newParameters,
-              languague: language,
+
+              language,
+              advertingMsgId
             };
           }
 
@@ -1159,7 +1518,8 @@ export class BotAIService implements OnModuleInit {
               calledFunc,
               queryType,
               newParameters,
-              languague: parameters.language,
+              language: parameters.language,
+              advertingMsgId
             };
           }
 
@@ -1174,7 +1534,8 @@ export class BotAIService implements OnModuleInit {
               calledFunc,
               queryType,
               newParameters,
-              languague: parameters.language,
+              language: parameters.language,
+              advertingMsgId
             };
 
           case 'getFngForDate':
@@ -1188,7 +1549,8 @@ export class BotAIService implements OnModuleInit {
                 calledFunc,
                 queryType,
                 newParameters,
-                languague: parameters.language,
+                language: parameters.language,
+                advertingMsgId
               };
             }
           case 'getCryptoPrice': {
@@ -1202,7 +1564,8 @@ export class BotAIService implements OnModuleInit {
               calledFunc,
               queryType,
               newParameters,
-              languague: parameters.language,
+              language: parameters.language,
+              advertingMsgId
             };
           }
 
@@ -1215,7 +1578,8 @@ export class BotAIService implements OnModuleInit {
               calledFunc,
               queryType,
               newParameters,
-              languague: parameters.language,
+              language: parameters.language,
+              advertingMsgId
             };
           }
 
@@ -1229,7 +1593,8 @@ export class BotAIService implements OnModuleInit {
               calledFunc,
               queryType,
               newParameters,
-              languague: parameters.language,
+              language: parameters.language,
+              advertingMsgId
             };
           }
 
@@ -1243,7 +1608,8 @@ export class BotAIService implements OnModuleInit {
               calledFunc,
               queryType,
               newParameters,
-              languague: parameters.language,
+              language: parameters.language,
+              advertingMsgId
             };
           }
 
@@ -1257,7 +1623,8 @@ export class BotAIService implements OnModuleInit {
               calledFunc,
               queryType,
               newParameters,
-              languague: parameters.language,
+              language: parameters.language,
+              advertingMsgId
             };
           }
 
@@ -1272,7 +1639,8 @@ export class BotAIService implements OnModuleInit {
               calledFunc,
               queryType,
               newParameters,
-              languague: parameters.language,
+              language: parameters.language,
+              advertingMsgId
             };
           }
 
@@ -1286,7 +1654,8 @@ export class BotAIService implements OnModuleInit {
               calledFunc,
               queryType,
               newParameters,
-              languague: parameters.language,
+              language: parameters.language,
+              advertingMsgId
             };
           }
 
@@ -1297,7 +1666,8 @@ export class BotAIService implements OnModuleInit {
               calledFunc,
               queryType,
               newParameters,
-              languague: parameters.language,
+              language: parameters.language,
+              advertingMsgId
             };
 
           case 'getSortForSymbol': {
@@ -1311,7 +1681,8 @@ export class BotAIService implements OnModuleInit {
                 calledFunc,
                 queryType,
                 newParameters,
-                languague: parameters.language,
+                language: parameters.language,
+                advertingMsgId
               };
             }
 
@@ -1326,7 +1697,8 @@ export class BotAIService implements OnModuleInit {
                 calledFunc,
                 queryType,
                 newParameters,
-                languague: parameters.language,
+                language: parameters.language,
+                advertingMsgId
               };
             }
 
@@ -1336,7 +1708,8 @@ export class BotAIService implements OnModuleInit {
               calledFunc,
               queryType,
               newParameters,
-              languague: parameters.language,
+              language: parameters.language,
+              advertingMsgId
             };
           }
 
@@ -1351,7 +1724,9 @@ export class BotAIService implements OnModuleInit {
                 calledFunc,
                 queryType,
                 newParameters,
-                languague: language,
+
+                language,
+                advertingMsgId
               };
             }
 
@@ -1368,7 +1743,9 @@ export class BotAIService implements OnModuleInit {
                 calledFunc,
                 queryType,
                 newParameters,
-                languague: language,
+
+                language,
+                advertingMsgId
               };
             }
 
@@ -1377,7 +1754,8 @@ export class BotAIService implements OnModuleInit {
               calledFunc,
               queryType,
               newParameters,
-              languague: parameters.language,
+              language: parameters.language,
+              advertingMsgId
             };
           }
 
@@ -1387,41 +1765,64 @@ export class BotAIService implements OnModuleInit {
             const { limit = 10, language, title } = parameters; // Include language
             const news = await this.dataRepository.getLatestNews(limit, title);
             return {
-              responseText: await this.formatNewsResponse(news, language),
+              responseArray: await this.formatNewsResponse(news, language),
               calledFunc,
               queryType,
               newParameters,
-              languague: parameters.language,
+              language: parameters.language,
+              advertingMsgId
             };
           }
 
           case 'getTopNewsByInteractionsAndTitle': {
             const { limit = 10, language, title } = parameters; // Include language
-            const news = await this.dataRepository.getTopNewsByInteractions(limit, title);
+            let news;
+            news = await this.dataRepository.getTopNewsByInteractions(limit, title);
             return {
-              responseText: await this.formatNewsResponse(news, language),
+              responseArray: await this.formatNewsResponse(news, language),
               calledFunc,
               queryType,
               newParameters,
-              languague: parameters.language,
+              language: parameters.language,
+              advertingMsgId
+            };
+          }
+
+          case 'getLatestNewsBySymbol': {
+            const { limit = 10, language } = parameters; // Include language
+            let news;
+            const mappedSymbol = mapSymbol(parameters.symbol, 'plain');
+            console.log("symbol : ", mappedSymbol);
+            if (mappedSymbol) {
+              console.log("symbol : ", mappedSymbol);
+              news = await this.dataRepository.getLatestNews(limit, mappedSymbol);
+
+            } else {
+              console.log("title : ", parameters.symbol);
+              news = await this.dataRepository.getLatestNews(limit, parameters.symbol);
+            }
+            return {
+              responseArray: await this.formatNewsResponse(news, language),
+              calledFunc,
+              queryType,
+              newParameters,
+              language: parameters.language,
+              advertingMsgId
             };
           }
 
           case 'searchNewsByTitle': {
             const { title, limit = 10, language } = parameters; // Include language
             let news;
-            const mappedSymbol = mapSymbol(parameters.symbol, 'plain');
-            console.log("symbole : ", mappedSymbol);
-            if (mappedSymbol)
-              news = await this.dataRepository.searchNewsByTitle(mappedSymbol, limit);
-            else
+            if (title)
               news = await this.dataRepository.searchNewsByTitle(title, limit);
             return {
-              responseText: await this.formatNewsResponse(news, language),
+              responseArray: await this.formatNewsResponse(news, language),
               calledFunc,
               queryType,
               newParameters,
-              languague: parameters.language,
+              language: parameters.language,
+              advertingMsgId
             };
           }
 
@@ -1430,11 +1831,12 @@ export class BotAIService implements OnModuleInit {
             const { n = 10, language, title } = parameters;
             const response = await this.getHighSentimentNews(n, language, title);
             return {
-              responseText: response,
+              responseArray: await this.formatNewsResponse(response, language),
               calledFunc,
               queryType,
               newParameters,
-              languague: parameters.language,
+              language: parameters.language,
+              advertingMsgId
             };
           }
 
@@ -1442,8 +1844,10 @@ export class BotAIService implements OnModuleInit {
           default:
             {
               queryType = 'out-of-scope';
-              return { responseText: 'Requested function is not available.',
-                calledFunc, queryType, languague: "en" };
+              return {
+                responseText: 'Requested function is not available.',
+                calledFunc, queryType, language: "en", advertingMsgId
+              };
             }
         }
       }
@@ -1452,19 +1856,25 @@ export class BotAIService implements OnModuleInit {
 
         if (responseMessage) {
           this.logger.log(`Response from ChatGPT: ${responseMessage}`);
-          return { responseText: responseMessage || 'Invalid response from ChatGPT.',
-            calledFunc, queryType, languague: "en" };
+          return {
+            responseText: responseMessage || 'Invalid response from ChatGPT.',
+            calledFunc, queryType, language: "en", advertingMsgId
+          };
 
         } else {
           this.logger.error('Received an empty response from ChatGPT', { stream });
-          return { responseText: 'Sorry, I didn’t receive a valid response from ChatGPT. Please try again.',
-            calledFunc, queryType, languague: "en" };
+          return {
+            responseText: 'Sorry, I didn’t receive a valid response from ChatGPT. Please try again.',
+            calledFunc, queryType, language: "en", advertingMsgId
+          };
         }
       }
     } catch (error) {
       console.error('Error fetching response from ChatGPT:', error);
-      return { responseText: 'There is Update going on AI Core, please try again later. ',
-        calledFunc, queryType, languague: "en" };
+      return {
+        responseText: 'There is Update going on AI Core, please try again later. ',
+        calledFunc, queryType, language: "en", advertingMsgId
+      };
 
     }
   }
@@ -1519,7 +1929,7 @@ export class BotAIService implements OnModuleInit {
     const effectiveDate = new Date().toISOString().split('T')[0];
     const timestamp1 = new Date(effectiveDate).getTime() / 1000;
 
-    console.log("Analyze symbol : ", sym);
+    //console.log("Analyze symbol : ", sym);
 
     // Start timing for FNG data retrieval
     const fngStart = Date.now();
@@ -1575,6 +1985,33 @@ export class BotAIService implements OnModuleInit {
     const historicalDataEnd = Date.now();
     this.logDuration(historicalDataStart, historicalDataEnd, 'Fetching historical data');
 
+    // Fetch last 10 news articles for the symbol
+    const newsStart = Date.now();
+    const news = await this.dataRepository.getLatestNews(5, symbol); // Assuming this method exists
+    const newsEnd = Date.now();
+    this.logDuration(newsStart, newsEnd, 'Fetching news data');
+
+
+    // Format news data
+    const formattedNews = await Promise.all(
+      news.map(async (item) => {
+        // Translate the title if the language is not English
+        let title;
+        if (language === 'en') {
+          title = item.post_title;
+        } else {
+          title = await this.getTranslatedText(item.id, item.post_title, language);
+        }
+        return `
+  📰 *News Title*: ${title}
+  - *Sentiment*: ${item.post_sentiment}
+  - *Interactions*: ${item.post_interactions || 'N/A'}
+  - *Link*: [Read more](${item.post_link})
+      `;
+      })
+    );
+
+    const formattedNewsString = formattedNews.join('\n\n');
 
     function formatHistoricalData(historicalData: any[], indicator: string): string {
       if (!historicalData || historicalData.length === 0) {
@@ -1671,9 +2108,13 @@ ${formattedEMAHistory}
     )}
   - ${analyzeSorts("Sentiment", sorts.sentiment)}
 
+  ### **Latest News**
+  Here are the latest 5 news articles for ${symbol}:
+  ${formattedNewsString}
+
    ### **Analysis Instructions**
   Based on the above data and user prompt : ${userPrompt} analyze the market conditions for 
-  ${symbol}, Please format given data in friendly version and provide a detailed explanation on price along
+  ${symbol} with News Analysis, Please format given data in friendly version and provide a detailed explanation on price along
    price change in last 7 days and Provide a detailed explanation foreach indicators along analyzing current indicators 
    values with historical data and also add details for each sort parameter along analyzing sorts parameters values 
   and their changes and generate a trading action section for ("Buy", "Sell", "Hold", or "Strong Buy/Sell")
@@ -1855,7 +2296,7 @@ ${formattedEMAHistory}
     // Updated prompt to include historical data
     const additionalPrompt = `
   The user asked the following: "${prompt}".
-  Provide a detailed interpretation of the following topic -> ${topic}, data for symbol(s) -> ${symbol} on date -> ${date}, data ->
+  Provide a detailed interpretation of the following topic -> ${topic}, data for symbol(s) -> ${symbol} ${date ? `on date -> ${date}` : ''} , data ->
   ${JSON.stringify(data)}.
   Please include an explanation of user promt and details in what this ${topic} data and show time with data and use the historical trends -> ${historicalDataString}, imply in terms of market conditions and trading strategy.
   Answer in ${language}.
@@ -2165,31 +2606,139 @@ ${formattedEMAHistory}
   private async formatNewsResponse(
     news: any[],
     language: string,
-  ): Promise<string> {
-    if (!news || news.length === 0) return 'No news found.';
+  ): Promise<string[]> {
+    if (!news || news.length === 0) return ['No news found.'];
 
-    const formattedNews = await Promise.all(
-      news.map(async (item, index) => {
-        const source = item.id.split('-')[0];
-        const sentimentIcon = this.getSentimentIcon(item.post_sentiment);
-        const sentimentTitle = this.getSentimentTitle(item.post_sentiment);
+    // Format each news item and return an array of formatted strings
+    return Promise.all(
+      news.map(async (item) => {
 
+        const getTimeAgo = (timestamp: number): string => {
+          const now = Date.now();
+          const secondsAgo = Math.floor((now - timestamp * 1000) / 1000);
+
+          if (secondsAgo < 60) {
+            return `${secondsAgo}s ago`;
+          } else if (secondsAgo < 3600) {
+            return `${Math.floor(secondsAgo / 60)}m ago`;
+          } else if (secondsAgo < 86400) {
+            return `${Math.floor(secondsAgo / 3600)}h ago`;
+          } else {
+            return `${Math.floor(secondsAgo / 86400)}d ago`;
+          }
+        };
+        // Determine sentiment icon based on sentiment value
+        const sentiment = item.post_sentiment;
+        let sentimentIcon = '⚪ Neutral';
+        if (sentiment < 2.5) {
+          sentimentIcon = '🔴 Negative';
+        } else if (sentiment >= 2.5 && sentiment <= 3.4) {
+          sentimentIcon = '⚪ Neutral';
+        } else if (sentiment > 3.4) {
+          sentimentIcon = '🟢 Positive';
+        }
+
+        // Translate the title if the language is not English
         const translatedTitle = language === 'en'
           ? item.post_title
           : await this.getTranslatedText(item.id, item.post_title, language);
 
+        // Calculate time ago
+        const timeAgo = getTimeAgo(item.post_created);
+
+        // Format the news item
         return `
-    ${index + 1}. ${translatedTitle} ${sentimentIcon} (${sentimentTitle}, ${item.post_sentiment})
-    🔗 (${item.post_link})
-    📰 Source: ${source}`;
+  📰 *New Crypto News*:
+  *Title:* ${translatedTitle}
+  *Source:* ${item.creator_name || 'Unknown'}
+  *Time:* ${timeAgo}
+  *Sentiment:* ${sentimentIcon}
+  *Link:* [Read more](${item.post_link})
+        `;
       }),
     );
-
-    return `📢 Latest Crypto News\n${formattedNews.join('\n')}`;
   }
 
+  private async formatSingleNews(
+    newsItem: any,
+    language: string,
+  ): Promise<string> {
+    if (!newsItem) return 'No news item provided.';
 
-  async getHighSentimentNews(n = 5, language: string, title: string): Promise<string> {
+    // Helper function to calculate time ago
+    const getTimeAgo = (timestamp: number): string => {
+      const now = Date.now();
+      const secondsAgo = Math.floor((now - timestamp * 1000) / 1000);
+
+      if (secondsAgo < 60) {
+        return `${secondsAgo}s ago`;
+      } else if (secondsAgo < 3600) {
+        return `${Math.floor(secondsAgo / 60)}m ago`;
+      } else if (secondsAgo < 86400) {
+        return `${Math.floor(secondsAgo / 3600)}h ago`;
+      } else {
+        return `${Math.floor(secondsAgo / 86400)}d ago`;
+      }
+    };
+
+    // Determine sentiment icon based on sentiment value
+    const sentiment = newsItem.post_sentiment;
+    let sentimentIcon = '⚪ Neutral';
+    if (sentiment < 2.5) {
+      sentimentIcon = '🔴 Negative';
+    } else if (sentiment >= 2.5 && sentiment <= 3.4) {
+      sentimentIcon = '⚪ Neutral';
+    } else if (sentiment > 3.4) {
+      sentimentIcon = '🟢 Positive';
+    }
+
+    // Translate the title if the language is not English
+    const translatedTitle = language === 'en'
+      ? newsItem.post_title
+      : await this.getTranslatedText(newsItem.id, newsItem.post_title, language);
+
+    // Calculate time ago
+    const timeAgo = getTimeAgo(newsItem.post_created);
+
+    // Format the news item
+    return `
+📰 *New Crypto News*:
+*Title:* ${translatedTitle}
+*Source:* ${newsItem.creator_name || 'Unknown'}
+*Time:* ${timeAgo}
+*Sentiment:* ${sentimentIcon}
+*Link:* [Read more](${newsItem.post_link})
+  `;
+  }
+
+  // private async formatNewsResponse(
+  //   news: any[],
+  //   language: string,
+  // ): Promise<string> {
+  //   if (!news || news.length === 0) return 'No news found.';
+
+  //   const formattedNews = await Promise.all(
+  //     news.map(async (item, index) => {
+  //       const source = item.id.split('-')[0];
+  //       const sentimentIcon = this.getSentimentIcon(item.post_sentiment);
+  //       const sentimentTitle = this.getSentimentTitle(item.post_sentiment);
+
+  //       const translatedTitle = language === 'en'
+  //         ? item.post_title
+  //         : await this.getTranslatedText(item.id, item.post_title, language);
+
+  //       return `
+  //   ${index + 1}. ${translatedTitle} ${sentimentIcon} (${sentimentTitle}, ${item.post_sentiment})
+  //   🔗 (${item.post_link})
+  //   📰 Source: ${source}`;
+  //     }),
+  //   );
+
+  //   return `📢 Latest Crypto News\n${formattedNews.join('\n')}`;
+  // }
+
+
+  async getHighSentimentNews(n = 5, language: string, title: string): Promise<any> {
     const results = await this.dataRepository.getNewsWithHighSentiment(n, title);
 
     if (!results || results.length === 0) {
@@ -2202,7 +2751,15 @@ ${formattedEMAHistory}
   }
 
 
-
+  private async getUserChatHistory(telegramId: string, limit: number = 3): Promise<UserChatLogDto[]> {
+    try {
+      const chatLogs = await this.dataRepository.getChatHistory(telegramId, limit);
+      return chatLogs;
+    } catch (error) {
+      this.logger.error('Failed to retrieve user chat history:', error);
+      return [];
+    }
+  }
 
   async onModuleInit() {
     const me = await this.bot.getMe();
@@ -2214,7 +2771,7 @@ ${formattedEMAHistory}
       const text = msg.text?.toLowerCase();
 
       // Extract user info from the Telegram message
-      console.log('start');
+      //console.log('start');
       const telegramID = msg.from?.id?.toString();
       const telegramUserName = msg.from?.username || 'Unknown';
       const telegramFirstName = msg.from?.first_name || '';
@@ -2239,12 +2796,15 @@ ${formattedEMAHistory}
         telegramFirstName,
         telegramLastName,
         telegramLanCode,
-        clientSecret: process.env.NEXT_PUBLIC_APP_SECRET, // Add this to .env if not already present
+        clientSecret: process.env.NEXT_PUBLIC_APP_SECRET,
+        alias: ''
+        // Add this to .env if not already present
       };
 
       try {
-        const { token, isNewToken, userId } = await this.iamService.registerOrLogin(userInsertDto);
+        const { token, isNewToken, userId, alias } = await this.iamService.registerOrLogin(userInsertDto);
         this.userId = new Types.ObjectId(userId);
+        this.currentUserAlias = alias;
         // this.logger.log(
         //   `User ${isNewToken ? 'registered' : 'logged in'} successfully with userId: ${userId}. Token: ${token}`
         // );        
@@ -2257,10 +2817,10 @@ ${formattedEMAHistory}
             await this.balanceService.addTransaction({
               userId: this.userId,
               transactionType: 'achievementsreward',
-              amount: 2000,
+              amount: 50000,
               currency: this.curId,
               transactionEntityId: "6741f536d877c06a82d7e751", //unique ID for trial - just add once
-              balanceAfterTransaction: this.userBalance + 2000,
+              balanceAfterTransaction: this.userBalance + 50000,
               timestamp: Math.floor(Date.now() / 1000),
               _id: new Types.ObjectId()
             });
@@ -2275,8 +2835,8 @@ ${formattedEMAHistory}
             this.logger.warn('trial added once', err.message);
           }
         }
-        var userCh = await this.iamService.getUser(userId);
-        console.log('userCh.mobile', userCh.mobile);
+        var userCh = await this.iamService.getUser(this.userId);
+        //console.log('userCh.mobile', userCh.mobile);
         if (!userCh.mobile) {
           // Ask the user to share their contact
           await this.bot.sendMessage(chatId, 'Please share your contact to use the bot:', {
@@ -2301,67 +2861,106 @@ ${formattedEMAHistory}
         return;
       }
 
-      // Handle help command
-      if (msg.text === '/help') {
-        const inlineKeyboard = this.prompts.map((prompt, index) => [{
-          text: prompt.length > 150
-            ? `${prompt.slice(0, 147)}...`
-            : prompt,
-          callback_data: `prompt_${index}`
-        }]);
 
-        await this.bot.sendMessage(chatId, 'لطفاً یکی از سوالات زیر را انتخاب کنید:', {
-          reply_markup: {
-            inline_keyboard: inlineKeyboard
-          }
-        });
+      // Handle /help command
+      if (msg.text === '/help') {
+        // Create inline keyboard for categories
+        // const inlineKeyboard = Object.keys(this.categories).map((category) => [
+        //   {
+        //     text: category,
+        //     callback_data: `category_${category}`,
+        //   },
+        // ]);
+
+        // await this.bot.sendMessage(chatId, 'لطفاً یک دسته‌بندی را انتخاب کنید:', {
+        //   reply_markup: {
+        //     inline_keyboard: inlineKeyboard,
+        //   },
+        // });
+        await this.sendMenu(chatId);
         return;
       }
 
+
       // General message handling
       if (msg.text) {
-        this.logger.log('Received text message:', msg.text);
+        //this.logger.log('Received text message:', msg.text);
         //check balance 
         // Get the last ask for this user (if any)
-        const lastAsk = this.userLastAsk[chatId] || null;
-
-        // Update the last ask to the current one for the next iteration
-        this.userLastAsk[chatId] = text;
-
 
         console.log("userBalance", this.userBalance);
-        // Check user balance
-        if (this.userBalance < 100) {
-          await this.bot.sendMessage(chatId, 'Insufficient balance for this request. Please recharge to continue.');
+        if (this.userBalance < 5000) {
+          await this.bot.sendMessage(chatId, 'اعتبار شما رو به پایان است٫ لطفا اعتبار خود را شارژ کنید.');
         }
 
-        if (this.userBalance < 20)
+        if (this.userBalance < 1000)
+        {
           return;
+        }
+
+        // Retrieve chat history
+        const chatHistory = await this.getUserChatHistory(telegramID, 3); // Retrieve last 5 messages
+
+        const formattedChatHistory = chatHistory.map(log => {
+          // Truncate query and response if necessary
+          const truncatedQuery = truncateText(log.query, 100);
+          let truncatedResponse = '';
+          if (log.response)
+            truncatedResponse = truncateText(log.response, 100);
+
+          return `ask: ${truncatedQuery} -> response: ${truncatedResponse}`;
+        }).join('\n');
 
         // Create a prompt with only the last and current asks
         const prompt = `
-    The user asked this previously: "${lastAsk || 'None'}".
+    The user asked this previously: "${formattedChatHistory || 'None'}".
+    'Note: The chat history may has been truncated for brevity.'
     The user is now asking: "${text}".
     Based on this, please infer the user's intent and provide a 
     relevant response in detected user's language.
   `;
 
-        let responseText = await this.getChatGptResponse(prompt);
+        let last;
+        if (this.currentUserAlias) {
+          last = `${prompt} 
+  The user alias is "${this.currentUserAlias}" please always call them by their alias .
+  `;
+        }
+        else { last = `${prompt}`; }
 
-        // Calculate token counts for prompt and response
-        const inputTokens = Math.ceil(prompt.length / 4); // Approx 4 chars per token
-        const outputTokens = Math.ceil(responseText.responseText.length / 4);
+        let responseText = await this.getChatGptResponse(last, chatId);
+        let totalCostInIRT;
+        if (responseText.responseText) {
+          // Calculate token counts for prompt and response
+          const inputTokens = Math.ceil(prompt.length / 4); // Approx 4 chars per token
+          const outputTokens = Math.ceil(responseText.responseText.length / 4);
 
-        // Calculate costs in USD
-        const inputCost = (inputTokens / 1_000_000) * 0.15; // $0.15 per 1M tokens
-        const outputCost = (outputTokens / 1_000_000) * 0.60; // $0.60 per 1M tokens
+          // Calculate costs in USD
+          const inputCost = (inputTokens / 1_000_000) * 0.15; // $0.15 per 1M tokens
+          const outputCost = (outputTokens / 1_000_000) * 0.60; // $0.60 per 1M tokens
 
-        const totalCost = inputCost + outputCost; // Total cost in USD
+          const totalCost = inputCost + outputCost; // Total cost in USD
 
-        // Convert to IRT
-        const conversionRateToIRT = 2_000_000; // Example conversion rate
-        const totalCostInIRT = Math.ceil(totalCost * conversionRateToIRT);
+          // Convert to IRT
+          const conversionRateToIRT = 2_000_000; // Example conversion rate
+          totalCostInIRT = Math.ceil(totalCost * conversionRateToIRT);
+        } else {
+          responseText.responseArray.forEach(element => {
+            // Calculate token counts for prompt and response
+            const inputTokens = Math.ceil(prompt.length / 4); // Approx 4 chars per token
+            const outputTokens = Math.ceil(element.length / 4);
 
+            // Calculate costs in USD
+            const inputCost = (inputTokens / 1_000_000) * 0.15; // $0.15 per 1M tokens
+            const outputCost = (outputTokens / 1_000_000) * 0.60; // $0.60 per 1M tokens
+
+            const totalCost = inputCost + outputCost; // Total cost in USD
+
+            // Convert to IRT
+            const conversionRateToIRT = 2_000_000; // Example conversion rate
+            totalCostInIRT = Math.ceil(totalCost * conversionRateToIRT);
+          });
+        }
         // Check user balance
         if (this.userBalance < totalCostInIRT) {
           await this.bot.sendMessage(chatId, 'Insufficient balance for this request. Please recharge to continue.');
@@ -2388,7 +2987,7 @@ ${formattedEMAHistory}
           telegramId: this.currentTelegramId,
           calledFunction: responseText.calledFunc,
           query: text,
-          response: responseText.responseText,
+          response: Array.isArray(responseText.responseArray) ? responseText.responseArray.join(' ') : responseText.responseText,
           queryType: responseText.queryType,
           newParameters: responseText.newParameters || [],
           save_at: Math.floor(Date.now() / 1000),
@@ -2402,24 +3001,62 @@ ${formattedEMAHistory}
         }
 
 
-        this.bot.sendMessage(chatId, responseText.responseText)
-          .catch((err) => {
-            if (err.code === 'ETELEGRAM' && err.message.includes('message is too long')) {
-              this.logger.error('Message too long, splitting and sending in parts.');
+        if (responseText.advertingMsgId != '')
+          await this.bot.deleteMessage(chatId, responseText.advertingMsgId.toString());
 
-              const maxLength = 1000; // Telegram's max message length
-              const messageParts = splitTelegramMessage(responseText.responseText, maxLength);
+        const newsFunctions = new Set(['getHighSentimentNewsByTitle', 'searchNewsByTitle'
+          , 'getLatestNewsBySymbol', 'getTopNewsByInteractionsAndTitle', 'getLatestNewsByTitle']);
+        if (newsFunctions.has(responseText.calledFunc)) {
+          if (Array.isArray(responseText.responseArray)) {
+            // Iterate through each news item
+            responseText.responseArray.forEach((newsItem) => {
+              this.bot.sendMessage(chatId, newsItem)
+                .catch((err) => {
+                  if (err.code === 'ETELEGRAM' && err.message.includes('message is too long')) {
+                    this.logger.error('Message too long, splitting and sending in parts.');
 
-              // Send each part sequentially
-              messageParts.reduce((promise, part) => {
-                return promise.then(() => this.bot.sendMessage(chatId, part));
-              }, Promise.resolve()).catch((err) => {
-                this.logger.error('Failed to send split messages', err);
-              });
-            } else {
-              this.logger.error('Failed to send message', err);
-            }
-          });
+                    const maxLength = 1000; // Telegram's max message length
+                    const messageParts = splitTelegramMessage(newsItem, maxLength);
+
+                    // Send each part sequentially
+                    messageParts.reduce((promise, part) => {
+                      return promise.then(() => this.bot.sendMessage(chatId, part));
+                    }, Promise.resolve()).catch((err) => {
+                      this.logger.error('Failed to send split messages', err);
+                    });
+                  } else {
+                    this.logger.error('Failed to send message', err);
+                  }
+                });
+            });
+          } else {
+            this.logger.error('responseText.responseText is not an array of news items.');
+          }
+
+        }
+        else {
+
+          this.bot.sendMessage(chatId, responseText.responseText)
+            .catch((err) => {
+              if (err.code === 'ETELEGRAM' && err.message.includes('message is too long')) {
+                this.logger.error('Message too long, splitting and sending in parts.');
+
+                const maxLength = 1000; // Telegram's max message length
+                const messageParts = splitTelegramMessage(responseText.responseText, maxLength);
+
+                // Send each part sequentially
+                messageParts.reduce((promise, part) => {
+                  return promise.then(() => this.bot.sendMessage(chatId, part));
+                }, Promise.resolve()).catch((err) => {
+                  this.logger.error('Failed to send split messages', err);
+                });
+              } else {
+                this.logger.error('Failed to send message', err);
+              }
+            });
+
+        }
+
 
         // this.bot.sendMessage(chatId, responseText.responseText)
         //   .catch((err) => {
@@ -2445,25 +3082,348 @@ ${formattedEMAHistory}
       }
     });
 
-    // Callback query handler
     this.bot.on('callback_query', async (callbackQuery) => {
-      const chatId = callbackQuery.message.chat.id;
+      const msg = callbackQuery.message;
       const data = callbackQuery.data;
+      const from = callbackQuery.from;
+      const chatId = msg.chat.id;
+      if (!this.currentTelegramId) {
+        this.currentTelegramId = from.id?.toString();
+        const telegramUserName = from.username || 'Unknown';
+        const telegramFirstName = from.first_name || '';
+        const telegramLastName = from.last_name || '';
+        const telegramLanCode = from.language_code || 'en';
 
-      if (data.startsWith('prompt_')) {
-        const promptIndex = parseInt(data.split('_')[1], 10);
-        const selectedPrompt = this.prompts[promptIndex];
+       
+       
+        // Register or login the user
+        const userInsertDto = {
+          telegramID: this.currentTelegramId,
+          mobile: msg.contact ? msg.contact.phone_number : '',
+          chatId: chatId,
+          telegramUserName,
+          telegramFirstName,
+          telegramLastName,
+          telegramLanCode,
+          clientSecret: process.env.NEXT_PUBLIC_APP_SECRET,
+          alias: ''
+          // Add this to .env if not already present
+        };
 
-        await this.bot.sendMessage(chatId, `پرسش انتخابی شما: ${selectedPrompt}`);
+        try {
+          const { token, isNewToken, userId, alias } = await this.iamService.registerOrLogin(userInsertDto);
+          this.userId = new Types.ObjectId(userId);
+          console.log("userId : -----", this.userId);
+          this.currentUserAlias = alias;
+          // this.logger.log(
+          //   `User ${isNewToken ? 'registered' : 'logged in'} successfully with userId: ${userId}. Token: ${token}`
+          // );        
 
-        const chatGptResponse = await this.getChatGptResponse(selectedPrompt);
-        this.bot.sendMessage(chatId, chatGptResponse.responseText).catch((err) => {
-          this.logger.error('Failed to send message', err);
+          this.curId = (await this.balanceService.getCurrencyByName('Toman'))._id;
+          console.log("this.curId-----", this.curId);
+          this.userBalance = await this.balanceService.getUserBalance(this.userId, this.curId);
+          console.log("userBalance-----", this.userBalance);
+          // Check user balance
+          if (this.userBalance < 5000) {
+            await this.bot.sendMessage(chatId, 'اعتبار شما رو به پایان است٫ لطفا اعتبار خود را شارژ کنید.');
+          }
+  
+          if (this.userBalance < 1000)
+          {
+            return;
+          }
+
+        } catch (error) {
+          this.logger.error('Error during user registration/login:', error.message);
+          return;
+        }
+
+      }
+      console.log("current telegram Id", this.currentTelegramId);
+      console.log("current user Id", this.userId);
+      // Extract user info from the Telegram message
+      //console.log('start');
+      //
+
+      // Handle category selection
+      if (data.startsWith('category_')) {
+        const selectedCategory = data.split('_')[1];
+        const prompts = this.categories[selectedCategory];
+
+        // Create inline keyboard for prompts in the selected category
+        const promptKeyboard = prompts.map((prompt, index) => [
+          {
+            text: prompt.length > 150 ? `${prompt.slice(0, 147)}...` : prompt,
+            callback_data: `prompt_${index}_${selectedCategory}`,
+          },
+        ]);
+
+        // Add "برگشت به طبقه بندی ها" button at the bottom
+        promptKeyboard.push([
+          {
+            text: 'برگشت به طبقه بندی ها',
+            callback_data: 'back_to_categories',
+          },
+        ]);
+
+        await this.bot.sendMessage(chatId, `دسته‌بندی: ${selectedCategory}`, {
+          reply_markup: {
+            inline_keyboard: promptKeyboard,
+          },
+        });
+      }
+
+      // Handle prompt selection
+      else if (data.startsWith('prompt_')) {
+        const [_, promptIndex, category] = data.split('_');
+        const selectedPrompt = this.categories[category][parseInt(promptIndex, 10)];
+
+        // Fetch user chat history
+        const chatHistory = await this.getUserChatHistory(this.currentTelegramId, 3); // Retrieve last 3 messages
+        const formattedChatHistory = chatHistory.map(log => {
+          const truncatedQuery = truncateText(log.query, 100);
+          const truncatedResponse = log.response ? truncateText(log.response, 100) : '';
+          return `ask: ${truncatedQuery} -> response: ${truncatedResponse}`;
+        }).join('\n');
+
+        // Create a prompt with chat history and the selected prompt
+        const promptWithHistory = `
+          The user asked this previously: "${formattedChatHistory || 'None'}".
+          'Note: The chat history may have been truncated for brevity.'
+          The user is now asking: "${selectedPrompt}".
+          Based on this, please infer the user's intent and provide a relevant response in the detected user's language.
+        `;
+
+        // Add user alias to the prompt if available
+        let finalPrompt = promptWithHistory;
+        if (this.currentUserAlias) {
+          finalPrompt = `${promptWithHistory} 
+          The user alias is "${this.currentUserAlias}". Please always call them by their alias.
+          `;
+        }
+
+        // Get ChatGPT response
+        const chatGptResponse = await this.getChatGptResponse(finalPrompt, chatId);
+
+        // Remove advertising message if it exists
+        if (chatGptResponse.advertingMsgId) {
+          await this.bot.deleteMessage(chatId, chatGptResponse.advertingMsgId.toString());
+        }
+
+        let totalCostInIRT;
+        if (chatGptResponse.responseText) {
+          // Calculate token counts for prompt and response
+          const inputTokens = Math.ceil(finalPrompt.length / 4); // Approx 4 chars per token
+          const outputTokens = Math.ceil(chatGptResponse.responseText.length / 4);
+
+          // Calculate costs in USD
+          const inputCost = (inputTokens / 1_000_000) * 0.15; // $0.15 per 1M tokens
+          const outputCost = (outputTokens / 1_000_000) * 0.60; // $0.60 per 1M tokens
+
+          const totalCost = inputCost + outputCost; // Total cost in USD
+
+          // Convert to IRT
+          const conversionRateToIRT = 2_000_000; // Example conversion rate
+          totalCostInIRT = Math.ceil(totalCost * conversionRateToIRT);
+        } else {
+          chatGptResponse.responseArray.forEach(element => {
+            // Calculate token counts for prompt and response
+            const inputTokens = Math.ceil(finalPrompt.length / 4); // Approx 4 chars per token
+            const outputTokens = Math.ceil(element.length / 4);
+
+            // Calculate costs in USD
+            const inputCost = (inputTokens / 1_000_000) * 0.15; // $0.15 per 1M tokens
+            const outputCost = (outputTokens / 1_000_000) * 0.60; // $0.60 per 1M tokens
+
+            const totalCost = inputCost + outputCost; // Total cost in USD
+
+            // Convert to IRT
+            const conversionRateToIRT = 2_000_000; // Example conversion rate
+            totalCostInIRT = Math.ceil(totalCost * conversionRateToIRT);
+          });
+        }
+
+        // Check user balance
+        if (this.userBalance < totalCostInIRT) {
+          await this.bot.sendMessage(chatId, 'موجودی شما برای این درخواست کافی نیست. لطفاً حساب خود را شارژ کنید.');
+          return;
+        }
+
+        // Deduct the cost
+        const remainingBalance = this.userBalance - totalCostInIRT;
+        await this.balanceService.addTransaction({
+          userId: this.userId,
+          transactionType: 'payment',
+          amount: -totalCostInIRT,
+          currency: this.curId,
+          transactionEntityId: new Types.ObjectId().toString(), // Generate a unique ID for this transaction
+          balanceAfterTransaction: remainingBalance,
+          timestamp: Math.floor(Date.now() / 1000),
+          _id: new Types.ObjectId()
+        });
+
+        // Update user balance
+        this.userBalance = remainingBalance;
+
+        // Save user chat log
+        const chatLog: UserChatLogDto = {
+          telegramId: this.currentTelegramId,
+          calledFunction: chatGptResponse.calledFunc,
+          query: selectedPrompt,
+          response: Array.isArray(chatGptResponse.responseArray) ? chatGptResponse.responseArray.join(' ') : chatGptResponse.responseText,
+          queryType: chatGptResponse.queryType,
+          newParameters: chatGptResponse.newParameters || [],
+          save_at: Math.floor(Date.now() / 1000),
+        };
+
+        try {
+          await this.dataRepository.saveUserChatLog(chatLog);
+          this.logger.log('User chat log saved successfully.');
+        } catch (error) {
+          this.logger.error('Failed to save user chat log:', error);
+        }
+
+        const newsFunctions = new Set(['getHighSentimentNewsByTitle', 'searchNewsByTitle'
+          , 'getLatestNewsBySymbol', 'getTopNewsByInteractionsAndTitle', 'getLatestNewsByTitle']);
+        if (newsFunctions.has(chatGptResponse.calledFunc)) {
+          if (Array.isArray(chatGptResponse.responseArray)) {
+            // Iterate through each news item
+            chatGptResponse.responseArray.forEach((newsItem) => {
+              this.bot.sendMessage(chatId, newsItem)
+                .catch((err) => {
+                  if (err.code === 'ETELEGRAM' && err.message.includes('message is too long')) {
+                    this.logger.error('Message too long, splitting and sending in parts.');
+
+                    const maxLength = 1000; // Telegram's max message length
+                    const messageParts = splitTelegramMessage(newsItem, maxLength);
+
+                    // Send each part sequentially
+                    messageParts.reduce((promise, part) => {
+                      return promise.then(() => this.bot.sendMessage(chatId, part));
+                    }, Promise.resolve()).catch((err) => {
+                      this.logger.error('Failed to send split messages', err);
+                    });
+                  } else {
+                    this.logger.error('Failed to send message', err);
+                  }
+                });
+            });
+          } else {
+            this.logger.error('responseText.responseText is not an array of news items.');
+          }
+
+        }
+        else {
+
+          this.bot.sendMessage(chatId, chatGptResponse.responseText)
+            .catch((err) => {
+              if (err.code === 'ETELEGRAM' && err.message.includes('message is too long')) {
+                this.logger.error('Message too long, splitting and sending in parts.');
+
+                const maxLength = 1000; // Telegram's max message length
+                const messageParts = splitTelegramMessage(chatGptResponse.responseText, maxLength);
+
+                // Send each part sequentially
+                messageParts.reduce((promise, part) => {
+                  return promise.then(() => this.bot.sendMessage(chatId, part));
+                }, Promise.resolve()).catch((err) => {
+                  this.logger.error('Failed to send split messages', err);
+                });
+              } else {
+                this.logger.error('Failed to send message', err);
+              }
+            });
+
+        }
+
+        const allowedFunctions = new Set(["getUserAlias", "setUserAlias", "getUserBalance"]);
+        if (!allowedFunctions.has(chatGptResponse.calledFunc)) {
+          await this.sendChildMenu(chatId, category);
+        }
+
+      }
+
+      // Handle "برگشت به طبقه بندی ها" button
+      else if (data === 'back_to_categories') {
+        // Create inline keyboard for categories
+        const inlineKeyboard = Object.keys(this.categories).map((category) => [
+          {
+            text: category,
+            callback_data: `category_${category}`,
+          },
+        ]);
+
+        await this.bot.sendMessage(chatId, 'لطفاً یک دسته‌بندی را انتخاب کنید:', {
+          reply_markup: {
+            inline_keyboard: inlineKeyboard,
+          },
         });
       }
     });
+
+
+    // Callback query handler
+    // this.bot.on('callback_query', async (callbackQuery) => {
+    //   const chatId = callbackQuery.message.chat.id;
+    //   const data = callbackQuery.data;
+
+    //   if (data.startsWith('prompt_')) {
+    //     const promptIndex = parseInt(data.split('_')[1], 10);
+    //     const selectedPrompt = this.prompts[promptIndex];
+
+    //     await this.bot.sendMessage(chatId, `پرسش انتخابی شما: ${selectedPrompt}`);
+
+    //     const chatGptResponse = await this.getChatGptResponse(selectedPrompt, chatId);
+    //     this.bot.sendMessage(chatId, chatGptResponse.responseText).catch((err) => {
+    //       this.logger.error('Failed to send message', err);
+    //     });
+    //   }
+    // });
+  }
+
+  private async sendChildMenu(chatId: number, category: string) {
+    const prompts = this.categories[category];
+
+    // Create inline keyboard for prompts in the selected category
+    const promptKeyboard = prompts.map((prompt, index) => [
+      {
+        text: prompt.length > 150 ? `${prompt.slice(0, 147)}...` : prompt,
+        callback_data: `prompt_${index}_${category}`,
+      },
+    ]);
+
+    // Add "برگشت به طبقه بندی ها" button at the bottom
+    promptKeyboard.push([
+      {
+        text: 'برگشت به طبقه بندی ها',
+        callback_data: 'back_to_categories',
+      },
+    ]);
+
+    await this.bot.sendMessage(chatId, `دسته‌بندی: ${category}`, {
+      reply_markup: {
+        inline_keyboard: promptKeyboard,
+      },
+    });
+  }
+
+  private async sendMenu(chatId: number) {
+    // Create inline keyboard for categories
+    const inlineKeyboard = Object.keys(this.categories).map((category) => [
+      {
+        text: category,
+        callback_data: `category_${category}`,
+      },
+    ]);
+
+    await this.bot.sendMessage(chatId, 'لطفاً یک دسته‌بندی را انتخاب کنید:', {
+      reply_markup: {
+        inline_keyboard: inlineKeyboard,
+      },
+    });
   }
 }
+
 
 function splitTelegramMessage(message: string, maxLength: number): string[] {
   const parts: string[] = [];

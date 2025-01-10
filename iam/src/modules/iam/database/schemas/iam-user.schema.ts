@@ -26,6 +26,13 @@ export class IAMUser {
 
   @Prop({ required: true, default: Date.now })
   createdDate: Date;
+  
+  @Prop({ required: false })       
+  clientSecret: string;
+
+  @Prop({ required: false })
+  alias: string;
+
 }
 
 export const IAMUserSchema = SchemaFactory.createForClass(IAMUser);

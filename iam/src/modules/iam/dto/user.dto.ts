@@ -41,6 +41,14 @@ export class UserDto {
   @IsNumber()
   @IsNotEmpty()
   createdDate: number;
+
+  @IsString()
+  @IsNotEmpty()
+  clientSecret: string;
+    
+  @IsString()
+  @IsOptional()
+  alias: string;
 }
 
 export class UserInsertDto {
@@ -72,4 +80,8 @@ export class UserInsertDto {
   @IsString()
   @IsNotEmpty()
   clientSecret: string;
+  
+  @IsString()
+  @IsOptional()
+  alias: string;
 }

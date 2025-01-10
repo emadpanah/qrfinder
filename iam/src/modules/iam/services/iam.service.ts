@@ -13,6 +13,7 @@ import { TokenExpiredError } from 'jsonwebtoken';
 import axios, { AxiosInstance } from 'axios';
 import { getOS } from 'mongodb-memory-server-core/lib/util/getos';
 import { Chat } from 'openai/resources';
+import { sanitizeString } from 'src/shared/helper';
 
 @Injectable()
 export class IamService {
@@ -50,19 +51,29 @@ export class IamService {
       throw error;
     }
   }
-  async getUser(userId: string): Promise<UserDto> {
+  async getUser(userId: Types.ObjectId): Promise<UserDto> {
     try {
-      const obj = new Types.ObjectId(userId);
-      let user = await this.iamRepository.findUserById(obj);
+      //const obj = new Types.ObjectId(userId);
+      let user = await this.iamRepository.findUserById(userId);
       return user;
     } catch (error) {
       throw error;
     }
   }
 
+  async setUserAlias(telegramID: string, alias: string): Promise<any> {
+    try {
+      const ret = await this.iamRepository.setUserAlias(telegramID, alias);
+      return ret;
+    } catch (error) {
+      console.log('Error setting user alias:', error);
+      throw new Error('Failed to set user alias.');
+    }
+  }
+
   async registerOrLogin(
     dto: UserInsertDto,
-  ): Promise<{ token: string; isNewToken: boolean; userId: string }> {
+  ): Promise<{ token: string; isNewToken: boolean; userId: string, alias: string }> {
     try {
       console.log('registering started ');
 
@@ -79,15 +90,15 @@ export class IamService {
           user.telegramUserName != dto.telegramUserName ||
           (user.mobile != dto.mobile && dto.mobile != '')
         ) {
-          console.log("updating .....");
+          //console.log("updating .....");
           user = await this.iamRepository
             .updateUser(user.telegramID, dto.telegramUserName, dto.mobile);
         }
-        console.log('user updated - ', user);
+        //console.log('user updated - ', user);
         const existingLoginInfo =
           await this.userLoginRepository.findLatestLoginByUserId(user._id);
-        console.log('latestlogin - ', existingLoginInfo);
-        console.log('userId - ', user._id);
+        //console.log('latestlogin - ', existingLoginInfo);
+       // console.log('userId - ', user._id);
         if (existingLoginInfo) {
           try {
             await this.authService.verifyJwt(existingLoginInfo.token);
@@ -95,13 +106,14 @@ export class IamService {
               token: existingLoginInfo.token,
               isNewToken: false,
               userId: user._id,
+              alias: user.alias
             }; // Return existing valid token
           } catch (error) {
             if (error instanceof TokenExpiredError) {
               // Generate a new token if the existing one is expired
               const newToken = await this.authService.generateJwt(user._id);
               await this.userLoginRepository.createLogin(user._id, newToken, dto.chatId);
-              return { token: newToken, isNewToken: true, userId: user._id };
+              return { token: newToken, isNewToken: true, userId: user._id, alias: user.alias };
             } else {
               throw error; // Re-throw the error if it's not a TokenExpiredError
             }
@@ -109,11 +121,11 @@ export class IamService {
         }
 
         // Generate a new token if no valid token exists
-        console.log('Generate a new token', user._id);
+        //console.log('Generate a new token', user._id);
         const newToken = await this.authService.generateJwt(user._id);
-        console.log('Generate a new token', newToken);
+        //console.log('Generate a new token', newToken);
         await this.userLoginRepository.createLogin(user._id, newToken, dto.chatId);
-        return { token: newToken, isNewToken: true, userId: user._id };
+        return { token: newToken, isNewToken: true, userId: user._id, alias: user.alias };
       }
 
       // User does not exist, proceed with registration
@@ -123,7 +135,7 @@ export class IamService {
       const token = await this.authService.generateJwt(newUser._id);
       await this.userLoginRepository.createLogin(newUser._id, token, dto.chatId);
 
-      return { token: token, isNewToken: true, userId: newUser._id };
+      return { token: token, isNewToken: true, userId: newUser._id, alias: newUser.alias };
     } catch (error) {
       throw error;
     }
