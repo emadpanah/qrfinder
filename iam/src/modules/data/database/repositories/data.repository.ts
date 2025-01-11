@@ -22,6 +22,7 @@ import { CCIData } from '../schema/cci.schema';
 import { CCIDto, EMADto, RSIDto, StochasticDto } from '../dto/rsi.dto';
 import { MACDDto } from '../dto/macd.dto';
 import { ADXDto } from '../dto/adx.dto';
+import { isValidUnixTimestamp, sanitizeString } from 'src/shared/helper';
 
 @Injectable()
 export class DataRepository {
@@ -1291,10 +1292,56 @@ export class DataRepository {
     return null;
   }
 
-  async saveUserChatLog(log: UserChatLogDto): Promise<void> {
-    const collection = this.connection.collection(this.userchatlogCollectionName);
-    await collection.insertOne(log);
+  // async saveUserChatLog(log: UserChatLogDto): Promise<void> {
+  //   const collection = this.connection.collection(this.userchatlogCollectionName);
+  //   await collection.insertOne(log);
+  // }
+
+  
+async saveUserChatLog(log: UserChatLogDto): Promise<void> {
+  // Validate all required fields
+  if (!log.telegramId || typeof log.telegramId !== 'string') {
+    throw new Error('Invalid telegramId');
   }
+  if (!log.query || typeof log.query !== 'string') {
+    throw new Error('Invalid query');
+  }
+  if (!log.response || typeof log.response !== 'string') {
+    throw new Error('Invalid response');
+  }
+  if (!log.queryType || typeof log.queryType !== 'string') {
+    throw new Error('Invalid queryType');
+  }
+  if (!isValidUnixTimestamp(log.save_at)) {
+    throw new Error('Invalid save_at timestamp');
+  }
+
+  // Sanitize all string fields to prevent injection
+  log.telegramId = sanitizeString(log.telegramId, 100);
+  log.query = sanitizeString(log.query, 1000);
+  log.response = sanitizeString(log.response, 2500);
+  log.queryType = sanitizeString(log.queryType, 100);
+
+  // Optional fields validation
+  if (log.calledFunction && typeof log.calledFunction !== 'string') {
+    throw new Error('Invalid calledFunction');
+  }
+  if (log.calledFunction) {
+    log.calledFunction = sanitizeString(log.calledFunction, 100);
+  }
+
+  if (log.parameters && typeof log.parameters !== 'object') {
+    throw new Error('Invalid parameters');
+  }
+  if (log.newParameters && typeof log.newParameters !== 'object') {
+    throw new Error('Invalid newParameters');
+  }
+
+  // Proceed to save the sanitized and validated data
+  const collection = this.connection.collection(this.userchatlogCollectionName);
+  await collection.insertOne(log);
+}
+
 
   async getChatHistory(telegramId: string, limit: number = 5): Promise<UserChatLogDto[]> {
     try {

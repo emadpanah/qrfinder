@@ -101,6 +101,10 @@ export function truncateText(text: string, maxLength: number = 100): string {
 }
 
 export function sanitizeString(input: string, maxLength: number): string {
+
+  // if (!input || typeof input !== 'string') {
+  //   throw new Error('Invalid string value');
+  // }
   // Define allowed characters:
   // - Persian letters (Unicode range: \u0600-\u06FF)
   // - English letters (a-zA-Z)
@@ -109,10 +113,13 @@ export function sanitizeString(input: string, maxLength: number): string {
   const allowedCharactersRegex = /[^\u0600-\u06FFa-zA-Z0-9_ ]/g;
 
   // Remove unwanted characters
-  const sanitizedString = input.replace(allowedCharactersRegex, '');
+  const sanitizedStrings = input.replace(allowedCharactersRegex, '');
 
   // Limit the length of the string
-  const truncatedString = sanitizedString.substring(0, maxLength);
+  let truncatedString = sanitizedStrings;
+  if (truncatedString.length < maxLength) {
+   truncatedString = sanitizedStrings.substring(0, maxLength);
+  }
 
   // Escape special characters to prevent injection
   const escapedString = truncatedString
@@ -124,6 +131,10 @@ export function sanitizeString(input: string, maxLength: number): string {
     .replace(/\//g, '&#x2F;');
 
   return escapedString;
+}
+
+export function isValidUnixTimestamp(value: number): boolean {
+  return Number.isInteger(value) && value > 0 && value < 2147483647; // Valid within the 32-bit timestamp range
 }
 
 export function formatNumber(number: number, language: string): string {

@@ -97,6 +97,55 @@ export class BotAIService implements OnModuleInit {
       'اخبار با احساسات مثبت برای بیت‌کوین',
       'تحلیل دقیق بیت‌کوین با توجه به اخبار',
     ],
+    'آموزش': [
+      // Beginner Basics
+      'آشنایی با اصول اولیه معامله‌گری',
+      'ریاضیات مورد نیاز برای معامله‌گری',
+      'معرفی مفهوم چارت و نمودار',
+      'معرفی سایت CoinMarketCap',
+      'معرفی ابزار TradingView',
+      'انواع چارت‌ها و نمودارها (کندل‌استیک، میله‌ای، خطی)',
+      'آموزش تحلیل ساده خطوط حمایت و مقاومت',
+      
+      // Intermediate Concepts
+      'معرفی انواع ربات‌های معامله‌گری',
+      'ربات‌های معامله‌گری چگونه کار می‌کنند؟',
+      'معرفی کانال‌های سیگنال‌دهی',
+      'آشنایی با مفهوم کپی‌ترید',
+      'بررسی روش‌های مدیریت ریسک در معاملات',
+      'آشنایی با استراتژی‌های بلندمدت و کوتاه‌مدت',
+      
+      // Advanced Education
+      'چگونه اخبار بر بازار کریپتو اثر می‌گذارند؟',
+      'نحوه تشخیص احساسات مثبت و منفی در اخبار',
+      'آموزش استفاده از داده‌های سوشال در تحلیل',
+      'راهنمای کامل شاخص ترس و طمع (FNG)',
+      'راهنمای کار با پارامترهای Social Dominance',
+      'آشنایی با امتیاز گلکسی و altRank',
+      'چگونه ارزهای دیجیتال برتر را بر اساس داده‌های سوشال پیدا کنیم؟',
+
+      // Learning about crypto types
+    'ارزهای دیجیتال DeFi چیست؟',
+    'توکن‌های هوش مصنوعی (AI) چیست؟',
+    'توکن‌های NFT چیست؟',
+    'توکن‌های Gaming چیست؟',
+    'استیبل‌کوین چیست؟',
+    'توکن‌های Real-World Assets چیست؟',
+    'اکوسیستم بیت‌کوین چیست؟',
+    'لایه اول (Layer 1) چیست؟',
+    'لایه دوم (Layer 2) چیست؟',
+    'میم‌کوین (MemeCoin) چیست؟',
+    'توکن‌های SocialFi چیست؟',
+    'توکن‌های DAO چیست؟',
+    'توکن‌های ورزشی (Sports Tokens) چیست؟',
+    'توکن‌های Gambling چیست؟',
+    'توکن‌های Fan Tokens چیست؟',
+    'توکن‌های Web3 چیست؟',
+    'توکن‌های مربوط به حوزه Metaverse چیست؟',
+    'توکن‌های IoT چیست؟',
+    'توکن‌های Security چیست؟',
+    'توکن‌های Privacy چیست؟',
+    ],
     'تنظیمات کاربری': [
       //'تنظیم نام مستعار',
       'دریافت نام مستعار',
@@ -1000,8 +1049,8 @@ export class BotAIService implements OnModuleInit {
 
     ];
     const systemPrompt = this.constructSystemPrompt(this.currentUserAlias);
-    console.log('systemPrompt Base : ', systemPrompt);
-    console.log('userPrompt Base : ', prompt);
+    console.log('system Prompt:', systemPrompt);
+    console.log('user prompt:', prompt);
     try {
       const stream = await this.openai.chat.completions.create({
         messages: [
@@ -1095,7 +1144,6 @@ export class BotAIService implements OnModuleInit {
 
             try {
               // Use IamService to retrieve user profile
-              console.log('this.userId : ', this.userId);
               const userProfile = await this.iamService.getUser(this.userId);
 
               if (!userProfile || !userProfile.alias) {
@@ -1136,7 +1184,6 @@ export class BotAIService implements OnModuleInit {
 
             try {
               // Use BalanceService to retrieve user balance
-              console.log('this.userId : ', this.userId);
               const balance = await this.balanceService.getUserBalance(this.userId, this.curId);
 
               if (balance === null || balance === undefined) {
@@ -1687,7 +1734,6 @@ export class BotAIService implements OnModuleInit {
             }
 
             const mappedSymbol = mapSymbol(parameters.symbol, 'plain');
-            console.log("mappedSymbol : ", mappedSymbol);
             const sorts = await this.dataRepository.getSortValueForSymbol(mappedSymbol, sort);
 
             if (!sorts) {
@@ -1792,13 +1838,10 @@ export class BotAIService implements OnModuleInit {
             const { limit = 10, language } = parameters; // Include language
             let news;
             const mappedSymbol = mapSymbol(parameters.symbol, 'plain');
-            console.log("symbol : ", mappedSymbol);
             if (mappedSymbol) {
-              console.log("symbol : ", mappedSymbol);
               news = await this.dataRepository.getLatestNews(limit, mappedSymbol);
 
             } else {
-              console.log("title : ", parameters.symbol);
               news = await this.dataRepository.getLatestNews(limit, parameters.symbol);
             }
             return {
@@ -1929,7 +1972,7 @@ export class BotAIService implements OnModuleInit {
     const effectiveDate = new Date().toISOString().split('T')[0];
     const timestamp1 = new Date(effectiveDate).getTime() / 1000;
 
-    //console.log("Analyze symbol : ", sym);
+  
 
     // Start timing for FNG data retrieval
     const fngStart = Date.now();
@@ -2330,7 +2373,6 @@ ${formattedEMAHistory}
       return "Please provide at least one cryptocurrency symbol.";
     }
 
-    console.log("symbols -- ", symbols);
     // Fetch the latest price for each symbol
     const prices = await Promise.all(
       symbols.map(async (symbol) => {
@@ -2783,7 +2825,7 @@ ${formattedEMAHistory}
         this.logger.error('Missing Telegram ID in message.');
         return;
       }
-      console.log('telegramID :', telegramID);
+      //console.log('telegramID :', telegramID);
       // Save the Telegram ID locally for chat saving
       this.currentTelegramId = telegramID;
 
@@ -2827,7 +2869,7 @@ ${formattedEMAHistory}
             this.userBalance = await this.balanceService.getUserBalance(this.userId, this.curId);
             await this.bot.sendMessage(
               chatId,
-              `🎉 <b>Congratulations!</b> 🎉\n\n✨ You have received <b>2000 Tomans</b> as a welcome credit to explore the amazing <b>Trading AI Bot</b> features! 🚀\n\n💡 Start your trading journey now!`,
+              `🎉 <b>Congratulations!</b> 🎉\n\n✨ You have received <b>50000 Tomans</b> as a welcome credit to explore the amazing <b>Trading AI Bot</b> features! 🚀\n\n💡 Start your trading journey now!`,
               { parse_mode: 'HTML' }
             );
           }
@@ -2888,7 +2930,6 @@ ${formattedEMAHistory}
         //check balance 
         // Get the last ask for this user (if any)
 
-        console.log("userBalance", this.userBalance);
         if (this.userBalance < 5000) {
           await this.bot.sendMessage(chatId, 'اعتبار شما رو به پایان است٫ لطفا اعتبار خود را شارژ کنید.');
         }
@@ -2903,10 +2944,10 @@ ${formattedEMAHistory}
 
         const formattedChatHistory = chatHistory.map(log => {
           // Truncate query and response if necessary
-          const truncatedQuery = truncateText(log.query, 100);
+          const truncatedQuery = truncateText(log.query, 1000);
           let truncatedResponse = '';
           if (log.response)
-            truncatedResponse = truncateText(log.response, 100);
+            truncatedResponse = truncateText(log.response, 1000);
 
           return `ask: ${truncatedQuery} -> response: ${truncatedResponse}`;
         }).join('\n');
@@ -3113,16 +3154,13 @@ ${formattedEMAHistory}
         try {
           const { token, isNewToken, userId, alias } = await this.iamService.registerOrLogin(userInsertDto);
           this.userId = new Types.ObjectId(userId);
-          console.log("userId : -----", this.userId);
           this.currentUserAlias = alias;
           // this.logger.log(
           //   `User ${isNewToken ? 'registered' : 'logged in'} successfully with userId: ${userId}. Token: ${token}`
           // );        
 
           this.curId = (await this.balanceService.getCurrencyByName('Toman'))._id;
-          console.log("this.curId-----", this.curId);
           this.userBalance = await this.balanceService.getUserBalance(this.userId, this.curId);
-          console.log("userBalance-----", this.userBalance);
           // Check user balance
           if (this.userBalance < 5000) {
             await this.bot.sendMessage(chatId, 'اعتبار شما رو به پایان است٫ لطفا اعتبار خود را شارژ کنید.');
@@ -3139,8 +3177,6 @@ ${formattedEMAHistory}
         }
 
       }
-      console.log("current telegram Id", this.currentTelegramId);
-      console.log("current user Id", this.userId);
       // Extract user info from the Telegram message
       //console.log('start');
       //
