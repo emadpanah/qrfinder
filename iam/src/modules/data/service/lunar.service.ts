@@ -24,9 +24,9 @@ export class LunarCrushService {
 
   private readonly telegramBot = new TelegramBot(process.env.
     //NABZAR_BOT_TOKEN
-    TELEGRAM_BOT_TOKEN
+    NABZAR_X_BOT
     , { polling: false });
-  private readonly telegramChatId = "1772792379"
+  private readonly telegramChatId = process.env.TELEGRAM_SIGNAL_GROUP_ID;
 
   constructor(private readonly repository: DataRepository) { }
 
@@ -134,26 +134,91 @@ export class LunarCrushService {
   }
 
   //@Cron('0 */20 * * * *') // Every 20 minutes
-  @Cron('0 0 1 1 *') //run every year
-  async fetchAndStoreNews(): Promise<void> {
-    console.log(`Fetching news at ${new Date().toISOString()}...`);
-    try {
-      const response = await this.fetchDataWithRetry(
-        'https://lunarcrush.com/api4/public/topic/cryptocurrency/news/v1',
-        {
-          headers: {
-            Authorization: `Bearer ${process.env.LUNARCRUSH_API_KEY}`,
-          },
-        }
-      );
+  // @Cron('0 0 1 1 *') //run every year
+  // async fetchAndStoreNews(): Promise<void> {
+  //   console.log(`Fetching news at ${new Date().toISOString()}...`);
+  //   try {
+  //     const response = await this.fetchDataWithRetry(
+  //       //'https://lunarcrush.com/api4/public/topic/cryptocurrency/news/v1',
+  //       'https://lunarcrush.com/api4/public/category/cryptocurrencies/news/v1',
+  //       {
+  //         headers: {
+  //           Authorization: `Bearer ${process.env.LUNARCRUSH_API_KEY}`,
+  //         },
+  //       }
+  //     );
+
+  //     const data = response.data?.data;
+  //     if (data && Array.isArray(data)) {
+  //       const timestamp = Math.floor(Date.now() / 1000);
+  //       const twentyFourHoursAgo = Math.floor(Date.now() / 1000) - 86400; // 24 hours ago
+  //       for (const newsItem of data) {
+  //         if (newsItem.post_created >= twentyFourHoursAgo) {
+
+  //           try {
+  //             await this.repository.createLunarNews({
+  //               id: newsItem.id,
+  //               post_title: newsItem.post_title,
+  //               post_link: newsItem.post_link,
+  //               post_image: newsItem.post_image,
+  //               post_created: newsItem.post_created,
+  //               post_sentiment: newsItem.post_sentiment,
+  //               interactions_24h: newsItem.interactions_24h,
+  //               interactions_total: newsItem.interactions_total,
+  //               fetched_at: timestamp,
+  //             });
+  //             // Send to Telegram only if interactions_24h > 1000
+  //             if (newsItem.interactions_24h > 1000 ||
+  //               newsItem.interactions_total>10000 || newsItem.post_sentiment > 3.4 ) {
+  //               await this.sendNewsToTelegram(newsItem);
+  //             }
+  //           } catch (error) {
+  //             if (error.code === 11000) {
+  //               console.log(`Duplicate news item: ${newsItem.id}`);
+  //             } else {
+  //               console.error(`Error saving news item: ${error.message}`);
+  //             }
+  //           }
+  //         }
+  //       }
+  //       console.log(`Fetched and stored ${data.length} news items.`);
+  //     } else {
+  //       console.log('No news data available.');
+  //     }
+  //   } catch (error) {
+  //     console.error('Error fetching LunarCrush news:', error.message);
+  //   }
+  // }
+
+  //@Cron('0 */40 * * * *') // Every 40 minutes
+   @Cron('0 0 1 1 *') //run every year
+async fetchAndStoreNews(): Promise<void> {
+  console.log(`Fetching news at ${new Date().toISOString()}...`);
+
+  // Define the two endpoints
+  const endpoints = [
+    'https://lunarcrush.com/api4/public/category/cryptocurrencies/news/v1',
+    'https://lunarcrush.com/api4/public/topic/bitcoin/news/v1',
+  ];
+
+  try {
+    for (let i = 0; i < endpoints.length; i++) {
+      const endpoint = endpoints[i];
+
+      // Fetch data from the current endpoint
+      const response = await this.fetchDataWithRetry(endpoint, {
+        headers: {
+          Authorization: `Bearer ${process.env.LUNARCRUSH_API_KEY}`,
+        },
+      });
 
       const data = response.data?.data;
       if (data && Array.isArray(data)) {
         const timestamp = Math.floor(Date.now() / 1000);
         const twentyFourHoursAgo = Math.floor(Date.now() / 1000) - 86400; // 24 hours ago
+
         for (const newsItem of data) {
           if (newsItem.post_created >= twentyFourHoursAgo) {
-
             try {
               await this.repository.createLunarNews({
                 id: newsItem.id,
@@ -166,8 +231,13 @@ export class LunarCrushService {
                 interactions_total: newsItem.interactions_total,
                 fetched_at: timestamp,
               });
-              // Send to Telegram only if interactions_24h > 1000
-              if (newsItem.interactions_24h > 1000) {
+
+              // Send to Telegram only if interactions_24h > 1000 or other conditions
+              if (
+                newsItem.interactions_24h > 1000 ||
+                newsItem.interactions_total > 10000 ||
+                newsItem.post_sentiment > 3.4
+              ) {
                 await this.sendNewsToTelegram(newsItem);
               }
             } catch (error) {
@@ -179,14 +249,26 @@ export class LunarCrushService {
             }
           }
         }
-        console.log(`Fetched and stored ${data.length} news items.`);
+        console.log(`Fetched and stored ${data.length} news items from ${endpoint}.`);
       } else {
-        console.log('No news data available.');
+        console.log(`No news data available from ${endpoint}.`);
       }
-    } catch (error) {
-      console.error('Error fetching LunarCrush news:', error.message);
+
+      // Add a 3-minute delay between the two queries (except after the last query)
+      if (i < endpoints.length - 1) {
+        console.log('Waiting 3 minutes before the next query...');
+        await this.sleep(180000); // 3 minutes in milliseconds
+      }
     }
+  } catch (error) {
+    console.error('Error fetching LunarCrush news:', error.message);
   }
+}
+
+// Utility function to introduce a delay
+sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
   private async sendNewsToTelegram(newsItem: any): Promise<void> {
     const getTimeAgo = (timestamp: number): string => {

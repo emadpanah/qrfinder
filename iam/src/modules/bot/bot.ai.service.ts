@@ -308,11 +308,11 @@ export class BotAIService implements OnModuleInit {
     })}.
   `;
 
-    //   if(!alias) {
-    //     basePrompt = `${basePrompt} 
-    // The user has not set a preferred alias yet. Please ask them to set a preferred alias. for seeting their 
-    // alias they must use sentences like this " may name is [alias]" or "call me [alias]" or "set my alias to [alias]".`;
-    //   }
+      if(!alias) {
+        basePrompt = `${basePrompt} 
+    The user has not set a preferred alias yet. Please ask them to set a preferred alias. for seeting their 
+    alias they must use sentences like this " may name is [alias]" or "call me [alias]" or "set my alias to [alias]".`;
+      }
 
     return basePrompt;
   }
@@ -2793,7 +2793,7 @@ ${formattedEMAHistory}
   }
 
 
-  private async getUserChatHistory(telegramId: string, limit: number = 3): Promise<UserChatLogDto[]> {
+  private async getUserChatHistory(telegramId: string, limit: number = 2): Promise<UserChatLogDto[]> {
     try {
       const chatLogs = await this.dataRepository.getChatHistory(telegramId, limit);
       return chatLogs;
@@ -2869,8 +2869,20 @@ ${formattedEMAHistory}
             this.userBalance = await this.balanceService.getUserBalance(this.userId, this.curId);
             await this.bot.sendMessage(
               chatId,
-              `🎉 <b>Congratulations!</b> 🎉\n\n✨ You have received <b>50000 Tomans</b> as a welcome credit to explore the amazing <b>Trading AI Bot</b> features! 🚀\n\n💡 Start your trading journey now!`,
-              { parse_mode: 'HTML' }
+              `🎉 <b>تبریک می‌گوییم!</b> 🎉\n\n✨ شما <b>۵۰,۰۰۰ تومان</b> اعتبار هدیه به عنوان کاربر جدید دریافت کرده‌اید! 🚀\n\n💡 همین حالا شروع کنید و از امکانات فوق‌العاده <b>ربات معامله‌گر هوشمند</b> لذت ببرید!`,
+              {
+                parse_mode: 'HTML',
+                reply_markup: {
+                  inline_keyboard: [
+                    [
+                      {
+                        text: '✨ از اسپانسر ما دیدن کنید',
+                        url: 'https://trade-ai.bot/',
+                      },
+                    ],
+                  ],
+                },
+              }
             );
           }
           catch (err) {
@@ -2881,12 +2893,12 @@ ${formattedEMAHistory}
         //console.log('userCh.mobile', userCh.mobile);
         if (!userCh.mobile) {
           // Ask the user to share their contact
-          await this.bot.sendMessage(chatId, 'Please share your contact to use the bot:', {
+          await this.bot.sendMessage(chatId, 'برای استفاده از ربات نبضار شماره موبایل خود را به اشتراک بگذارید', {
             reply_markup: {
               keyboard: [
                 [
                   {
-                    text: '📞 Share Contact',
+                    text: '📞 اشتراک شماره موبایل',
                     request_contact: true, // Requests the user's contact information
                   },
                 ],
@@ -2940,7 +2952,7 @@ ${formattedEMAHistory}
         }
 
         // Retrieve chat history
-        const chatHistory = await this.getUserChatHistory(telegramID, 3); // Retrieve last 5 messages
+        const chatHistory = await this.getUserChatHistory(telegramID, 2); // Retrieve last 5 messages
 
         const formattedChatHistory = chatHistory.map(log => {
           // Truncate query and response if necessary
@@ -3215,7 +3227,7 @@ ${formattedEMAHistory}
         const selectedPrompt = this.categories[category][parseInt(promptIndex, 10)];
 
         // Fetch user chat history
-        const chatHistory = await this.getUserChatHistory(this.currentTelegramId, 3); // Retrieve last 3 messages
+        const chatHistory = await this.getUserChatHistory(this.currentTelegramId, 2); // Retrieve last 3 messages
         const formattedChatHistory = chatHistory.map(log => {
           const truncatedQuery = truncateText(log.query, 100);
           const truncatedResponse = log.response ? truncateText(log.response, 100) : '';
@@ -3416,6 +3428,8 @@ ${formattedEMAHistory}
     //   }
     // });
   }
+
+  
 
   private async sendChildMenu(chatId: number, category: string) {
     const prompts = this.categories[category];
