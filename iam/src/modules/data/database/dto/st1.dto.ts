@@ -1,5 +1,7 @@
+import { ObjectId, Types } from "mongoose";
+
 export class ST1Dto {
-    _id?:string;
+    _id:  Types.ObjectId;
     signal: string;
     exchange: string;
     symbol: string;

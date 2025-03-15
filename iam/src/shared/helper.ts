@@ -1,6 +1,23 @@
 export function mapSymbol(input: string, mode: 'pair' | 'plain'): string {
   const symbolMapping: { [key: string]: string } = {
+    usdcad:'USDCAD',
+    USDCAD:'USDCAD',
+    usdjpy:'USDJPY',
+    eurusd:'EURUSD',
+    usdchf:'USDCHF',
+    gbpusd:'GBPUSD',
+    us500:'US500',
+    xagusd:'XAGUSD',
+    USDJPY:'USDJPY',
+    EURUSD:'EURUSD',
+    USDCHF:'USDCHF',
+    GBPUSD:'GBPUSD',
+    US500:'US500',
+    XAGUSD:'XAGUSD',
+    xauusd :'XAUUSD',
+    XAUUSD :'XAUUSD',
     bitcoin: 'BTCUSDT',
+    BTCUSDT: 'BTCUSDT',
     'بیتکوین': 'BTCUSDT',
     'بیت کوین': 'BTCUSDT',
     'بیت': 'BTCUSDT',
@@ -65,7 +82,20 @@ export function mapSymbol(input: string, mode: 'pair' | 'plain'): string {
     'یو‌اس‌دی‌کوین': 'USDC',
 
     'btcusdt': 'BTCUSDT',
-  'ethusdt': 'ETHUSDT',
+    'ethusdt': 'ETHUSDT',
+    'ETHUSDT': 'ETHUSDT',
+  'XRPUSDT': 'XRPUSDT',
+  'BNBUSDT': 'BNBUSDT',
+  'ADAUSDT': 'ADAUSDT',
+  'SOLUSDT': 'SOLUSDT',
+  'DOGEUSDT': 'DOGEUSDT',
+  'DOTUSDT': 'DOTUSDT',
+  'TRXUSDT': 'TRXUSDT',
+  'SHIBUSDT': 'SHIBUSDT',
+  'ATOMUSDT': 'ATOMUSDT',
+  'DAIUSDT': 'DAIUSDT',
+  'WBTCUSDT': 'WBTCUSDT',
+  'PEPEUSDT': 'PEPEUSDT',
   'xrpusdt': 'XRPUSDT',
   'bnbusdt': 'BNBUSDT',
   'adausdt': 'ADAUSDT',
@@ -77,17 +107,18 @@ export function mapSymbol(input: string, mode: 'pair' | 'plain'): string {
   'atomusdt': 'ATOMUSDT',
   'daiusdt': 'DAIUSDT',
   'wbtcusdt': 'WBTCUSDT',
-  'pepeusdt': 'PEPEUSDT'
+  'pepeusdt': 'PEPEUSDT',
+   
 
   };
 
-  input = input.trim().toLowerCase().replace(/usd$/, 'usdt');
+  //input = input.trim().toLowerCase().replace(/usd$/, 'usdt');
     const mappedSymbol = symbolMapping[input];
 
     if (!mappedSymbol) return null; // Return null if no mapping found
 
     // For plain mode, strip "USDT" if present
-    return mode === 'plain' ? mappedSymbol.replace(/USDT$/, '') : mappedSymbol;
+    return mode === 'plain' ? mappedSymbol.replace(/USDT$/, '').replace(/USD$/, '') : mappedSymbol;
 }
 
 

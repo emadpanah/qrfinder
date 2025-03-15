@@ -4,6 +4,9 @@ import { Document } from 'mongoose';
 @Schema({ timestamps: true, collection: '_st1data' })
 export class ST1Data {
   @Prop()
+  _id?:string;
+
+  @Prop()
   signal: string; // Buy/Sell signal
 
   @Prop()

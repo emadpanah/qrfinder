@@ -11,6 +11,7 @@ import { DominanceDto } from '../database/dto/dominance.dto';
 import { ST1Dto } from '../database/dto/st1.dto';
 import { ADXDto } from '../database/dto/adx.dto';
 import { ADXData } from '../database/schema/adx.schema';
+import { Types } from 'mongoose';
 
 @Injectable()
 export class DataService {
@@ -65,12 +66,39 @@ export class DataService {
     //console.log('dominance data saved successfully');
   }
 
+  // src/modules/data/service/data.service.ts
+
+async updateAllSignalsAndCalculateWinRate(): Promise<{ winRate: number; totalSignals: number; winningSignals: number }> {
+  const signals = await this.dataRepository.getAllST1Signals();
+
+  let winningSignals = 0;
+
+  for (const signal of signals) {
+    const isTargetReached =
+      (signal.signal === 'Buy' && signal.price >= signal.target) ||
+      (signal.signal === 'Sell' && signal.price <= signal.target);
+
+    if (isTargetReached) {
+      winningSignals++;
+    }
+
+    // Update the isDone status in the database
+    await this.dataRepository.updateST1IsDone(signal._id.toString(), isTargetReached);
+  }
+
+  const totalSignals = signals.length;
+  const winRate = totalSignals > 0 ? (winningSignals / totalSignals) * 100 : 0;
+
+  return { winRate, totalSignals, winningSignals };
+}
+
   async saveST1Data(st1Data: ST1Dto): Promise<void> {
     const timestamp = new Date(st1Data.time).getTime() / 1000;
     const formattedData = {
+      _id: new Types.ObjectId(),
       symbol: st1Data.symbol,
       price : st1Data.price,
-      singnal: st1Data.signal,
+      signal: st1Data.signal,
       time: timestamp,
       exchange: st1Data.exchange,
       stop: st1Data.stop,

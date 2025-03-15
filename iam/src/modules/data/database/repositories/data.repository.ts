@@ -23,6 +23,7 @@ import { CCIDto, EMADto, RSIDto, StochasticDto } from '../dto/rsi.dto';
 import { MACDDto } from '../dto/macd.dto';
 import { ADXDto } from '../dto/adx.dto';
 import { isValidUnixTimestamp, sanitizeString } from 'src/shared/helper';
+import { ST1Dto } from '../dto/st1.dto';
 
 @Injectable()
 export class DataRepository {
@@ -225,36 +226,86 @@ export class DataRepository {
     return result.length > 0 ? result[0] : null;
   }
 
+  // async getLast7DaysDailyPriceOptimized(symbol: string, endDate: number): Promise<TradingViewAlertDto[]> {
+  //   const collection = this.connection.collection(this.tickerCollectionName);
+
+  //   const startOfRange = endDate - 6 * 24 * 60 * 60; // 7 days in seconds
+
+  //   // Fetch the latest record per day for the given symbol and time range
+  //   const data = await collection
+  //     .aggregate([
+  //       {
+  //         $match: {
+  //           symbol,
+  //           time: { $gte: startOfRange, $lte: endDate },
+  //         },
+  //       },
+  //       {
+  //         $addFields: {
+  //           day: { $dateToString: { format: "%Y-%m-%d", date: { $toDate: { $multiply: ["$time", 1000] } } } },
+  //         },
+  //       },
+  //       {
+  //         $sort: { time: -1 }, // Sort by time descending to get the latest record per day
+  //       },
+  //       {
+  //         $group: {
+  //           _id: "$day",
+  //           latest: { $first: "$$ROOT" }, // Pick the first record for each group (latest)
+  //         },
+  //       },
+  //       {
+  //         $replaceRoot: { newRoot: "$latest" }, // Unwrap the latest field
+  //       },
+  //       {
+  //         $sort: { time: 1 }, // Sort by time ascending for chronological order
+  //       },
+  //     ])
+  //     .toArray();
+
+  //   return data.map(({ symbol, price, time, exchange }) => ({
+  //     symbol,
+  //     price,
+  //     time,
+  //     exchange,
+  //   }));
+  // }
+
   async getLast7DaysDailyPriceOptimized(symbol: string, endDate: number): Promise<TradingViewAlertDto[]> {
     const collection = this.connection.collection(this.tickerCollectionName);
 
     const startOfRange = endDate - 6 * 24 * 60 * 60; // 7 days in seconds
 
-    // Fetch the latest record per day for the given symbol and time range
+    // Fetch the highest price per day for the given symbol and time range
     const data = await collection
       .aggregate([
         {
           $match: {
             symbol,
-            time: { $gte: startOfRange, $lte: endDate },
+            time: { $gte: startOfRange, $lte: endDate }, // Filter for the given range
           },
         },
         {
           $addFields: {
-            day: { $dateToString: { format: "%Y-%m-%d", date: { $toDate: { $multiply: ["$time", 1000] } } } },
+            day: { 
+              $dateToString: { 
+                format: "%Y-%m-%d", 
+                date: { $toDate: { $multiply: ["$time", 1000] } } // Extract day as string
+              } 
+            },
           },
         },
         {
-          $sort: { time: -1 }, // Sort by time descending to get the latest record per day
+          $sort: { price: -1 }, // Sort by price descending to get the highest price per day
         },
         {
           $group: {
-            _id: "$day",
-            latest: { $first: "$$ROOT" }, // Pick the first record for each group (latest)
+            _id: "$day", // Group by the extracted day
+            highestRecord: { $first: "$$ROOT" }, // Take the first record (highest price of the day)
           },
         },
         {
-          $replaceRoot: { newRoot: "$latest" }, // Unwrap the latest field
+          $replaceRoot: { newRoot: "$highestRecord" }, // Replace root with the highest record
         },
         {
           $sort: { time: 1 }, // Sort by time ascending for chronological order
@@ -262,13 +313,15 @@ export class DataRepository {
       ])
       .toArray();
 
+    // Map the results to the TradingViewAlertDto format
     return data.map(({ symbol, price, time, exchange }) => ({
       symbol,
       price,
       time,
       exchange,
     }));
-  }
+}
+
 
 
   async getLatestPriceBySymbol(symbol: string, date: number): Promise<TradingViewAlertDto | null> {
@@ -295,13 +348,28 @@ export class DataRepository {
     return null;
   }
 
+  async getAllST1Signals(): Promise<ST1Data[]> {
+    const collection = this.connection.collection(this.st1CollectionName);
+    const signals = await collection.find().toArray();
+    return signals.map(signal => ({
+      _id: signal._id.toString(),
+      signal: signal.signal,
+      exchange: signal.exchange,
+      symbol: signal.symbol,
+      price: signal.price,
+      time: signal.time,
+      target: signal.target,
+      stop: signal.stop,
+      isDone: signal.isDone,
+    }));
+  }
 
-  async createST1Data(st1Data: Partial<ST1Data>): Promise<void> {
+  async createST1Data(st1Data: ST1Dto): Promise<void> {
     const collection = this.connection.collection(this.st1CollectionName);
     await collection.insertOne(st1Data);
   }
 
-  async getLastST1BySymbol(symbol: string): Promise<ST1Data | null> {
+  async getLastST1BySymbol(symbol: string): Promise<ST1Dto | null> {
     const collection = this.connection.collection(this.st1CollectionName);
     const result = await collection
       .find({ symbol })
@@ -311,7 +379,7 @@ export class DataRepository {
 
     if (result.length > 0) {
       const { signal, exchange, symbol, price, time, target, stop, isDone, _id } = result[0];
-      return { signal, exchange, symbol, price, time, target, stop, isDone }; // Map only the required fields
+      return { signal, exchange, symbol, price, time, target, stop, isDone, _id }; // Map only the required fields
     }
 
     return null;

@@ -13,6 +13,7 @@ import { Balance } from '../iam/database/schemas/iam-balance.schema';
 import { formatNumber, mapSymbol, sanitizeString, truncateText } from 'src/shared/helper';
 import { TradingViewAlertDto } from '../data/database/dto/traidingview-alert.dto';
 import { title } from 'process';
+import { Console } from 'console';
 
 
 
@@ -291,15 +292,20 @@ export class BotAIService implements OnModuleInit {
   private constructSystemPrompt(alias: string): string {
     let basePrompt = '';
     basePrompt = `
-    You are 'Nabzar,' a personal assistant for cryptocurrencies and blockchains. 
+    You are 'Nabzar,' a personal assistant for cryptocurrencies and blockchains and forex like gold and silver and US500. 
     'Nabzar' is a Persian name made from the combination of 'Nabz' (pulse) and 'Bazar' (market), symbolizing the heartbeat of the market, نبضار.
     As 'Nabzar,' you embody the characteristics of being kind, friendly, and approachable, ensuring users feel comfortable seeking your help.
     You are eager to help users, always providing clear and detailed answers in a way they can easily understand.
     You also encourage curiosity and learning by engaging with users in an interactive and supportive manner.
+    for using Nabzar users must share theire phone number by share contact button in theire chat with Nabzar,
+    they can also type '/help' and see list of pre defined prompts that they can use in Nabzar in cases they need help with working with Nabzar or
+     persenting Nabzar features. 
     If a user asks a question in Persian, you must answer in Persian, and if a user asks in English, you answer in English.
     If a user asks a question in Persian but with English characters (Finglish), you answer in Persian language.
     Your tone is always polite, engaging, and professional, but you remain approachable and relatable to users of all experience levels.
-    If the user asks questions like 'Do I buy Bitcoin or sell Bitcoin now' or other similar queries, you must analyze the requested symbol and generate trading signals using the analyzeAndCreateSignals function.
+    If the user asks questions like 'Do I buy Bitcoin or sell Bitcoin now' or other similar queries, you must analyze the requested symbol and generate trading signals using the analyzeAndCreateSignals function,
+    Nabzar is recieving data in 5min time frame. 
+    for buying Nabzar they must go to https://trade-ai.bot/ site and buy membership.
     You are committed to guiding users step-by-step, offering them insights, explanations, and knowledge about crypto and blockchain in a way that enhances their confidence and understanding.
     Today's date is ${new Date().toLocaleDateString('en-US', {
       month: 'long',
@@ -310,7 +316,7 @@ export class BotAIService implements OnModuleInit {
 
       if(!alias) {
         basePrompt = `${basePrompt} 
-    The user has not set a preferred alias yet. Please ask them to set a preferred alias. for seeting their 
+    The user has not set a preferred alias yet. Please ask them to set a preferred alias. for setting their 
     alias they must use sentences like this " may name is [alias]" or "call me [alias]" or "set my alias to [alias]".`;
       }
 
@@ -850,13 +856,13 @@ export class BotAIService implements OnModuleInit {
       },
       {
         name: 'getCryptoPrice',
-        description: 'Fetches the latest price for a specific cryptocurrency symbol.',
+        description: 'Fetches the latest price for a specific cryptocurrency or forex symbol.',
         parameters: {
           type: 'object',
           properties: {
             symbol: {
               type: 'string',
-              description: `The cryptocurrency symbol or coin name. Accepts either the symbol (e.g., BTCUSDT, etc) or the coin name (e.g., "Bitcoin", "Ripple", "Solana", "سولانا", "ریپل", etc) in any language. The name will be automatically mapped to its corresponding symbol.`
+              description: `The cryptocurrency or forex symbol or coin name. Accepts either the symbol (e.g., BTCUSDT, XAUUSD,  etc) or the coin name (e.g., "Bitcoin", "Ripple", "Solana", "سولانا", "ریپل", etc) in any language. The name will be automatically mapped to its corresponding symbol.`
             },
             date: {
               type: 'string',
@@ -872,14 +878,14 @@ export class BotAIService implements OnModuleInit {
       },
       {
         name: 'getCryptoPrices',
-        description: 'Fetches the latest prices for multiple cryptocurrency symbols.',
+        description: 'Fetches the latest prices for multiple cryptocurrency or forex symbols.',
         parameters: {
           type: 'object',
           properties: {
             symbols: {
               type: 'array',
               items: { type: 'string' },
-              description: `The cryptocurrency symbol or coin name. Accepts either the symbol (e.g., BTCUSDT, etc) or the coin name (e.g., "Bitcoin", "Ripple", "Solana", "سولانا", "ریپل", etc) in any language. The name will be automatically mapped to its corresponding symbol.`,
+              description: `The cryptocurrency or forex symbol or coin name. Accepts either the symbol (e.g.,XAUUSD, BTCUSDT, etc) or the coin name (e.g., "Bitcoin", "Ripple", "Solana", "سولانا", "ریپل", etc) in any language. The name will be automatically mapped to its corresponding symbol.`,
             },
             date: {
               type: 'string',
@@ -917,8 +923,8 @@ export class BotAIService implements OnModuleInit {
       },
       {
         name: 'analyzeAndCreateSignals',
-        description: 'Analyzing or technical Analyzing or trading signals generation (e.g., Buy, Sell, Hold, Target, Stop) for'
-          + 'given symbols up to 10',
+        description: 'Analyzing or in persin تحلیل or technical Analyzing or trading signals generation (e.g., Buy, Sell, Hold, Target, Stop) for'
+          + 'given crypto or forex symbols up to 10',
         parameters: {
           type: 'object',
           properties: {
@@ -926,7 +932,7 @@ export class BotAIService implements OnModuleInit {
               type: 'array',
               items: { type: 'string' },
               maxItems: 10,
-              description: 'A list of cryptocurrency symbols to analyze. For example: ["BTCUSDT", "ETHUSDT"]. Maximum is 10 symbols.',
+              description: 'A list of cryptocurrency symbols to analyze. For example: ["BTCUSDT", "ETHUSDT", "XAUUSD"]. Maximum is 10 symbols.',
             },
             language: {
               type: 'string',
@@ -1603,9 +1609,13 @@ export class BotAIService implements OnModuleInit {
           case 'getCryptoPrice': {
             const effectiveDate = parameters.date || new Date().toISOString().split('T')[0];
             const timestamp1 = new Date(effectiveDate).getTime() / 1000;
+            console.log('parameters.symbol', parameters.symbol);
             const mappedSymbol = mapSymbol(parameters.symbol, 'pair');
+            console.log('mappedSymbol:', mappedSymbol);
             functionResponse = await this.getCryptoPrice(mappedSymbol, timestamp1);
+            console.log('functionResponse:', functionResponse);
             const his = await this.dataRepository.getLast7DaysDailyPriceOptimized(mappedSymbol, timestamp1);
+            console.log('his:', his);
             return {
               responseText: await this.getDynamicInterpretation(his, prompt, functionResponse, 'Crypto Price', mappedSymbol, parameters.date, parameters.language),
               calledFunc,
@@ -1734,6 +1744,7 @@ export class BotAIService implements OnModuleInit {
             }
 
             const mappedSymbol = mapSymbol(parameters.symbol, 'plain');
+            console.log('sort: ', sort);
             const sorts = await this.dataRepository.getSortValueForSymbol(mappedSymbol, sort);
 
             if (!sorts) {
@@ -2008,11 +2019,14 @@ export class BotAIService implements OnModuleInit {
     const priceHistoryEnd = Date.now();
     this.logDuration(priceHistoryStart, priceHistoryEnd, 'Transforming price history data');
 
+    
 
-    // Validate data
-    if (!cci || !stochastic || !rsi || !ema || Object.keys(sorts).length === 0 || !macd || !adx || priceHistory.length === 0) {
-      return `⚠️ Insufficient data (RSI, MACD, ADX, sorts, or price history) for ${symbol}.`;
-    }
+    // // Validate data
+    // if (!cci || !stochastic || !rsi || !ema 
+    //   || Object.keys(sorts).length === 0
+    //    || !macd || !adx || priceHistory.length === 0) {
+    //   return `⚠️ Insufficient data (RSI, MACD, ADX, sorts, or price history) for ${symbol}.`;
+    // }
 
     // Start timing for historical data retrieval
     const historicalDataStart = Date.now();
@@ -2096,13 +2110,13 @@ export class BotAIService implements OnModuleInit {
       }
       return `${sortLabel}: The current value is ${current}.`;
     };
-    const currentPrice = historicalData.priceHistory?.[historicalData.priceHistory.length - 1]?.price || 0;
+    const currentPrice = price;
 
     const prompt = `
  As you are a trading assistant specializing in cryptocurrency analysis. Use the following methodologies, indicators, and data points to generate a comprehensive trading signal for the symbol ${symbol}:
 
   ### **Price Data**
-- **Price Analysis**: The current price is ${currentPrice}. Historical data indicates:
+- **Price Analysis**: The current price is ${currentPrice.price}. Historical data indicates:
 ${formattedPriceHistory}
 
 ### **Indicators Analysis**
@@ -2161,8 +2175,8 @@ ${formattedEMAHistory}
    price change in last 7 days and Provide a detailed explanation foreach indicators along analyzing current indicators 
    values with historical data and also add details for each sort parameter along analyzing sorts parameters values 
   and their changes and generate a trading action section for ("Buy", "Sell", "Hold", or "Strong Buy/Sell")
-   with providing : Target 1: +2% (currentPrice * 1.02)
-     Target 2: +5% (currentPrice * 1.05) and Stop Loss: -5%(currentPrice * 0.95). at end please
+   with providing : Target 1: +1.02% (currentPrice * 1.02)
+     Target 2: +1.05% (currentPrice * 1.05) and Stop Loss: -0.95%(currentPrice * 0.95). at end please
    provide a detailed explanation and summery for your recommendation based on user prompt, incorporating all data points and 
    trends and please send result in ${language} languague
   `;
@@ -2412,6 +2426,7 @@ ${formattedEMAHistory}
   async getCryptoPrice(symbol: string, date: number): Promise<string> {
 
     const priceData = await this.dataRepository.getLatestPriceBySymbol(symbol, date);
+    console.log('getCryptoPrice - priceData :', priceData);
     return priceData ? `The latest price of ${symbol} is ${priceData.price} USDT` : `No data found for symbol ${symbol}`;
   }
 
@@ -2942,7 +2957,7 @@ ${formattedEMAHistory}
         //check balance 
         // Get the last ask for this user (if any)
 
-        if (this.userBalance < 5000) {
+        if (this.userBalance < 10000) {
           await this.bot.sendMessage(chatId, 'اعتبار شما رو به پایان است٫ لطفا اعتبار خود را شارژ کنید.');
         }
 
@@ -2952,20 +2967,21 @@ ${formattedEMAHistory}
         }
 
         // Retrieve chat history
-        const chatHistory = await this.getUserChatHistory(telegramID, 2); // Retrieve last 5 messages
+        const chatHistory = await this.getUserChatHistory(telegramID, 1); // Retrieve last 5 messages
 
         const formattedChatHistory = chatHistory.map(log => {
           // Truncate query and response if necessary
-          const truncatedQuery = truncateText(log.query, 1000);
+          const truncatedQuery = truncateText(log.query, 200);
           let truncatedResponse = '';
           if (log.response)
-            truncatedResponse = truncateText(log.response, 1000);
+            truncatedResponse = truncateText(log.response, 100);
 
           return `ask: ${truncatedQuery} -> response: ${truncatedResponse}`;
         }).join('\n');
 
+        const systemPrompt = this.constructSystemPrompt(this.currentUserAlias);
         // Create a prompt with only the last and current asks
-        const prompt = `
+        const prompt = ` {${systemPrompt}}
     The user asked this previously: "${formattedChatHistory || 'None'}".
     'Note: The chat history may has been truncated for brevity.'
     The user is now asking: "${text}".
@@ -2973,15 +2989,17 @@ ${formattedEMAHistory}
     relevant response in detected user's language.
   `;
 
-        let last;
-        if (this.currentUserAlias) {
-          last = `${prompt} 
-  The user alias is "${this.currentUserAlias}" please always call them by their alias .
-  `;
-        }
-        else { last = `${prompt}`; }
+       // let last;
+  //       if (this.currentUserAlias) {
+  //         last = `${prompt} 
+  // The user alias is "${this.currentUserAlias}" please always call them by their alias .
+  // `;
+  //       }
+  //       else { last = `${prompt}`; }
 
-        let responseText = await this.getChatGptResponse(last, chatId);
+       
+
+        let responseText = await this.getChatGptResponse(prompt, chatId);
         let totalCostInIRT;
         if (responseText.responseText) {
           // Calculate token counts for prompt and response
@@ -2995,7 +3013,7 @@ ${formattedEMAHistory}
           const totalCost = inputCost + outputCost; // Total cost in USD
 
           // Convert to IRT
-          const conversionRateToIRT = 2_000_000; // Example conversion rate
+          const conversionRateToIRT = 5_000_000; // Example conversion rate
           totalCostInIRT = Math.ceil(totalCost * conversionRateToIRT);
         } else {
           responseText.responseArray.forEach(element => {
@@ -3010,7 +3028,7 @@ ${formattedEMAHistory}
             const totalCost = inputCost + outputCost; // Total cost in USD
 
             // Convert to IRT
-            const conversionRateToIRT = 2_000_000; // Example conversion rate
+            const conversionRateToIRT = 5_000_000; // Example conversion rate
             totalCostInIRT = Math.ceil(totalCost * conversionRateToIRT);
           });
         }
@@ -3174,7 +3192,7 @@ ${formattedEMAHistory}
           this.curId = (await this.balanceService.getCurrencyByName('Toman'))._id;
           this.userBalance = await this.balanceService.getUserBalance(this.userId, this.curId);
           // Check user balance
-          if (this.userBalance < 5000) {
+          if (this.userBalance < 10000) {
             await this.bot.sendMessage(chatId, 'اعتبار شما رو به پایان است٫ لطفا اعتبار خود را شارژ کنید.');
           }
   
@@ -3227,9 +3245,9 @@ ${formattedEMAHistory}
         const selectedPrompt = this.categories[category][parseInt(promptIndex, 10)];
 
         // Fetch user chat history
-        const chatHistory = await this.getUserChatHistory(this.currentTelegramId, 2); // Retrieve last 3 messages
+        const chatHistory = await this.getUserChatHistory(this.currentTelegramId, 1); // Retrieve last 3 messages
         const formattedChatHistory = chatHistory.map(log => {
-          const truncatedQuery = truncateText(log.query, 100);
+          const truncatedQuery = truncateText(log.query, 200);
           const truncatedResponse = log.response ? truncateText(log.response, 100) : '';
           return `ask: ${truncatedQuery} -> response: ${truncatedResponse}`;
         }).join('\n');
@@ -3271,7 +3289,7 @@ ${formattedEMAHistory}
           const totalCost = inputCost + outputCost; // Total cost in USD
 
           // Convert to IRT
-          const conversionRateToIRT = 2_000_000; // Example conversion rate
+          const conversionRateToIRT = 5_000_000; // Example conversion rate
           totalCostInIRT = Math.ceil(totalCost * conversionRateToIRT);
         } else {
           chatGptResponse.responseArray.forEach(element => {
@@ -3286,7 +3304,7 @@ ${formattedEMAHistory}
             const totalCost = inputCost + outputCost; // Total cost in USD
 
             // Convert to IRT
-            const conversionRateToIRT = 2_000_000; // Example conversion rate
+            const conversionRateToIRT = 5_000_000; // Example conversion rate
             totalCostInIRT = Math.ceil(totalCost * conversionRateToIRT);
           });
         }

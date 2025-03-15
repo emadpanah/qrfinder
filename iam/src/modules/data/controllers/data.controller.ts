@@ -88,7 +88,7 @@ export class DataController {
 
     // Programmatically set target and stop values
     const { signal, price } = st1Data;
-    const multiplier = 0.02; // Example: 2% above/below the price
+    const multiplier = 0.12; // Example: 2% above/below the price
 
     st1Data.target = signal === 'Buy' ? price * (1 + multiplier) : price * (1 - multiplier);
     st1Data.stop = signal === 'Buy' ? price * (1 - multiplier) : price * (1 + multiplier);
@@ -107,15 +107,15 @@ export class DataController {
     }
 
     // Fetch the last signal for the same symbol
-    // const lastSignal = await this.dataService.getLastST1BySymbol(st1Data.symbol);
-
-    // if (lastSignal) {
-    //   const isTargetReached =
-    //     (lastSignal.signal === 'Buy' && price >= lastSignal.target) ||
-    //     (lastSignal.signal === 'Sell' && price <= lastSignal.target);
-
-    //     await this.dataService.updateST1IsDone(lastSignal._id.toString(), isTargetReached);
-    // }
+     const lastSignal = await this.dataService.getLastST1BySymbol(st1Data.symbol);
+       
+    if (lastSignal) {
+      const isTargetReached =
+        (lastSignal.signal === 'Buy' && price >= lastSignal.target) ||
+        (lastSignal.signal === 'Sell' && price <= lastSignal.target);
+          console.log('isTargetReached: ', isTargetReached);
+        await this.dataService.updateST1IsDone(lastSignal._id.toString(), isTargetReached);
+     }
 
     return { message: 'ST1 data received and saved successfully' };
 
