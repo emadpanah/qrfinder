@@ -67,12 +67,12 @@ export class LunarCrushService {
   //   }
 
   //@Cron('0 */28 * * * *') // Every 28 minutes
-  @Cron('0 0 1 1 *') //run every year
-  async fetchAndStoreAllSorts(): Promise<void> {
-    console.log(`Fetching all sorts at ${new Date().toISOString()}...`);
-    await this.fetchBatchData(this.sorts);
-    console.log(`Completed fetching all sorts.`);
-  }
+  // @Cron('0 0 1 1 *') //run every year
+  // async fetchAndStoreAllSorts(): Promise<void> {
+  //   console.log(`Fetching all sorts at ${new Date().toISOString()}...`);
+  //   await this.fetchBatchData(this.sorts);
+  //   console.log(`Completed fetching all sorts.`);
+  // }
 
 
   // private async fetchBatchData(sorts: string[]): Promise<void> {
@@ -108,30 +108,80 @@ export class LunarCrushService {
   //   }
   // }
 
-  private async fetchBatchData(sorts: string[]): Promise<void> {
-    for (const sort of sorts) {
-      try {
-        await new Promise((resolve) => setTimeout(resolve, 2000)); // 2s delay
-        const response = await this.fetchDataWithRetry(this.apiUrl, {
-          params: { sort, limit: 100 },
-          headers: { Authorization: `Bearer ${process.env.LUNARCRUSH_API_KEY}` },
-        });
+  // private async fetchBatchData(sorts: string[]): Promise<void> {
+  //   for (const sort of sorts) {
+  //     try {
+  //       await new Promise((resolve) => setTimeout(resolve, 2000)); // 2s delay
+  //       const response = await this.fetchDataWithRetry(this.apiUrl, {
+  //         params: { sort, limit: 100 },
+  //         headers: { Authorization: `Bearer ${process.env.LUNARCRUSH_API_KEY}` },
+  //       });
 
-        const data = response.data?.data;
+  //       const data = response.data?.data;
+  //       const timestamp = Math.floor(Date.now() / 1000);
+  //       for (const coin of data) {
+  //         await this.repository.createLunarPubCoin({
+  //           ...coin,
+  //           fetched_sort: sort,
+  //           fetched_at: timestamp,
+  //         });
+  //       }
+  //       console.log(`Fetched sort "${sort}" successfully.`);
+  //     } catch (error) {
+  //       console.error(`Error fetching sort "${sort}":`, error.message);
+  //     }
+  //   }
+  // }
+
+  @Cron('0 */30 * * * *') // Every 30 minutes
+  async fetchAndStoreCoinsNewApi(): Promise<void> {
+    console.log(`Fetching new LunarCrush coins at ${new Date().toISOString()}...`);
+  
+    try {
+      const response = await this.fetchDataWithRetry(
+        'https://lunarcrush.com/api4/public/coins/list/v1',
+        {
+          headers: {
+            Authorization: `Bearer ${process.env.LUNARCRUSH_API_KEY}`,
+          },
+        }
+      );
+  
+      const data = response.data?.data;
+      if (data && Array.isArray(data)) {
         const timestamp = Math.floor(Date.now() / 1000);
-        for (const coin of data) {
+  
+        // Sort by market cap DESC and limit to 200 items
+        const sortedData = data
+          .sort((a, b) => b.market_cap - a.market_cap)
+          .slice(0, 200);
+  
+        for (const coin of sortedData) {
           await this.repository.createLunarPubCoin({
             ...coin,
-            fetched_sort: sort,
+            market_dominance_prev: coin.market_dominance_prev || 0,
+            last_updated_price_by: coin.last_updated_price_by || '',
+            blockchains: (coin.blockchains || []).map((b: any) => ({
+              type: b.type || '',
+              network: b.network || '',
+              address: b.address || '',
+              decimals: b.decimals || 0,
+            })),
+            fetched_sort: '', // EMPTY STRING for new API
             fetched_at: timestamp,
           });
         }
-        console.log(`Fetched sort "${sort}" successfully.`);
-      } catch (error) {
-        console.error(`Error fetching sort "${sort}":`, error.message);
+  
+        console.log(`Saved top 200 market cap coins.`);
+      } else {
+        console.log('No coin data returned.');
       }
+    } catch (error) {
+      console.error('Error fetching coins from new API:', error.message);
     }
   }
+  
+
 
   //@Cron('0 */20 * * * *') // Every 20 minutes
   // @Cron('0 0 1 1 *') //run every year

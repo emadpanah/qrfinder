@@ -61,6 +61,9 @@ export class LunarCrushData {
   market_dominance: number;
 
   @Prop()
+  market_dominance_prev: number; // NEW FIELD
+
+  @Prop()
   galaxy_score: number;
 
   @Prop()
@@ -80,6 +83,7 @@ export class LunarCrushData {
 
   @Prop({ type: Array })
   blockchains: Array<{
+    type: string; // NEW FIELD
     network: string;
     address: string;
     decimals: number;
@@ -89,17 +93,21 @@ export class LunarCrushData {
   last_updated_price: number;
 
   @Prop()
+  last_updated_price_by: string; // NEW FIELD
+
+  @Prop()
   topic: string;
 
   @Prop()
   logo: string;
 
   @Prop()
-  fetched_sort: string; // Sort type (e.g., price, volume_24h, etc.)
+  fetched_sort: string;
 
   @Prop()
-  fetched_at: number; // Fetch timestamp
+  fetched_at: number;
 }
+
 
 export type LunarCrushDocument = LunarCrushData & Document;
 export const LunarCrushDataSchema = SchemaFactory.createForClass(LunarCrushData);

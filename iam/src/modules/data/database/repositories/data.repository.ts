@@ -417,39 +417,42 @@ export class DataRepository {
 
   async getTopCryptosByVolatility(limit: number): Promise<any[]> {
     const collection = this.connection.collection(this.lunarPubCoinCollectionName);
-
+  
     const results = await collection
-      .find({ fetched_sort: 'volatility' }) // Filter by fetched_sort: galaxy_score
-      .sort({ fetched_at: -1, volatility: -1 }) // Sort by latest fetched_at first, then by galaxy_score in descending order
+      .find({ $or: [{ fetched_sort: 'volatility' }, { fetched_sort: '', volatility: { $exists: true } }] })
+      .sort({ volatility: -1, fetched_at: -1 })
       .limit(limit)
       .toArray();
-
-    return results.map(({ _id, ...rest }) => rest); // Exclude the _id field
+  
+    return results.map(({ _id, ...rest }) => rest);
   }
+  
 
   async getTopCryptosByGalaxyScore(limit: number): Promise<any[]> {
     const collection = this.connection.collection(this.lunarPubCoinCollectionName);
-
+  
     const results = await collection
-      .find({ fetched_sort: 'galaxy_score' }) // Filter by fetched_sort: galaxy_score
-      .sort({ fetched_at: -1, galaxy_score: -1 }) // Sort by latest fetched_at first, then by galaxy_score in descending order
+      .find({ $or: [{ fetched_sort: 'galaxy_score' }, { fetched_sort: '', galaxy_score: { $exists: true } }] })
+      .sort({ galaxy_score: -1, fetched_at: -1 })
       .limit(limit)
       .toArray();
-
-    return results.map(({ _id, ...rest }) => rest); // Exclude the _id field
+  
+    return results.map(({ _id, ...rest }) => rest);
   }
+  
 
   async getTopCryptosByAltRank(limit: number): Promise<any[]> {
     const collection = this.connection.collection(this.lunarPubCoinCollectionName);
-
+  
     const results = await collection
-      .find({ fetched_sort: 'alt_rank' }) // Filter by fetched_sort: alt_rank
-      .sort({ fetched_at: -1, alt_rank: -1 }) // Sort by latest fetched_at first, then by alt_rank in descending order
+      .find({ $or: [{ fetched_sort: 'alt_rank' }, { fetched_sort: '', alt_rank: { $exists: true } }] })
+      .sort({ alt_rank: -1, fetched_at: -1 })
       .limit(limit)
       .toArray();
-
-    return results.map(({ _id, ...rest }) => rest); // Exclude the _id field
+  
+    return results.map(({ _id, ...rest }) => rest);
   }
+  
 
   async getMACDBySymbolAndDate(symbol: string, date?: number): Promise<MACDData | null> {
     const collection = this.connection.collection(this.macdCollectionName);
@@ -510,36 +513,45 @@ export class DataRepository {
 
   async getTopCoinsBySort(sort: string, limit: number): Promise<LunarCrushPublicCoinDto[]> {
     const collection = this.connection.collection(this.lunarPubCoinCollectionName);
-
+  
+    const sortField = this.resolveSortField(sort);
+    const query = {
+      $or: [
+        { fetched_sort: sort }, // legacy
+        { fetched_sort: '', [sortField]: { $exists: true } } // new API fallback
+      ]
+    };
+  
     const results = await collection
-      .find({ fetched_sort: sort })
-      .sort({ fetched_at: -1, [sort]: -1 })
+      .find(query)
+      .sort(sortField ? { [sortField]: -1, fetched_at: -1 } : { fetched_at: -1 })
       .limit(limit)
       .toArray();
-
-    // Map results to exclude `_id` and ensure type consistency
-    return results.map((doc) => {
-      const { _id, ...rest } = doc;
-      return rest as LunarCrushPublicCoinDto;
-    });
+  
+    return results.map(({ _id, ...rest }) => rest as LunarCrushPublicCoinDto);
   }
+  
 
   async getTopCoinsByCategoryAndSort(category: string, sort: string, limit: number): Promise<LunarCrushPublicCoinDto[]> {
     const collection = this.connection.collection(this.lunarPubCoinCollectionName);
-
+  
+    const sortField = this.resolveSortField(sort);
+    const query = {
+      $or: [
+        { categories: { $regex: category }, fetched_sort: sort },
+        { categories: { $regex: category }, fetched_sort: '', [sortField]: { $exists: true } }
+      ]
+    };
+  
     const results = await collection
-      //.find({ categories: category, fetched_sort: sort }) // Match the category and sort
-      .find({ categories: { $regex: category }, fetched_sort: sort })
-      .sort({ [sort]: -1, fetched_at: -1 }) // Sort by the sort field and the latest fetch time
-      .limit(limit) // Limit the number of results
+      .find(query)
+      .sort(sortField ? { [sortField]: -1, fetched_at: -1 } : { fetched_at: -1 })
+      .limit(limit)
       .toArray();
-
-    // Map results to exclude `_id` and ensure type consistency
-    return results.map((doc) => {
-      const { _id, ...rest } = doc;
-      return rest as LunarCrushPublicCoinDto;
-    });
+  
+    return results.map(({ _id, ...rest }) => rest as LunarCrushPublicCoinDto);
   }
+  
 
 
   async createDominanceData(dominanceData: Partial<DominanceData>): Promise<void> {
@@ -599,22 +611,24 @@ export class DataRepository {
       { upsert: true }
     );
   }
-  async getSortValueForSymbol(symbol: string, sort: string): Promise<LunarCrushPublicCoinDto | null> {
-    const collection = this.connection.collection(this.lunarPubCoinCollectionName);
 
-    // Find the latest document for this symbol with the requested sort parameter
-    const result = await collection
-      .find({ symbol: symbol.toUpperCase(), fetched_sort: sort })
-      .sort({ fetched_at: -1 })
-      .limit(1)
-      .toArray();
+  private resolveSortField(sort: string): string | null {
+    const sortMap: Record<string, string> = {
+      volume_24h: 'volume_24h',
+      volatility: 'volatility',
+      percent_change_24h: 'percent_change_24h',
+      market_cap: 'market_cap',
+      interactions_24h: 'interactions_24h',
+      social_dominance: 'social_dominance',
+      market_dominance: 'market_dominance',
+      galaxy_score: 'galaxy_score',
+      alt_rank: 'alt_rank',
+      sentiment: 'sentiment',
+    };
+    return sortMap[sort] || null;
+  }
 
-    if (result.length === 0) {
-      return null;
-    }
-
-    const doc = result[0];
-
+  private mapToDto(doc: any): LunarCrushPublicCoinDto {
     return {
       id: doc.id,
       symbol: doc.symbol,
@@ -628,41 +642,95 @@ export class DataRepository {
       percent_change_1h: doc.percent_change_1h,
       percent_change_24h: doc.percent_change_24h,
       percent_change_7d: doc.percent_change_7d,
+      percent_change_30d: doc.percent_change_30d,
       market_cap: doc.market_cap,
       market_cap_rank: doc.market_cap_rank,
       interactions_24h: doc.interactions_24h,
       social_volume_24h: doc.social_volume_24h,
       social_dominance: doc.social_dominance,
       market_dominance: doc.market_dominance,
+      market_dominance_prev: doc.market_dominance_prev || 0,
       galaxy_score: doc.galaxy_score,
       galaxy_score_previous: doc.galaxy_score_previous,
       alt_rank: doc.alt_rank,
       alt_rank_previous: doc.alt_rank_previous,
       sentiment: doc.sentiment,
-      categories: doc.categories,
-      blockchains: doc.blockchains,
-      percent_change_30d: doc.percent_change_30d,
+      categories: doc.categories || '',
+      blockchains: (doc.blockchains || []).map((b: any) => ({
+        type: b.type || '',
+        network: b.network || '',
+        address: b.address || '',
+        decimals: b.decimals || 0,
+      })),
       last_updated_price: doc.last_updated_price,
+      last_updated_price_by: doc.last_updated_price_by || '',
       topic: doc.topic,
       logo: doc.logo,
       fetched_sort: doc.fetched_sort,
       fetched_at: doc.fetched_at,
     };
   }
+  
+  
 
-  async getSortValueForSymbols(
-    symbols: string[],
-    sort: string
-  ): Promise<(LunarCrushPublicCoinDto | null)[]> {
+  async getSortValueForSymbol(symbol: string, sort: string): Promise<LunarCrushPublicCoinDto | null> {
+    if (!symbol) {
+      console.error("getSortValueForSymbol: symbol is null or undefined");
+      return null;
+    }
+  
     const collection = this.connection.collection(this.lunarPubCoinCollectionName);
-
-    // Convert symbols to uppercase for consistent querying
+  
+    console.log("sort :", sort);
+    const transformedSymbol = symbol.toUpperCase();
+    const legacySortFilter = { symbol: transformedSymbol, fetched_sort: sort };
+    const newApiFilter = { symbol: transformedSymbol, fetched_sort: '' };
+  
+    const sortField = this.resolveSortField(sort);
+    console.log("sortField :", sortField);
+  
+    const query = {
+      $or: [
+        legacySortFilter,
+        { ...newApiFilter },
+      ],
+    };
+  
+    const result = await collection
+      .find(query)
+      .sort(sortField ? { [sortField]: -1, fetched_at: -1 } : { fetched_at: -1 })
+      .limit(1)
+      .toArray();
+  
+    if (result.length === 0) {
+      console.log("result :", result);
+      return null;
+    }
+  
+    return this.mapToDto(result[0]);
+  }
+  
+  
+  
+  async getSortValueForSymbols(symbols: string[], sort: string): Promise<(LunarCrushPublicCoinDto | null)[]> {
+    const collection = this.connection.collection(this.lunarPubCoinCollectionName);
     const upperSymbols = symbols.map((s) => s.toUpperCase());
-
-    // Query all symbols in one go, fetching the latest document for each symbol
+  
+    const legacySortFilter = { symbol: { $in: upperSymbols }, fetched_sort: sort };
+    const newApiFilter = { symbol: { $in: upperSymbols }, fetched_sort: '' };
+  
+    const sortField = this.resolveSortField(sort);
+  
     const pipeline = [
-      { $match: { symbol: { $in: upperSymbols }, fetched_sort: sort } },
-      { $sort: { symbol: 1, fetched_at: -1 } },
+      {
+        $match: {
+          $or: [
+            legacySortFilter,
+            newApiFilter,
+          ],
+        },
+      },
+      { $sort: sortField ? { symbol: 1, [sortField]: -1, fetched_at: -1 } : { symbol: 1, fetched_at: -1 } },
       {
         $group: {
           _id: "$symbol",
@@ -670,98 +738,70 @@ export class DataRepository {
         },
       },
     ];
-
+  
     const docs = await collection.aggregate(pipeline).toArray();
-
-    // Create a map for quick lookup
+  
     const docMap: { [symbol: string]: any } = {};
     docs.forEach((d) => {
       docMap[d._id] = d.doc;
     });
-
-    // Map results to the required format
+  
     return symbols.map((symbol) => {
-      const upperSymbol = symbol.toUpperCase();
-      const doc = docMap[upperSymbol];
-      if (!doc) {
-        return null;
-      }
-      return {
-        id: doc.id,
-        symbol: doc.symbol,
-        name: doc.name,
-        price: doc.price,
-        price_btc: doc.price_btc,
-        volume_24h: doc.volume_24h,
-        volatility: doc.volatility,
-        circulating_supply: doc.circulating_supply,
-        max_supply: doc.max_supply,
-        percent_change_1h: doc.percent_change_1h,
-        percent_change_24h: doc.percent_change_24h,
-        percent_change_7d: doc.percent_change_7d,
-        market_cap: doc.market_cap,
-        market_cap_rank: doc.market_cap_rank,
-        interactions_24h: doc.interactions_24h,
-        social_volume_24h: doc.social_volume_24h,
-        social_dominance: doc.social_dominance,
-        market_dominance: doc.market_dominance,
-        galaxy_score: doc.galaxy_score,
-        galaxy_score_previous: doc.galaxy_score_previous,
-        alt_rank: doc.alt_rank,
-        alt_rank_previous: doc.alt_rank_previous,
-        sentiment: doc.sentiment,
-        categories: doc.categories || '',
-        blockchains: doc.blockchains || [],
-        percent_change_30d: doc.percent_change_30d,
-        last_updated_price: doc.last_updated_price,
-        topic: doc.topic,
-        logo: doc.logo,
-        fetched_sort: doc.fetched_sort,
-        fetched_at: doc.fetched_at,
-      };
+      const doc = docMap[symbol.toUpperCase()];
+      return doc ? this.mapToDto(doc) : null;
     });
   }
+  
+  
 
-  //this method is for analyzing 
   async getAllSortsForSymbol(symbol: string): Promise<Record<string, any>> {
-    const transformedSymbol = symbol.replace(/USDT$/, ''); // Remove 'USDT' from the symbol
+    const transformedSymbol = symbol.replace(/USDT$/, '').replace(/USD$/, '').toUpperCase();
     const collection = this.connection.collection(this.lunarPubCoinCollectionName);
-    console.log("symbol : ", transformedSymbol);
-    const results = await collection
-      .find({ symbol: transformedSymbol.toUpperCase() }) // Use transformed symbol
+    console.log("symbol :", transformedSymbol);
+  
+    // Search for both old & new data
+    const legacyDocs = await collection
+      .find({ symbol: transformedSymbol, fetched_sort: { $ne: '' } })
       .sort({ fetched_at: -1 })
-      .limit(1)
       .toArray();
-
-    if (results.length === 0) {
-      return {};
+  
+    const newApiDoc = await collection
+      .findOne({ symbol: transformedSymbol, fetched_sort: '' }, { sort: { fetched_at: -1 } });
+  
+    // Merge all legacy docs by sort into a map
+    const legacyMap: Record<string, any> = {};
+    for (const doc of legacyDocs) {
+      legacyMap[doc.fetched_sort] = doc;
     }
-
-    const data = results[0];
-    return {
-      price: data.price || 0,
-      volume_24h: data.volume_24h || 0,
-      volatility: data.volatility || 0,
-      circulating_supply: data.circulating_supply || 0,
-      max_supply: data.max_supply || 0,
-      percent_change_1h: data.percent_change_1h || 0,
-      percent_change_24h: data.percent_change_24h || 0,
-      percent_change_7d: data.percent_change_7d || 0,
-      percent_change_30d: data.percent_change_30d || 0,
-      market_cap: data.market_cap || 0,
-      market_cap_rank: data.market_cap_rank || 0,
-      interactions_24h: data.interactions_24h || 0,
-      social_volume_24h: data.social_volume_24h || 0,
-      social_dominance: data.social_dominance || 0,
-      market_dominance: data.market_dominance || 0,
-      market_dominance_prev: data.market_dominance_prev || 0,
-      galaxy_score: data.galaxy_score || 0,
-      galaxy_score_previous: data.galaxy_score_previous || 0,
-      alt_rank: data.alt_rank || 0,
-      alt_rank_previous: data.alt_rank_previous || 0,
-      sentiment: data.sentiment || 0,
+  
+    // Priority: if new API exists, grab data from there, otherwise fallback to legacy
+    const result: Record<string, any> = {
+      price: newApiDoc?.price ?? legacyMap['price']?.price ?? 0,
+      volume_24h: newApiDoc?.volume_24h ?? legacyMap['volume_24h']?.volume_24h ?? 0,
+      volatility: newApiDoc?.volatility ?? legacyMap['volatility']?.volatility ?? 0,
+      circulating_supply: newApiDoc?.circulating_supply ?? legacyMap['volume_24h']?.circulating_supply ?? 0,
+      max_supply: newApiDoc?.max_supply ?? legacyMap['volume_24h']?.max_supply ?? 0,
+      percent_change_1h: newApiDoc?.percent_change_1h ?? legacyMap['percent_change_24h']?.percent_change_1h ?? 0,
+      percent_change_24h: newApiDoc?.percent_change_24h ?? legacyMap['percent_change_24h']?.percent_change_24h ?? 0,
+      percent_change_7d: newApiDoc?.percent_change_7d ?? legacyMap['percent_change_24h']?.percent_change_7d ?? 0,
+      percent_change_30d: newApiDoc?.percent_change_30d ?? legacyMap['percent_change_24h']?.percent_change_30d ?? 0,
+      market_cap: newApiDoc?.market_cap ?? legacyMap['market_cap']?.market_cap ?? 0,
+      market_cap_rank: newApiDoc?.market_cap_rank ?? legacyMap['market_cap']?.market_cap_rank ?? 0,
+      interactions_24h: newApiDoc?.interactions_24h ?? legacyMap['interactions_24h']?.interactions_24h ?? 0,
+      social_volume_24h: newApiDoc?.social_volume_24h ?? legacyMap['social_dominance']?.social_volume_24h ?? 0,
+      social_dominance: newApiDoc?.social_dominance ?? legacyMap['social_dominance']?.social_dominance ?? 0,
+      market_dominance: newApiDoc?.market_dominance ?? legacyMap['market_dominance']?.market_dominance ?? 0,
+      market_dominance_prev: newApiDoc?.market_dominance_prev ?? 0,
+      galaxy_score: newApiDoc?.galaxy_score ?? legacyMap['galaxy_score']?.galaxy_score ?? 0,
+      galaxy_score_previous: newApiDoc?.galaxy_score_previous ?? 0,
+      alt_rank: newApiDoc?.alt_rank ?? legacyMap['alt_rank']?.alt_rank ?? 0,
+      alt_rank_previous: newApiDoc?.alt_rank_previous ?? 0,
+      sentiment: newApiDoc?.sentiment ?? legacyMap['sentiment']?.sentiment ?? 0,
     };
+  
+    return result;
   }
+  
 
   // async getLast7DaysDailyIndicator(
   //   symbol: string,

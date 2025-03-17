@@ -114,7 +114,7 @@ export function mapSymbol(input: string, mode: 'pair' | 'plain'): string {
 
   //input = input.trim().toLowerCase().replace(/usd$/, 'usdt');
     const mappedSymbol = symbolMapping[input];
-
+    //console.log("mappedSymbol map :", mappedSymbol);
     if (!mappedSymbol) return null; // Return null if no mapping found
 
     // For plain mode, strip "USDT" if present

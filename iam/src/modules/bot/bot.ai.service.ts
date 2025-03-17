@@ -1329,7 +1329,7 @@ export class BotAIService implements OnModuleInit {
           case 'getEMAForDate': {
             const effectiveDate = parameters.date || new Date().toISOString().split('T')[0];
             const timestamp = new Date(effectiveDate).getTime() / 1000;
-            const mappedSymbol = mapSymbol(parameters.symbol, 'pair');
+            const mappedSymbol = mapSymbol(parameters.symbol.toLowerCase(), 'pair');
             const emaData = await this.dataRepository.getEMABySymbolAndDate(mappedSymbol, timestamp);
             const his = await this.dataRepository.getLast7DaysEMA(mappedSymbol, timestamp);
             return {
@@ -1362,7 +1362,7 @@ export class BotAIService implements OnModuleInit {
             // case 'getSMAForDate': {
             //   const effectiveDate = parameters.date || new Date().toISOString().split('T')[0];
             //   const timestamp = new Date(effectiveDate).getTime() / 1000;
-            //   const mappedSymbol = mapSymbol(parameters.symbol, 'pair');
+            //   const mappedSymbol = mapSymbol(parameters.symbol.toLowerCase(), 'pair');
             //   const smaData = await this.dataRepository.getSMABySymbolAndDate(mappedSymbol, timestamp);
             //   const his = await this.dataRepository.getLast7Days(mappedSymbol, 'SMA', timestamp);
             //   return {
@@ -1396,7 +1396,7 @@ export class BotAIService implements OnModuleInit {
           case 'getStochasticForDate': {
             const effectiveDate = parameters.date || new Date().toISOString().split('T')[0];
             const timestamp = new Date(effectiveDate).getTime() / 1000;
-            const mappedSymbol = mapSymbol(parameters.symbol, 'pair');
+            const mappedSymbol = mapSymbol(parameters.symbol.toLowerCase(), 'pair');
             const stochasticData = await this.dataRepository.getStochasticBySymbolAndDate(mappedSymbol, timestamp);
             const his = await this.dataRepository.getLast7DaysStochastic(mappedSymbol, timestamp);
             return {
@@ -1429,7 +1429,7 @@ export class BotAIService implements OnModuleInit {
           case 'getCCIForDate': {
             const effectiveDate = parameters.date || new Date().toISOString().split('T')[0];
             const timestamp = new Date(effectiveDate).getTime() / 1000;
-            const mappedSymbol = mapSymbol(parameters.symbol, 'pair');
+            const mappedSymbol = mapSymbol(parameters.symbol.toLowerCase(), 'pair');
             const cciData = await this.dataRepository.getCCIBySymbolAndDate(mappedSymbol, timestamp);
             const his = await this.dataRepository.getLast7DaysCCI(mappedSymbol, timestamp);
             return {
@@ -1462,7 +1462,7 @@ export class BotAIService implements OnModuleInit {
           case 'getADXForDate': {
             const effectiveDate = parameters.date || new Date().toISOString().split('T')[0];
             const timestamp = new Date(effectiveDate).getTime() / 1000;
-            const mappedSymbol = mapSymbol(parameters.symbol, 'pair');
+            const mappedSymbol = mapSymbol(parameters.symbol.toLowerCase(), 'pair');
             const adxData = await this.dataRepository.getADXBySymbolAndDate(mappedSymbol, timestamp);
             const his = await this.dataRepository.getLast7DaysADX(mappedSymbol, timestamp);
             return {
@@ -1477,7 +1477,7 @@ export class BotAIService implements OnModuleInit {
 
           case 'getMultipleIndicatorSymbol': {
             // Map the symbol from the input
-            const mappedSymbol = mapSymbol(parameters.symbol, 'pair');
+            const mappedSymbol = mapSymbol(parameters.symbol.toLowerCase(), 'pair');
 
             // Fetch requested indicators
             const indicatorResults = await Promise.all(
@@ -1548,7 +1548,7 @@ export class BotAIService implements OnModuleInit {
             // Set the default date if not provided
             const effectiveDate = parameters.date || new Date().toISOString().split('T')[0];
             const timestamp1 = new Date(effectiveDate).getTime() / 1000;
-            const mappedSymbol = mapSymbol(parameters.symbol, 'pair');
+            const mappedSymbol = mapSymbol(parameters.symbol.toLowerCase(), 'pair');
             functionResponse = await this.getRSIForDate(mappedSymbol, timestamp1);
 
             // // Identify new or unexpected parameters
@@ -1579,7 +1579,7 @@ export class BotAIService implements OnModuleInit {
           case 'getMACDForDate':
             const ddd = parameters.date || new Date().toISOString().split('T')[0];
             const timestamp2 = new Date(ddd).getTime() / 1000;
-            const mappedSymbol = mapSymbol(parameters.symbol, 'pair');
+            const mappedSymbol = mapSymbol(parameters.symbol.toLowerCase(), 'pair');
             functionResponse = await this.getMACDForDate(mappedSymbol, timestamp2);
             const his = await this.dataRepository.getLast7DaysMACD(mappedSymbol, timestamp2);
             return {
@@ -1610,7 +1610,7 @@ export class BotAIService implements OnModuleInit {
             const effectiveDate = parameters.date || new Date().toISOString().split('T')[0];
             const timestamp1 = new Date(effectiveDate).getTime() / 1000;
             console.log('parameters.symbol', parameters.symbol);
-            const mappedSymbol = mapSymbol(parameters.symbol, 'pair');
+            const mappedSymbol = mapSymbol(parameters.symbol.toLowerCase(), 'pair');
             console.log('mappedSymbol:', mappedSymbol);
             functionResponse = await this.getCryptoPrice(mappedSymbol, timestamp1);
             console.log('functionResponse:', functionResponse);
@@ -1742,9 +1742,10 @@ export class BotAIService implements OnModuleInit {
                 advertingMsgId
               };
             }
-
-            const mappedSymbol = mapSymbol(parameters.symbol, 'plain');
-            console.log('sort: ', sort);
+            //console.log('parameters.symbol :', parameters.symbol);
+            const mappedSymbol = mapSymbol(parameters.symbol.toLowerCase(), 'plain');
+            //console.log('sort: ', sort);
+            //console.log('mappedSymbol', mappedSymbol);
             const sorts = await this.dataRepository.getSortValueForSymbol(mappedSymbol, sort);
 
             if (!sorts) {
@@ -1788,7 +1789,7 @@ export class BotAIService implements OnModuleInit {
             }
 
             // Map symbols and fetch data
-            const mappedSymbols = symbols.map((symbol) => mapSymbol(symbol, 'plain'));
+            const mappedSymbols = symbols.map((symbol) => mapSymbol(symbol.toLowerCase(), 'plain'));
             const sorts = await this.dataRepository.getSortValueForSymbols(mappedSymbols, sort);
 
             // Check if no data is found for any symbol
@@ -1848,7 +1849,7 @@ export class BotAIService implements OnModuleInit {
           case 'getLatestNewsBySymbol': {
             const { limit = 10, language } = parameters; // Include language
             let news;
-            const mappedSymbol = mapSymbol(parameters.symbol, 'plain');
+            const mappedSymbol = mapSymbol(parameters.symbol.toLowerCase(), 'plain');
             if (mappedSymbol) {
               news = await this.dataRepository.getLatestNews(limit, mappedSymbol);
 
@@ -1996,7 +1997,7 @@ export class BotAIService implements OnModuleInit {
       : { value: "0", value_classification: "Neutral" };
 
     let responseText = ``;
-    const symbol = mapSymbol(sym, 'pair');
+    const symbol = mapSymbol(sym.toLowerCase(), 'pair');
 
     const indicatorsStart = Date.now();
     const [rsi, sorts, macd, adx, cci, stochastic, ema, price] = await Promise.all([
@@ -2390,7 +2391,7 @@ ${formattedEMAHistory}
     // Fetch the latest price for each symbol
     const prices = await Promise.all(
       symbols.map(async (symbol) => {
-        const mappedSymbol = mapSymbol(symbol, 'pair');
+        const mappedSymbol = mapSymbol(symbol.toLowerCase(), 'pair');
         const latestPrice = await this.dataRepository.getLatestPriceBySymbol(mappedSymbol, date);
         if (latestPrice) {
           return `${latestPrice.symbol}: ${latestPrice.price} USDT`;
@@ -2518,7 +2519,7 @@ ${formattedEMAHistory}
 
   async getRSIForDate(symbol: string, date: number) {
     // Map common names to symbols
-    //const mappedSymbol = mapSymbol(symbol, 'pair');
+    //const mappedSymbol = mapSymbol(symbol.toLowerCase(), 'pair');
     const functionResponse = await this.dataRepository.getRSIBySymbolAndDate(symbol, date);
     return functionResponse
       ? `The RSI for ${symbol} on ${date} was ${functionResponse.RSI}.`
@@ -2602,7 +2603,7 @@ ${formattedEMAHistory}
     // Example:
     const results = await Promise.all(symbols.map(async (sym) => {
       // Map common names to symbols
-      const mappedSymbol = mapSymbol(sym, 'pair');
+      const mappedSymbol = mapSymbol(sym.toLowerCase(), 'pair');
       const data = await this.dataRepository.getRSIBySymbolAndDate(mappedSymbol, date);
       if (data && data.RSI) {
         return `${mappedSymbol}: RSI ${data.RSI}`;
@@ -2625,7 +2626,7 @@ ${formattedEMAHistory}
     // TODO: Implement logic to fetch MACD for multiple symbols
     const results = await Promise.all(symbols.map(async (sym) => {
       // Map common names to symbols
-      const mappedSymbol = mapSymbol(sym, 'pair');
+      const mappedSymbol = mapSymbol(sym.toLowerCase(), 'pair');
       const data = await this.dataRepository.getMACDBySymbolAndDate(mappedSymbol, date);
       if (data) {
         return `${mappedSymbol}: MACD: ${data.MACD}, Signal: ${data.Signal}, Histogram: ${data.Histogram}`;
