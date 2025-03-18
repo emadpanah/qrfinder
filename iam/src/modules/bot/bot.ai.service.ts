@@ -107,7 +107,7 @@ export class BotAIService implements OnModuleInit {
       'معرفی ابزار TradingView',
       'انواع چارت‌ها و نمودارها (کندل‌استیک، میله‌ای، خطی)',
       'آموزش تحلیل ساده خطوط حمایت و مقاومت',
-      
+
       // Intermediate Concepts
       'معرفی انواع ربات‌های معامله‌گری',
       'ربات‌های معامله‌گری چگونه کار می‌کنند؟',
@@ -115,7 +115,7 @@ export class BotAIService implements OnModuleInit {
       'آشنایی با مفهوم کپی‌ترید',
       'بررسی روش‌های مدیریت ریسک در معاملات',
       'آشنایی با استراتژی‌های بلندمدت و کوتاه‌مدت',
-      
+
       // Advanced Education
       'چگونه اخبار بر بازار کریپتو اثر می‌گذارند؟',
       'نحوه تشخیص احساسات مثبت و منفی در اخبار',
@@ -126,26 +126,26 @@ export class BotAIService implements OnModuleInit {
       'چگونه ارزهای دیجیتال برتر را بر اساس داده‌های سوشال پیدا کنیم؟',
 
       // Learning about crypto types
-    'ارزهای دیجیتال DeFi چیست؟',
-    'توکن‌های هوش مصنوعی (AI) چیست؟',
-    'توکن‌های NFT چیست؟',
-    'توکن‌های Gaming چیست؟',
-    'استیبل‌کوین چیست؟',
-    'توکن‌های Real-World Assets چیست؟',
-    'اکوسیستم بیت‌کوین چیست؟',
-    'لایه اول (Layer 1) چیست؟',
-    'لایه دوم (Layer 2) چیست؟',
-    'میم‌کوین (MemeCoin) چیست؟',
-    'توکن‌های SocialFi چیست؟',
-    'توکن‌های DAO چیست؟',
-    'توکن‌های ورزشی (Sports Tokens) چیست؟',
-    'توکن‌های Gambling چیست؟',
-    'توکن‌های Fan Tokens چیست؟',
-    'توکن‌های Web3 چیست؟',
-    'توکن‌های مربوط به حوزه Metaverse چیست؟',
-    'توکن‌های IoT چیست؟',
-    'توکن‌های Security چیست؟',
-    'توکن‌های Privacy چیست؟',
+      'ارزهای دیجیتال DeFi چیست؟',
+      'توکن‌های هوش مصنوعی (AI) چیست؟',
+      'توکن‌های NFT چیست؟',
+      'توکن‌های Gaming چیست؟',
+      'استیبل‌کوین چیست؟',
+      'توکن‌های Real-World Assets چیست؟',
+      'اکوسیستم بیت‌کوین چیست؟',
+      'لایه اول (Layer 1) چیست؟',
+      'لایه دوم (Layer 2) چیست؟',
+      'میم‌کوین (MemeCoin) چیست؟',
+      'توکن‌های SocialFi چیست؟',
+      'توکن‌های DAO چیست؟',
+      'توکن‌های ورزشی (Sports Tokens) چیست؟',
+      'توکن‌های Gambling چیست؟',
+      'توکن‌های Fan Tokens چیست؟',
+      'توکن‌های Web3 چیست؟',
+      'توکن‌های مربوط به حوزه Metaverse چیست؟',
+      'توکن‌های IoT چیست؟',
+      'توکن‌های Security چیست؟',
+      'توکن‌های Privacy چیست؟',
     ],
     'تنظیمات کاربری': [
       //'تنظیم نام مستعار',
@@ -314,11 +314,11 @@ export class BotAIService implements OnModuleInit {
     })}.
   `;
 
-      if(!alias) {
-        basePrompt = `${basePrompt} 
+    if (!alias) {
+      basePrompt = `${basePrompt} 
     The user has not set a preferred alias yet. Please ask them to set a preferred alias. for setting their 
     alias they must use sentences like this " may name is [alias]" or "call me [alias]" or "set my alias to [alias]".`;
-      }
+    }
 
     return basePrompt;
   }
@@ -1984,7 +1984,7 @@ export class BotAIService implements OnModuleInit {
     const effectiveDate = new Date().toISOString().split('T')[0];
     const timestamp1 = new Date(effectiveDate).getTime() / 1000;
 
-  
+
 
     // Start timing for FNG data retrieval
     const fngStart = Date.now();
@@ -2020,7 +2020,7 @@ export class BotAIService implements OnModuleInit {
     const priceHistoryEnd = Date.now();
     this.logDuration(priceHistoryStart, priceHistoryEnd, 'Transforming price history data');
 
-    
+
 
     // // Validate data
     // if (!cci || !stochastic || !rsi || !ema 
@@ -2824,9 +2824,17 @@ ${formattedEMAHistory}
     this.botUsername = me.username;
     this.logger.log(`Bot username: @${this.botUsername}`);
 
+
+
+
+
+
+
     this.bot.on('message', async (msg) => {
       const chatId = msg.chat.id;
       const text = msg.text?.toLowerCase();
+
+
 
       // Extract user info from the Telegram message
       //console.log('start');
@@ -2844,6 +2852,49 @@ ${formattedEMAHistory}
       //console.log('telegramID :', telegramID);
       // Save the Telegram ID locally for chat saving
       this.currentTelegramId = telegramID;
+
+      //console.log('telegramID :', telegramID);
+      const adminTelegramId = process.env.TELEGRAM_ADMIN_ID; // Replace this with your Telegram ID as a string
+      // Example inside your bot handler, where you want to fetch the active chatId for a telegramID
+      if (telegramID === adminTelegramId) {
+
+        const matches = msg.text.match(/send users:"([^"]+)"\s+(\w+)\s+(\w+)/);
+        if (matches) {
+          const idsString = matches[1];
+          const symbol = matches[2];
+          const language = matches[3];
+
+          const telegramIDs = idsString.split(',').map(id => id.trim());
+          const successList = [];
+
+          for (const id of telegramIDs) {
+            const loginInfo = await this.iamService.findLatestLoginByTelegramId(id);
+            if (loginInfo?.chatId) {
+              const analysis = await this.analyzeAndCreateSignals([symbol], language, '');
+              await this.bot.sendMessage(loginInfo.chatId, analysis);
+              successList.push(id);
+
+              // Log into UserChatLog for each user
+              const chatLog: UserChatLogDto = {
+                telegramId: telegramID,
+                calledFunction: 'analyzeAndCreateSignals',
+                query: `admin-cmd: send users: ${successList.join(',')} ${symbol} ${language}`,
+                response: analysis,
+                queryType: 'admin-broadcast',
+                newParameters: [],
+                save_at: Math.floor(Date.now() / 1000),
+              };
+              await this.dataRepository.saveUserChatLog(chatLog);
+
+            }
+          }
+
+          await this.bot.sendMessage(chatId, `${symbol.toUpperCase()} analysis sent to: ${successList.join(', ')}`);
+          return;
+        }
+      }
+
+
 
       // Register or login the user
       const userInsertDto = {
@@ -2962,8 +3013,7 @@ ${formattedEMAHistory}
           await this.bot.sendMessage(chatId, 'اعتبار شما رو به پایان است٫ لطفا اعتبار خود را شارژ کنید.');
         }
 
-        if (this.userBalance < 1000)
-        {
+        if (this.userBalance < 1000) {
           return;
         }
 
@@ -2990,15 +3040,15 @@ ${formattedEMAHistory}
     relevant response in detected user's language.
   `;
 
-       // let last;
-  //       if (this.currentUserAlias) {
-  //         last = `${prompt} 
-  // The user alias is "${this.currentUserAlias}" please always call them by their alias .
-  // `;
-  //       }
-  //       else { last = `${prompt}`; }
+        // let last;
+        //       if (this.currentUserAlias) {
+        //         last = `${prompt} 
+        // The user alias is "${this.currentUserAlias}" please always call them by their alias .
+        // `;
+        //       }
+        //       else { last = `${prompt}`; }
 
-       
+
 
         let responseText = await this.getChatGptResponse(prompt, chatId);
         let totalCostInIRT;
@@ -3166,8 +3216,8 @@ ${formattedEMAHistory}
         const telegramLastName = from.last_name || '';
         const telegramLanCode = from.language_code || 'en';
 
-       
-       
+
+
         // Register or login the user
         const userInsertDto = {
           telegramID: this.currentTelegramId,
@@ -3196,9 +3246,8 @@ ${formattedEMAHistory}
           if (this.userBalance < 10000) {
             await this.bot.sendMessage(chatId, 'اعتبار شما رو به پایان است٫ لطفا اعتبار خود را شارژ کنید.');
           }
-  
-          if (this.userBalance < 1000)
-          {
+
+          if (this.userBalance < 1000) {
             return;
           }
 
@@ -3448,7 +3497,7 @@ ${formattedEMAHistory}
     // });
   }
 
-  
+
 
   private async sendChildMenu(chatId: number, category: string) {
     const prompts = this.categories[category];

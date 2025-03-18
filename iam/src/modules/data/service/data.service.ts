@@ -68,6 +68,9 @@ export class DataService {
 
   // src/modules/data/service/data.service.ts
 
+
+  
+
 async updateAllSignalsAndCalculateWinRate(): Promise<{ winRate: number; totalSignals: number; winningSignals: number }> {
   const signals = await this.dataRepository.getAllST1Signals();
 

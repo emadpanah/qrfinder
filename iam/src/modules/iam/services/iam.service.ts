@@ -179,6 +179,20 @@ export class IamService {
     return null; // Return null if no shopToken is found
   }
 
+  async findLatestLoginByTelegramId(telegramID: string): Promise<{ chatId: string } | null> {
+    // Get user by telegramID first
+    const user = await this.iamRepository.findUserByTelegramID(telegramID);
+    if (!user) return null;
+  
+    // Then get latest login record by userId
+    const latestLogin = await this.userLoginRepository.findLatestLoginByUserId(user._id);
+    if (latestLogin && latestLogin.chatId) {
+      return { chatId: latestLogin.chatId };
+    }
+    return null;
+  }
+  
+
   getHello(): string {
     return 'Hello World!';
   }

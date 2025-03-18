@@ -147,6 +147,8 @@ export class DataController {
   }
 
 
+  
+
   @Post('DT')
   async dominanceTicker(@Body() dominanceData: DominanceDto) {
     console.log('Received Dominance Data:', dominanceData);
