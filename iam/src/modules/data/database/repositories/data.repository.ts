@@ -755,9 +755,10 @@ export class DataRepository {
   
 
   async getAllSortsForSymbol(symbol: string): Promise<Record<string, any>> {
+    //console.log("symbol :", symbol);
     const transformedSymbol = symbol.replace(/USDT$/, '').replace(/USD$/, '').toUpperCase();
     const collection = this.connection.collection(this.lunarPubCoinCollectionName);
-    console.log("symbol :", transformedSymbol);
+    //console.log("transformed symbol :", transformedSymbol);
   
     // Search for both old & new data
     const legacyDocs = await collection

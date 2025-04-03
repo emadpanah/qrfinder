@@ -1997,6 +1997,7 @@ export class BotAIService implements OnModuleInit {
       : { value: "0", value_classification: "Neutral" };
 
     let responseText = ``;
+    //console.log('sym:', sym);
     const symbol = mapSymbol(sym.toLowerCase(), 'pair');
 
     const indicatorsStart = Date.now();
@@ -2171,15 +2172,58 @@ ${formattedEMAHistory}
   ${formattedNewsString}
 
    ### **Analysis Instructions**
-  Based on the above data and user prompt : ${userPrompt} analyze the market conditions for 
-  ${symbol} with News Analysis, Please format given data in friendly version and provide a detailed explanation on price along
-   price change in last 7 days and Provide a detailed explanation foreach indicators along analyzing current indicators 
-   values with historical data and also add details for each sort parameter along analyzing sorts parameters values 
-  and their changes and generate a trading action section for ("Buy", "Sell", "Hold", or "Strong Buy/Sell")
-   with providing : Target 1: +1.02% (currentPrice * 1.02)
-     Target 2: +1.05% (currentPrice * 1.05) and Stop Loss: -0.95%(currentPrice * 0.95). at end please
-   provide a detailed explanation and summery for your recommendation based on user prompt, incorporating all data points and 
-   trends and please send result in ${language} languague
+  Based on the above data and user prompt: ${userPrompt}, analyze the market conditions for ${symbol} including:
+
+- **News Analysis**  
+- Friendly formatting of all data  
+- A detailed explanation of price movement over the past 7 days  
+- Indicator-by-indicator evaluation comparing current and historical values  
+- Sorts analysis, including changes over time  
+
+### **Trading Action Section Instructions**
+At the end, generate a trading action section with one of the following actions:
+- **Buy**
+- **Strong Buy**
+- **Sell**
+- **Strong Sell**
+- **Hold**
+
+📌 Based on the chosen action, apply this logic:
+
+- For **Buy**:
+  - 🎯 Target = currentPrice × 1.01
+  - 🛑 Stop Loss = currentPrice × 0.9905
+
+- For **Strong Buy**:
+  - 🎯 Target = currentPrice × 1.0102
+  - 🛑 Stop Loss = currentPrice × 0.9905
+
+- For **Sell**:
+  - 🎯 Target = currentPrice × 0.99
+  - 🛑 Stop Loss = currentPrice × 1.0095
+
+- For **Strong Sell**:
+  - 🎯 Target = currentPrice × 0.9898
+  - 🛑 Stop Loss = currentPrice × 1.0095
+
+- For **Hold**: Do not provide target or stop loss. Just summarize the reason for holding.
+
+📝 Format the trading action section like this:
+
+\`\`\`
+📊 Trading Action: [ACTION]
+
+🎯 Target Price: $[value] ([percentage])
+🛑 Stop Loss: $[value] ([percentage])
+
+📋 Summary:
+[Short summary of reasoning for the action.]
+
+🧠 Explanation:
+[Detailed explanation combining technical indicators, price movement, sentiment, sorts, and news.]
+\`\`\`
+
+Please respond in ${language} language.
   `;
 
     console.log("Analyze prompt:", prompt);
