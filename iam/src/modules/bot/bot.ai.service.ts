@@ -10,10 +10,12 @@ import { IamService } from '../iam/services/iam.service';
 import { Types } from 'mongoose';
 import { BalanceService } from '../iam/services/iam-balance.service';
 import { Balance } from '../iam/database/schemas/iam-balance.schema';
-import { formatNumber, mapSymbol, sanitizeString, truncateText } from 'src/shared/helper';
+import { escapeMarkdown, formatNumber, mapSymbol, sanitizeString, truncateText } from 'src/shared/helper';
 import { TradingViewAlertDto } from '../data/database/dto/traidingview-alert.dto';
 import { title } from 'process';
 import { Console } from 'console';
+import { DataService } from '../data/service/data.service';
+import { min } from 'class-validator';
 
 
 
@@ -208,6 +210,7 @@ export class BotAIService implements OnModuleInit {
 
   constructor(
     private readonly iamService: IamService,
+    private readonly dataService: DataService,
     private readonly balanceService: BalanceService,
     private readonly dataRepository: DataRepository // Inject DataRepository
   ) {
@@ -2425,6 +2428,61 @@ Please respond in ${language} language.
     }
   }
 
+  async handleGetLastUsers(n: number): Promise<string[]> {
+    const users = await this.iamService.getLastNUsers(n);
+    return users.map((u, i) => `*${i + 1}.* 🆔 ID: ${escapeMarkdown(u.telegramID || '')}
+  👤 Username: ${escapeMarkdown(u.telegramUserName || '-')}
+  🧑 First Name: ${escapeMarkdown(u.telegramFirstName || '-')}
+  👨‍🦰 Last Name: ${escapeMarkdown(u.telegramLastName || '-')}
+  📱 Mobile: ${escapeMarkdown(u.mobile || '-')}`);
+  }
+  
+  
+  async handleGetBalance(telegramId: string): Promise<string> {
+    const user = await this.iamService.findUserByTelegramID(telegramId);
+    if (!user) return `❌ User ${telegramId} not found.`;
+    const balance = await this.balanceService.getUserBalance(user._id);
+    return `💰 Balance for ${telegramId}: ${balance}`;
+  }
+  
+  async handleGetExpiredUsers(n: number): Promise<string[]> {
+    const users = await this.iamService.getExpiredUsers(n);
+    return users.map((u, i) => `*${i + 1}.* 🆔 ID: ${escapeMarkdown(u.telegramID || '')}
+  👤 Username: ${escapeMarkdown(u.telegramUserName || '-')}
+  🧑 First Name: ${escapeMarkdown(u.telegramFirstName || '-')}
+  👨‍🦰 Last Name: ${escapeMarkdown(u.telegramLastName || '-')}
+  📱 Mobile: ${escapeMarkdown(u.mobile || '-')}
+  💰 Last Balance: ${u.balanceAfterTransaction ?? '-'}
+  📅 Last Renew (Jalali): ${escapeMarkdown(u.lastRenewDate || '-')}`);
+  }
+  
+  private async handleMakeExpired(chatId: string, telegramId: string): Promise<any> {
+    return await this.dataService.handleMakeExpired(chatId, telegramId);
+  }
+  
+  private async handleGetChatLogs(chatId: string, telegramId: string, n: number): Promise<any[]> {
+   return await this.dataService.handleGetChatLogs(telegramId, n);
+  }
+  
+  async handleGetUserMChats(n: number, m: number): Promise<string[]> {
+    const users = await this.iamService.findUsersWithMinChatCount(m, n); // single optimized query
+  
+    return users.map((u, i) =>
+      `*${i + 1}.* 🆔 ID: ${escapeMarkdown(u.telegramID || '-')}\n` +
+      `👤 Username: ${escapeMarkdown(u.telegramUserName || '-')}\n` +
+      `🧑 First Name: ${escapeMarkdown(u.telegramFirstName || '-')}\n` +
+      `👨‍🦰 Last Name: ${escapeMarkdown(u.telegramLastName || '-')}\n` +
+      `📱 Mobile: ${escapeMarkdown(u.mobile || '-')}\n` +
+      `💬 Chat Count: ${u.chatCount}`
+    );
+  }
+  
+  
+  
+  private async handleGetUserDeposits(n: number): Promise<any> {
+    return await this.dataService.handleGetUserDeposits(n);
+  }
+  
 
   // Fetch prices for multiple symbols
   async getCryptoPrices(symbols: string[], date: number): Promise<string> {
@@ -2863,6 +2921,22 @@ Please respond in ${language} language.
     }
   }
 
+  
+  async sendChunkedMessage(bot: TelegramBot, chatId: number | string, content: string, chunkSize = 3500) {
+    const lines = content.split('\n\n');
+    let chunk = '';
+    for (const line of lines) {
+      if ((chunk + '\n\n' + line).length > chunkSize) {
+        await bot.sendMessage(chatId, chunk, { parse_mode: 'Markdown' });
+        chunk = '';
+      }
+      chunk += '\n\n' + line;
+    }
+    if (chunk.trim()) {
+      await bot.sendMessage(chatId, chunk, { parse_mode: 'Markdown' });
+    }
+  }
+
   async onModuleInit() {
     const me = await this.bot.getMe();
     this.botUsername = me.username;
@@ -2872,7 +2946,8 @@ Please respond in ${language} language.
 
 
 
-
+    
+    
 
     this.bot.on('message', async (msg) => {
       const chatId = msg.chat.id;
@@ -2897,46 +2972,49 @@ Please respond in ${language} language.
       // Save the Telegram ID locally for chat saving
       this.currentTelegramId = telegramID;
 
+
+      
+
       //console.log('telegramID :', telegramID);
-      const adminTelegramId = process.env.TELEGRAM_ADMIN_ID; // Replace this with your Telegram ID as a string
-      // Example inside your bot handler, where you want to fetch the active chatId for a telegramID
-      if (telegramID === adminTelegramId) {
+      // const adminTelegramId = process.env.TELEGRAM_ADMIN_ID; // Replace this with your Telegram ID as a string
+      // // Example inside your bot handler, where you want to fetch the active chatId for a telegramID
+      // if (telegramID === adminTelegramId) {
 
-        const matches = msg.text.match(/send users:"([^"]+)"\s+(\w+)\s+(\w+)/);
-        if (matches) {
-          const idsString = matches[1];
-          const symbol = matches[2];
-          const language = matches[3];
+      //   const matches = msg.text.match(/send users:"([^"]+)"\s+(\w+)\s+(\w+)/);
+      //   if (matches) {
+      //     const idsString = matches[1];
+      //     const symbol = matches[2];
+      //     const language = matches[3];
 
-          const telegramIDs = idsString.split(',').map(id => id.trim());
-          const successList = [];
+      //     const telegramIDs = idsString.split(',').map(id => id.trim());
+      //     const successList = [];
 
-          for (const id of telegramIDs) {
-            const loginInfo = await this.iamService.findLatestLoginByTelegramId(id);
-            if (loginInfo?.chatId) {
-              const analysis = await this.analyzeAndCreateSignals([symbol], language, '');
-              await this.bot.sendMessage(loginInfo.chatId, analysis);
-              successList.push(id);
+      //     for (const id of telegramIDs) {
+      //       const loginInfo = await this.iamService.findLatestLoginByTelegramId(id);
+      //       if (loginInfo?.chatId) {
+      //         const analysis = await this.analyzeAndCreateSignals([symbol], language, '');
+      //         await this.bot.sendMessage(loginInfo.chatId, analysis);
+      //         successList.push(id);
 
-              // Log into UserChatLog for each user
-              const chatLog: UserChatLogDto = {
-                telegramId: telegramID,
-                calledFunction: 'analyzeAndCreateSignals',
-                query: `admin-cmd: send users: ${successList.join(',')} ${symbol} ${language}`,
-                response: analysis,
-                queryType: 'admin-broadcast',
-                newParameters: [],
-                save_at: Math.floor(Date.now() / 1000),
-              };
-              await this.dataRepository.saveUserChatLog(chatLog);
+      //         // Log into UserChatLog for each user
+      //         const chatLog: UserChatLogDto = {
+      //           telegramId: telegramID,
+      //           calledFunction: 'analyzeAndCreateSignals',
+      //           query: `admin-cmd: send users: ${successList.join(',')} ${symbol} ${language}`,
+      //           response: analysis,
+      //           queryType: 'admin-broadcast',
+      //           newParameters: [],
+      //           save_at: Math.floor(Date.now() / 1000),
+      //         };
+      //         await this.dataRepository.saveUserChatLog(chatLog);
 
-            }
-          }
+      //       }
+      //     }
 
-          await this.bot.sendMessage(chatId, `${symbol.toUpperCase()} analysis sent to: ${successList.join(', ')}`);
-          return;
-        }
-      }
+      //     await this.bot.sendMessage(chatId, `${symbol.toUpperCase()} analysis sent to: ${successList.join(', ')}`);
+      //     return;
+      //   }
+      // }
 
 
 
@@ -3026,6 +3104,227 @@ Please respond in ${language} language.
         return;
       }
 
+      const adminTelegramIds = process.env.TELEGRAM_ADMIN_IDS?.split(',').map(id => id.trim()) || [];
+
+  console.log('adminTelegramIds :', adminTelegramIds);
+  if (adminTelegramIds.includes(this.currentTelegramId)) {
+
+    let adminChatId = null;
+    const adminLogin = await this.iamService.findLatestLoginByTelegramId(this.currentTelegramId);
+    if (adminLogin?.chatId) 
+      adminChatId=adminLogin.chatId;
+  
+    // Pattern matching
+    let commandMatch = null;
+
+    console.log('admin text :', text);
+    if (text.toLowerCase() === '/adminhelp') {
+      const helpMessage = `
+    🛠 *Admin Commands Help / راهنمای دستورات ادمین* 🛠
+    
+    📤 *Broadcast Analysis / ارسال تحلیل برای کاربران*
+    \`send users:"12345,67890" BTC en\`
+    ➤ Sends BTC analysis in English to listed Telegram IDs  
+    ➤ ارسال تحلیل BTC به زبان انگلیسی برای آی‌دی‌های مشخص‌شده
+    
+    📋 *Get Last N Registered Users / دریافت N کاربر آخر ثبت‌نامی*
+    \`get 10 lastusers\`
+    ➤ Lists the last 10 registered users  
+    ➤ لیست ۱۰ کاربر آخری که ثبت‌نام کرده‌اند
+    
+    💰 *Get Balance of a User / دریافت موجودی یک کاربر*
+    \`get balance 12345\`
+    ➤ Shows current balance for user 12345  
+    ➤ نمایش موجودی فعلی برای کاربر با آی‌دی 12345
+    
+    📅 *Get N Expired Users / دریافت N کاربر منقضی‌شده*
+    \`get 5 expired\`
+    ➤ Lists 5 users whose balance is expired  
+    ➤ لیست ۵ کاربر که اشتراک آنها منقضی شده است
+    
+    🔒 *Make User Expired / منقضی کردن یک کاربر*
+    \`make expired 12345\`
+    ➤ Sets balance of user 12345 to 100 (mark as expired)  
+    ➤ تنظیم موجودی کاربر به ۱۰۰ و منقضی کردن وی
+    
+    💬 *Get Last N Chats of a User / دریافت N پیام آخر کاربر*
+    \`get 5 chat 12345\`
+    ➤ Shows last 5 chat messages from user 12345  
+    ➤ نمایش ۵ پیام آخری کاربر مشخص‌شده
+    
+    🗣 *Get N Users with At Least M Chats / دریافت N کاربر با حداقل M پیام*
+    \`get 5 users with min 10 chat\`
+    ➤ Lists 5 users who have sent at least 10 messages  
+    ➤ لیست ۵ کاربری که حداقل ۱۰ پیام ارسال کرده‌اند
+    
+    💵 *Get Last N Users Who Made Deposit / دریافت N کاربر اخیر که واریز داشته‌اند*
+    \`get 10 user deposit\`
+    ➤ Returns last 10 users who made deposit-type transactions  
+    ➤ لیست ۱۰ کاربر آخری که تراکنش واریز داشته‌اند
+    
+    📨 *Send Custom Message / ارسال پیام سفارشی*
+    \`send 'Hello my friend' 12345\`
+    ➤ Sends message to user with Telegram ID 12345  
+    ➤ ارسال پیام سفارشی به کاربر با آی‌دی مشخص‌شده
+    
+    ℹ️ *Show Help / نمایش راهنما*
+    \`/adminhelp\`
+    ➤ Shows this help message  
+    ➤ نمایش این پیام راهنما
+      `;
+    
+      await this.bot.sendMessage(chatId, helpMessage, { parse_mode: 'Markdown' });
+      return;
+    }
+    
+    
+    
+  
+    // Command cases
+    if (commandMatch = text.match(/^send users:"([^"]+)"\s+(\w+)\s+(\w+)/)) {
+      const idsString = commandMatch[1];
+      const symbol = commandMatch[2];
+      const language = commandMatch[3];
+    
+      const telegramIDs = idsString.split(',').map(id => id.trim());
+      const successList: string[] = [];
+      const analysis = await this.analyzeAndCreateSignals([symbol], language, '');
+    
+      const messages: string[] = [];
+    
+      for (const id of telegramIDs) {
+        const loginInfo = await this.iamService.findLatestLoginByTelegramId(id);
+        if (loginInfo?.chatId) {
+          await this.bot.sendMessage(loginInfo.chatId, analysis);
+          successList.push(id);
+    
+          const chatLog: UserChatLogDto = {
+            telegramId: telegramID,
+            calledFunction: 'analyzeAndCreateSignals',
+            query: `admin-cmd: send users: ${id} ${symbol} ${language}`,
+            response: analysis,
+            queryType: 'admin-broadcast',
+            newParameters: [],
+            save_at: Math.floor(Date.now() / 1000),
+          };
+          await this.dataRepository.saveUserChatLog(chatLog);
+    
+          messages.push(`✅ Sent to ${id}`);
+        } else {
+          messages.push(`❌ Failed: No chatId for ${id}`);
+        }
+      }
+    
+      const summary = `📤 Broadcast Result for ${symbol.toUpperCase()}:\n\n${messages.join('\n')}`;
+      await this.sendChunkedMessage(this.bot, adminChatId, summary);
+      return;
+    } else if (commandMatch = text.match(/^get (\d+) lastusers/)) {
+      const n = parseInt(commandMatch[1]);
+      console.log("commandMatch", n );
+      // Handle get n lastUsers
+      const result = await this.handleGetLastUsers(n);
+      const header = '📋 *Last Users:*';
+      const fullText = [header, ...result].join('\n\n');
+      await this.sendChunkedMessage(this.bot, adminChatId, fullText);
+      return;
+  
+    } else if (commandMatch = text.match(/^get balance (\d+)/)) {
+      const telegramId = commandMatch[1];
+      // Handle get balance
+      var result = await this.handleGetBalance(telegramId);
+      await this.sendChunkedMessage(this.bot, adminChatId, result);
+      return;
+  
+    } else if (commandMatch = text.match(/^get (\d+) expired/)) {
+      const n = parseInt(commandMatch[1]);
+      // Handle get n expired
+      const expires = await this.handleGetExpiredUsers(n);
+      console.log("expires :", expires );
+      if (!expires.length) {
+        await this.bot.sendMessage(adminChatId, `No expired users found.`);
+        return;
+      }
+    
+      const header = '📋 *Expired Users:*';
+      const fullText = [header, ...expires].join('\n\n');
+      await this.sendChunkedMessage(this.bot, adminChatId, fullText);
+      return;
+  
+    } else if (commandMatch = text.match(/^make expired (\d+)/)) {
+      const telegramId = commandMatch[1];
+      // Handle make expired
+      const loginInfo = await this.iamService.findLatestLoginByTelegramId(telegramId);
+      const result = await this.handleMakeExpired(loginInfo.chatId, telegramId);
+      if (result) {
+        await this.bot.sendMessage(adminChatId, `User ${telegramId} marked as expired.`);
+      } else {
+        await this.bot.sendMessage(adminChatId, `Failed to mark ${telegramId} as expired.`);
+      }
+      return;
+  
+    } else if (commandMatch = text.match(/^get (\d+) chat (\d+)/)) {
+      const n = parseInt(commandMatch[1]);
+      const telegramId = commandMatch[2];
+      // Handle get n chat for a user
+      const result = await this.handleGetChatLogs(msg.chat.id, telegramId, n);
+      const header = '📋 *User Chats:*';
+      const fullText = [header, ...result].join('\n\n');
+      await this.sendChunkedMessage(this.bot, adminChatId, fullText);
+      return;
+  
+    } else if (commandMatch = text.match(/^get (\d+) users with min (\d+) chat/)) {
+      const minchat = parseInt(commandMatch[2]);
+      const limit = parseInt(commandMatch[1]);
+      // get limit user that has minimum minchat rows of chat
+      const result = await this.handleGetUserMChats(minchat, limit);
+      const header = '📋 *Result Users:*';
+      const fullText = [header, ...result].join('\n\n');
+      await this.sendChunkedMessage(this.bot, adminChatId, fullText);
+      return;
+  
+    } else if (commandMatch = text.match(/^get (\d+) user deposit/)) {
+      const n = parseInt(commandMatch[1]);
+      // Handle get n user deposit
+      const result = await this.handleGetUserDeposits(n);
+      const header = '📋 *Result Users:*';
+      const fullText = [header, ...result].join('\n\n');
+      await this.sendChunkedMessage(this.bot, adminChatId, fullText);
+      return;
+  
+    }
+    else if (commandMatch = text.match(/^send\s+'([^']+)'\s+(\d+)/)) {
+      const message = commandMatch[1];
+      const telegramId = commandMatch[2];
+    
+      const loginInfo = await this.iamService.findLatestLoginByTelegramId(telegramId);
+    
+      if (loginInfo?.chatId) {
+        await this.bot.sendMessage(loginInfo.chatId, message);
+    
+        // Save to user chat log
+        const chatLog: UserChatLogDto = {
+          telegramId: telegramID,
+          calledFunction: 'sendCustomMessage',
+          query: `admin-cmd: send '${message}' ${telegramId}`,
+          response: message,
+          queryType: 'admin-send-msg',
+          newParameters: [],
+          save_at: Math.floor(Date.now() / 1000),
+        };
+        await this.dataRepository.saveUserChatLog(chatLog);
+    
+        await this.bot.sendMessage(adminChatId, `✅ Message sent to ${telegramId}`);
+      } else {
+        await this.bot.sendMessage(adminChatId, `❌ User ${telegramId} not found or no active chatId.`);
+      }
+      return;
+    }    
+     else {
+      await this.bot.sendMessage(adminChatId, 'Invalid admin command.');
+      return;
+    }
+
+  }
 
       // Handle /help command
       if (msg.text === '/help') {

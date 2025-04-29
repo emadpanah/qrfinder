@@ -141,6 +141,29 @@ export function truncateText(text: string, maxLength: number = 100): string {
   return `${text.slice(0, half)}...${text.slice(-half)}`;
 }
 
+export function escapeMarkdown(text: string): string {
+  if (!text) return '-';
+  return text
+    .replace(/_/g, '\\_')
+    .replace(/\*/g, '\\*')
+    .replace(/\[/g, '\\[')
+    .replace(/\]/g, '\\]')
+    .replace(/\(/g, '\\(')
+    .replace(/\)/g, '\\)')
+    .replace(/~/g, '\\~')
+    .replace(/`/g, '\\`')
+    .replace(/>/g, '\\>')
+    .replace(/#/g, '\\#')
+    .replace(/\+/g, '\\+')
+    .replace(/\-/g, '\\-')
+    .replace(/=/g, '\\=')
+    .replace(/\|/g, '\\|')
+    .replace(/{/g, '\\{')
+    .replace(/}/g, '\\}')
+    .replace(/\./g, '\\.')
+    .replace(/!/g, '\\!');
+}
+
 export function sanitizeString(input: string, maxLength: number): string {
 
   // if (!input || typeof input !== 'string') {

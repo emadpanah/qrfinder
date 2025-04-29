@@ -12,12 +12,131 @@ import { ST1Dto } from '../database/dto/st1.dto';
 import { ADXDto } from '../database/dto/adx.dto';
 import { ADXData } from '../database/schema/adx.schema';
 import { Types } from 'mongoose';
-
+import * as TelegramBot from 'node-telegram-bot-api';
+import { IamService } from 'src/modules/iam/services/iam.service';
+import { BalanceService } from 'src/modules/iam/services/iam-balance.service';
+import { UserChatLogDto } from '../database/dto/userchatlog.dto';
+import { UserDto } from 'src/modules/iam/dto/user.dto';
+import { escapeMarkdown } from 'src/shared/helper';
 @Injectable()
 export class DataService {
-  constructor(private readonly dataRepository: DataRepository) {}
+   private readonly telegramBot = new TelegramBot(process.env.
+      //NABZAR_BOT_TOKEN
+      NABZAR_X_BOT
+      , { polling: false });
+    private readonly telegramChatId = process.env.TELEGRAM_SIGNAL_GROUP_ID;
+  constructor(private readonly dataRepository: DataRepository,
+              private readonly iamService: IamService,
+              private readonly balanceService: BalanceService,
+  ) {}
 
+    async handleSendUsers(chatId: string, idsString: string, symbol: string, language: string, adminTelegramId: string): Promise<void> {
+      const telegramIDs = idsString.split(',').map(id => id.trim());
+      const successList = [];
   
+      for (const id of telegramIDs) {
+        const loginInfo = await this.iamService.findLatestLoginByTelegramId(id);
+        if (loginInfo?.chatId) {
+          const analysis = await this.analyzeAndCreateSignals([symbol], language, ''); // You may need to move analyzeAndCreateSignals here or call service
+          await this.telegramBot.sendMessage(loginInfo.chatId, analysis);
+          successList.push(id);
+  
+          const chatLog: UserChatLogDto = {
+            telegramId: adminTelegramId,
+            calledFunction: 'analyzeAndCreateSignals',
+            query: `admin-cmd: send users: ${successList.join(',')} ${symbol} ${language}`,
+            response: analysis,
+            queryType: 'admin-broadcast',
+            newParameters: [],
+            save_at: Math.floor(Date.now() / 1000),
+          };
+          await this.dataRepository.saveUserChatLog(chatLog);
+        }
+      }
+  
+      await this.telegramBot.sendMessage(chatId, `${symbol.toUpperCase()} analysis sent to: ${successList.join(', ')}`);
+    }
+  
+    async handleGetLastUsers(n: number): Promise<string[]> {
+      const users = await this.iamService.getLastNUsers(n);
+      return users.map((u, i) => `*${i + 1}.* 🆔 ID: ${escapeMarkdown(u.telegramID || '')}
+    👤 Username: ${escapeMarkdown(u.telegramUserName || '-')}
+    🧑 First Name: ${escapeMarkdown(u.telegramFirstName || '-')}
+    👨‍🦰 Last Name: ${escapeMarkdown(u.telegramLastName || '-')}
+    📱 Mobile: ${escapeMarkdown(u.mobile || '-')}`);
+    }
+  
+    async handleGetBalance(telegramId: string): Promise<string> {
+      const user = await this.iamService.findUserByTelegramID(telegramId);
+      if (!user) return `❌ User ${telegramId} not found.`;
+      const balance = await this.balanceService.getUserBalance(user._id);
+      return `💰 Balance for ${telegramId}: ${balance}`;
+    }
+  
+    async handleGetExpiredUsers(n: number): Promise<any[]> {
+      const expiredUsers = await this.iamService.getExpiredUsers(n);
+      console.log('Expired users:', expiredUsers);
+      return expiredUsers;
+    }
+  
+    async handleMakeExpired(chatId: string, telegramId: string): Promise<any> {
+      const result = await this.iamService.expireUser(telegramId);
+      return result;
+    }
+  
+    async handleGetChatLogs(telegramId: string, n: number): Promise<string[]> {
+      const logs = await this.dataRepository.getChatHistory(telegramId, n);
+      if (!logs.length) return [`No chat history for user ${telegramId}.`];
+      return logs.map((log, i) => `*${i + 1}.* ${escapeMarkdown(log.query || '-')}`);
+    }
+  
+    async handleGetUserMChats(chatId: string, n: number, m: number): Promise<void> {
+      const users = await this.iamService.getLastNUsers(n);
+      for (const user of users) {
+        const logs = await this.dataRepository.getChatHistory(user.telegramID, m);
+        const formattedLogs = logs.map(log => `> ${log.query}`).join('\n');
+        await this.telegramBot.sendMessage(chatId, `User ${user.telegramID}:\n${formattedLogs}`);
+      }
+    }
+  
+    async handleGetUserDeposits(n: number): Promise<string[]> {
+      const deposits = await this.iamService.getTopDepositUsers(n);
+      return deposits.map((d, i) => 
+        `*${i + 1}.* 🆔 ID: ${escapeMarkdown(d.telegramID || '')}
+    👤 Username: ${escapeMarkdown(d.telegramUserName || '-')}
+    /📱 Mobile: ${escapeMarkdown(d.mobile || '-')}
+    💰 Total Deposit: ${d.totalAmount ?? '-'}`
+      );
+    }
+    
+  
+    async handleSendMessage(chatId: string, message: string, telegramId: string, adminTelegramId: string): Promise<void> {
+      const loginInfo = await this.iamService.findLatestLoginByTelegramId(telegramId);
+      if (loginInfo?.chatId) {
+        await this.telegramBot.sendMessage(loginInfo.chatId, message);
+  
+        const chatLog: UserChatLogDto = {
+          telegramId: adminTelegramId,
+          calledFunction: 'sendCustomMessage',
+          query: `admin-cmd: send '${message}' ${telegramId}`,
+          response: message,
+          queryType: 'admin-send-msg',
+          newParameters: [],
+          save_at: Math.floor(Date.now() / 1000),
+        };
+        await this.dataRepository.saveUserChatLog(chatLog);
+  
+        await this.telegramBot.sendMessage(chatId, `✅ Message sent to ${telegramId}`);
+      } else {
+        await this.telegramBot.sendMessage(chatId, `❌ User ${telegramId} not found or no active chatId.`);
+      }
+    }
+  
+    // Example placeholder if needed
+    private async analyzeAndCreateSignals(symbols: string[], language: string, someOther: string): Promise<string> {
+      // Your logic to generate the analysis text
+      return `Analysis for ${symbols.join(', ')} in ${language}`;
+    }
 
   // Save new ticker data received from TradingView
   async saveTickerData(tickerData: TradingViewAlertDto): Promise<void> {

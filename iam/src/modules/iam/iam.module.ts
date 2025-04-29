@@ -46,7 +46,7 @@ import { CurrencyRepository } from './database/repositories/currency.repository'
     BalanceService,
     CurrencyRepository,
     //JwtAuthGuard,
-    AuthService
+    AuthService,
   ],
   exports: [IamService], 
 })

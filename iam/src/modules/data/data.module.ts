@@ -23,6 +23,14 @@ import { CCIData, CCIDataSchema } from './database/schema/cci.schema';
 import { StochasticData, StochasticDataSchema } from './database/schema/stochastic.schema';
 import { EMAData, EMADataSchema } from './database/schema/ema.schema';
 import { SMAData, SMADataSchema } from './database/schema/sma.schema';
+import { IamService } from '../iam/services/iam.service';
+import { BalanceService } from '../iam/services/iam-balance.service';
+import { IamRepository } from '../iam/database/repositories/iam.repository';
+import { UserLoginRepository } from '../iam/database/repositories/user-login.repository';
+import { AuthService } from '../iam/services/auth.service';
+import { CurrencyRepository } from '../iam/database/repositories/currency.repository';
+import { BalanceRepository } from '../iam/database/repositories/balance.repository';
+import { JwtService } from '@nestjs/jwt';
 
 @Module({
   imports: [
@@ -41,9 +49,12 @@ import { SMAData, SMADataSchema } from './database/schema/sma.schema';
       { name: StochasticData.name, schema: StochasticDataSchema },
       { name: EMAData.name, schema: EMADataSchema },
       { name: SMAData.name, schema: SMADataSchema },
-    ], 'service'),
+    ], 'service')
   ],
-  providers: [FngService, DataService, DataRepository, LunarCrushService ],
+  providers: [FngService, DataService, DataRepository, 
+    LunarCrushService, IamService, BalanceService, IamRepository,
+    UserLoginRepository, AuthService, CurrencyRepository, BalanceRepository,
+    JwtService  ],
   controllers: [DataController],
   exports: [DataService, DataRepository],
 })

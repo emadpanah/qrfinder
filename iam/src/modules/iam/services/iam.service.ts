@@ -192,6 +192,38 @@ export class IamService {
     return null;
   }
   
+  async getLastNUsers(n: number): Promise<UserDto[]> {
+    return this.iamRepository.findLastNUsers(n);
+  }
+  
+  async findUsersWithMinChatCount(minChats: number, limit: number): Promise<any[]> {
+    return await this.iamRepository.findUsersWithMinChatCount(minChats, limit);
+  }
+  
+
+  async findUserByTelegramID(telegramId: string): Promise<UserDto> {
+    return this.iamRepository.findUserByTelegramID(telegramId);
+  }
+
+  async getExpiredUsers(n: number): Promise<any[]> {
+    const expiredUserIds = await this.iamRepository.findExpiredUsers(n);
+    
+    return expiredUserIds;
+  }
+
+  async getTopDepositUsers(n: number): Promise<any[]> {
+    return await this.iamRepository.findUsersWithTopDeposits(n);
+  }
+  
+  async expireUser(telegramId: string): Promise<boolean> {
+    const user = await this.iamRepository.findUserByTelegramID(telegramId);
+    if (!user || !user._id) {
+      throw new Error(`User not found with telegramId: ${telegramId}`);
+    }
+    return this.iamRepository.expireUser(user._id);
+  }
+  
+  
 
   getHello(): string {
     return 'Hello World!';

@@ -14,6 +14,7 @@ import { IamRepository } from '../iam/database/repositories/iam.repository';
 import { UserLoginRepository } from '../iam/database/repositories/user-login.repository';
 import { AuthService } from '../iam/services/auth.service';
 import { JwtService } from '@nestjs/jwt';
+import { DataRepository } from '../data/database/repositories/data.repository';
 
 @Module({
   imports: [ProductModule, DataModule],
@@ -28,6 +29,7 @@ import { JwtService } from '@nestjs/jwt';
     IamService,
     IamRepository,
     UserLoginRepository,
+    DataRepository,
     AuthService,
     JwtService,
     //ChatGptBotService

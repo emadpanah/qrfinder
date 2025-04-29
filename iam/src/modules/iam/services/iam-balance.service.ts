@@ -38,11 +38,14 @@ export class BalanceService {
     return transaction;
   }
 
-  async getUserBalance(userId: Types.ObjectId, currency: Types.ObjectId): Promise<number> {
-    if(!currency)
-    {
-        currency = await this.currencyRepository.findDefaultCurrency();
+  async getUserBalance(userId: Types.ObjectId, currencyId?: Types.ObjectId): Promise<number> {
+    if (!currencyId) {
+      const defaultCurrency = await this.currencyRepository.findDefaultCurrency();
+      currencyId = defaultCurrency._id;
     }
-    return this.balanceRepository.findUserBalance(userId, currency);
+    return this.balanceRepository.findUserBalance(userId, currencyId);
   }
+
+  
+  
 }
