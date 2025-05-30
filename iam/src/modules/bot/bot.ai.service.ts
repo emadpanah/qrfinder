@@ -3323,10 +3323,10 @@ Please respond in ${language} language.
       }
       return;
     }    
-     else {
-      await this.bot.sendMessage(adminChatId, 'Invalid admin command.');
-      return;
-    }
+    //  else {
+    //   await this.bot.sendMessage(adminChatId, 'Invalid admin command.');
+    //   return;
+    // }
 
   }
 
