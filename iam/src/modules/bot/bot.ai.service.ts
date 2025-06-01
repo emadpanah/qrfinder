@@ -233,7 +233,8 @@ export class BotAIService implements OnModuleInit {
   private readonly validCategories = ['liquid-staking-tokens', 'runes',
     'analytics', 'stablecoin', 'fan', 'bitcoin-ecosystem', 'sports', 'desci', 'real-estate', 'real-world-assets',
     'ai', 'exchange-tokens', 'wallets', 'brc20', 'events', 'defi', 'layer-1', 'base-ecosystem', 'meme', 'dao',
-    'layer-2', 'lending-borrowing', 'nft', 'gaming', 'gambling', 'depin', 'socialfi', 'stacks-ecosystem'];
+    'layer-2', 'lending-borrowing', 'nft', 'gaming', 'gambling', 'depin', 'socialfi', 
+    'stacks-ecosystem', 'made-in-usa', 'cardano','oracle', 'inj', 'zk', 'pow','solana-ecosystem','dot'];
 
   private readonly validSorts = [
     //'price', 

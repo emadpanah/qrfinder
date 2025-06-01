@@ -24,6 +24,7 @@ import { MACDDto } from '../dto/macd.dto';
 import { ADXDto } from '../dto/adx.dto';
 import { isValidUnixTimestamp, sanitizeString } from 'src/shared/helper';
 import { ST1Dto } from '../dto/st1.dto';
+import { LunarCrushStockData } from '../schema/lunarcrush-stock.schema';
 
 @Injectable()
 export class DataRepository {
@@ -40,6 +41,7 @@ export class DataRepository {
   private readonly st1CollectionName = '_st1data';
   private readonly dominanceCollectionName = '_dominancedata';
   private readonly lunarPubCoinCollectionName = '_lunarpublicoindata';
+  private readonly lunarPubStockCollectionName = '_lunarpublicStocksdata';
   private readonly lunarNewsCollectionName = "_lunarpublicnewsdata";
   private readonly translationCollectionName = '_translationsdata';
   private readonly logger = new Logger(DataRepository.name);
@@ -594,6 +596,22 @@ export class DataRepository {
     const collection = this.connection.collection(this.macdCollectionName);
     await collection.insertOne(macdData);
   }
+
+  async createLunarPubStock(data: Partial<LunarCrushStockData>): Promise<void> {
+    const collection = this.connection.collection(this.lunarPubStockCollectionName);
+  
+    await collection.updateOne(
+      { id: data.id },
+      {
+        $set: {
+          ...data,
+          fetched_at: data.fetched_at,
+        },
+      },
+      { upsert: true }
+    );
+  }
+  
 
   async createLunarPubCoin(data: Partial<LunarCrushPublicCoinDto>): Promise<void> {
     const collection = this.connection.collection(this.lunarPubCoinCollectionName);

@@ -16,6 +16,7 @@ import { ST1Data, ST1DataSchema } from './database/schema/st1.schema';
 import { LunarCrushData, LunarCrushDataSchema } from './database/schema/lunarcrush.schema';
 import { LunarCrushService } from './service/lunar.service';
 import { LunarCrushNews, LunarCrushNewsSchema } from './database/schema/lunarcrush-news.schema';
+import { LunarCrushStockData, LunarCrushStockSchema } from './database/schema/lunarcrush-stock.schema';
 import { Translation, TranslationSchema } from './database/schema/translations.schema';
 import { UserChatLog, UserChatLogSchema } from './database/schema/userchatlog.schema';
 import { ADXData, ADXDataSchema } from './database/schema/adx.schema';
@@ -42,6 +43,7 @@ import { JwtService } from '@nestjs/jwt';
       { name: ST1Data.name, schema: ST1DataSchema },
       { name: LunarCrushData.name, schema: LunarCrushDataSchema },
       { name: LunarCrushNews.name, schema: LunarCrushNewsSchema },
+      { name: LunarCrushStockData.name, schema: LunarCrushStockSchema },
       { name: Translation.name, schema: TranslationSchema },
       { name: UserChatLog.name, schema: UserChatLogSchema },
       { name: ADXData.name, schema: ADXDataSchema },

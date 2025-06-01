@@ -155,7 +155,7 @@ export class LunarCrushService {
         // Sort by market cap DESC and limit to 200 items
         const sortedData = data
           .sort((a, b) => b.market_cap - a.market_cap)
-          .slice(0, 200);
+          .slice(0, 1000);
   
         for (const coin of sortedData) {
           await this.repository.createLunarPubCoin({
@@ -173,7 +173,7 @@ export class LunarCrushService {
           });
         }
   
-        console.log(`Saved top 200 market cap coins.`);
+        console.log(`Saved top 1000 market cap coins.`);
       } else {
         console.log('No coin data returned.');
       }
@@ -241,33 +241,38 @@ export class LunarCrushService {
   //   }
   // }
 
-  //@Cron('0 */40 * * * *') // Every 40 minutes
-   @Cron('0 0 1 1 *') //run every year
-async fetchAndStoreNews(): Promise<void> {
-  console.log(`Fetching news at ${new Date().toISOString()}...`);
-
-  // Define the two endpoints
-  const endpoints = [
-    'https://lunarcrush.com/api4/public/category/cryptocurrencies/news/v1',
-    'https://lunarcrush.com/api4/public/topic/bitcoin/news/v1',
-  ];
-
-  try {
+  @Cron('0 */45 * * * *')
+  async fetchAndStoreNews(): Promise<void> {
+    console.log(`🟢 [START] Full news fetch run at ${new Date().toISOString()}...`);
+  
+    const endpoints = [
+      'https://lunarcrush.com/api4/public/category/cryptocurrencies/news/v1',
+      'https://lunarcrush.com/api4/public/topic/bitcoin/news/v1',
+      'https://lunarcrush.com/api4/public/topic/memecoin/news/v1',
+      'https://lunarcrush.com/api4/public/category/stocks/news/v1',
+    ];
+  
     for (let i = 0; i < endpoints.length; i++) {
       const endpoint = endpoints[i];
-
-      // Fetch data from the current endpoint
-      const response = await this.fetchDataWithRetry(endpoint, {
-        headers: {
-          Authorization: `Bearer ${process.env.LUNARCRUSH_API_KEY}`,
-        },
-      });
-
-      const data = response.data?.data;
-      if (data && Array.isArray(data)) {
+      console.log(`🔄 [${i + 1}/${endpoints.length}] Fetching from: ${endpoint}`);
+  
+      try {
+        const response = await this.fetchDataWithRetry(endpoint, {
+          headers: {
+            Authorization: `Bearer ${process.env.LUNARCRUSH_API_KEY}`,
+          },
+        });
+  
+        const data = response.data?.data;
         const timestamp = Math.floor(Date.now() / 1000);
-        const twentyFourHoursAgo = Math.floor(Date.now() / 1000) - 86400; // 24 hours ago
-
+        const twentyFourHoursAgo = timestamp - 86400;
+  
+        if (!Array.isArray(data)) {
+          console.warn(`⚠️ No valid array from ${endpoint}`);
+          continue;
+        }
+  
+        let storedCount = 0;
         for (const newsItem of data) {
           if (newsItem.post_created >= twentyFourHoursAgo) {
             try {
@@ -282,8 +287,9 @@ async fetchAndStoreNews(): Promise<void> {
                 interactions_total: newsItem.interactions_total,
                 fetched_at: timestamp,
               });
-
-              // Send to Telegram only if interactions_24h > 1000 or other conditions
+  
+              storedCount++;
+  
               if (
                 newsItem.interactions_24h > 1000 ||
                 newsItem.interactions_total > 10000 ||
@@ -293,28 +299,106 @@ async fetchAndStoreNews(): Promise<void> {
               }
             } catch (error) {
               if (error.code === 11000) {
-                console.log(`Duplicate news item: ${newsItem.id}`);
+                console.log(`🟡 Duplicate news item: ${newsItem.id}`);
               } else {
-                console.error(`Error saving news item: ${error.message}`);
+                console.error(`❌ Save error [${newsItem.id}]: ${error.message}`);
               }
             }
           }
         }
-        console.log(`Fetched and stored ${data.length} news items from ${endpoint}.`);
-      } else {
-        console.log(`No news data available from ${endpoint}.`);
+  
+        console.log(`✅ Stored ${storedCount} news items from: ${endpoint}`);
+      } catch (error) {
+        console.error(`❌ Fetch failed from ${endpoint}: ${error.message}`);
       }
-
-      // Add a 3-minute delay between the two queries (except after the last query)
+  
+      // Wait 3 minutes if not the last endpoint
       if (i < endpoints.length - 1) {
-        console.log('Waiting 3 minutes before the next query...');
-        await this.sleep(180000); // 3 minutes in milliseconds
+        console.log(`⏳ Waiting 1 minutes before next endpoint...`);
+        await this.sleep(1 * 60 * 1000); // 180000ms
       }
     }
-  } catch (error) {
-    console.error('Error fetching LunarCrush news:', error.message);
+  
+    console.log(`🟢 [END] Full run complete at ${new Date().toISOString()}`);
   }
-}
+  //@Cron('0 */40 * * * *') // Every 40 minutes
+   //@Cron('0 0 1 1 *') //run every year
+// async fetchAndStoreNews(): Promise<void> {
+//   console.log(`Fetching news at ${new Date().toISOString()}...`);
+
+//   // Define the two endpoints
+//   const endpoints = [
+//     'https://lunarcrush.com/api4/public/category/cryptocurrencies/news/v1',
+//     'https://lunarcrush.com/api4/public/topic/bitcoin/news/v1',
+//     'https://lunarcrush.com/api4/public/topic/memecoin/news/v1',
+//     'https://lunarcrush.com/api4/public/category/stocks/news/v1'
+//   ];
+
+//   try {
+//     for (let i = 0; i < endpoints.length; i++) {
+//       const endpoint = endpoints[i];
+
+//       // Fetch data from the current endpoint
+//       const response = await this.fetchDataWithRetry(endpoint, {
+//         headers: {
+//           Authorization: `Bearer ${process.env.LUNARCRUSH_API_KEY}`,
+//         },
+//       });
+
+//       const data = response.data?.data;
+//       if (data && Array.isArray(data)) {
+//         const timestamp = Math.floor(Date.now() / 1000);
+//         const twentyFourHoursAgo = Math.floor(Date.now() / 1000) - 86400; // 24 hours ago
+
+//         for (const newsItem of data) {
+//           if (newsItem.post_created >= twentyFourHoursAgo) {
+//             try {
+//               await this.repository.createLunarNews({
+//                 id: newsItem.id,
+//                 post_title: newsItem.post_title,
+//                 post_link: newsItem.post_link,
+//                 post_image: newsItem.post_image,
+//                 post_created: newsItem.post_created,
+//                 post_sentiment: newsItem.post_sentiment,
+//                 interactions_24h: newsItem.interactions_24h,
+//                 interactions_total: newsItem.interactions_total,
+//                 fetched_at: timestamp,
+//               });
+
+//               // Send to Telegram only if interactions_24h > 1000 or other conditions
+//               if (
+//                 newsItem.interactions_24h > 1000 ||
+//                 newsItem.interactions_total > 10000 ||
+//                 newsItem.post_sentiment > 3.4
+//               ) {
+//                 await this.sendNewsToTelegram(newsItem);
+//               }
+//             } catch (error) {
+//               if (error.code === 11000) {
+//                 console.log(`Duplicate news item: ${newsItem.id}`);
+//               } else {
+//                 console.error(`Error saving news item: ${error.message}`);
+//               }
+//             }
+//           }
+//         }
+//         console.log(`Fetched and stored ${data.length} news items from ${endpoint}.`);
+//       } else {
+//         console.log(`No news data available from ${endpoint}.`);
+//       }
+
+//       // Add a 3-minute delay between the two queries (except after the last query)
+//       if (i < endpoints.length - 1) {
+//         console.log('Waiting 3 minutes before the next query...');
+//         await this.sleep(180000); // 3 minutes in milliseconds
+//       }
+//     }
+//   } catch (error) {
+//     console.error('Error fetching LunarCrush news:', error.message);
+//   }
+// }
+
+
 
 // Utility function to introduce a delay
 sleep(ms: number): Promise<void> {
@@ -406,6 +490,47 @@ sleep(ms: number): Promise<void> {
       throw error; // Propagate the error after all retries fail
     }
   }
+
+  //@Cron('* * * * *')
+//@Cron('0 */40 * * * *') // Every 40 minutes
+@Cron('0 0 1 1 *') // adjust as needed
+async fetchAndStoreStocks(): Promise<void> {
+  console.log(`Fetching LunarCrush stock data at ${new Date().toISOString()}...`);
+
+  try {
+    const response = await this.fetchDataWithRetry(
+      'https://lunarcrush.com/api4/public/stocks/list/v1',
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.LUNARCRUSH_API_KEY}`,
+        },
+      }
+    );
+
+    const data = response.data?.data;
+    if (data && Array.isArray(data)) {
+      const timestamp = Math.floor(Date.now() / 1000);
+      const topStocks = data
+        .sort((a, b) => b.market_cap - a.market_cap)
+        .slice(0, 1000);
+
+      for (const stock of topStocks) {
+        await this.repository.createLunarPubStock({
+          ...stock,
+          market_dominance_prev: stock.market_dominance_prev || 0,
+          last_updated_price_by: stock.last_updated_price_by || '',
+          fetched_at: timestamp,
+        });
+      }
+
+      console.log(`Saved top ${topStocks.length} stocks.`);
+    } else {
+      console.log('No stock data returned.');
+    }
+  } catch (error) {
+    console.error('Error fetching stock data:', error.message);
+  }
+}
 
 
   // private async fetchDataWithRetry(url: string, options: any, retries = 3, delay = 1000): Promise<any> {
