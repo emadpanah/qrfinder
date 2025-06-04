@@ -135,6 +135,7 @@ export class LunarCrushService {
 
   //@Cron('0 */30 * * * *') // Every 30 minutes
   @Cron('0 0 1 1 *') //run every year
+  //@Cron('* * * * *')
   async fetchAndStoreCoinsNewApi(): Promise<void> {
     console.log(`Fetching new LunarCrush coins at ${new Date().toISOString()}...`);
   
@@ -491,7 +492,7 @@ sleep(ms: number): Promise<void> {
     }
   }
 
-  //@Cron('* * * * *')
+ // @Cron('* * * * *')
 //@Cron('0 */40 * * * *') // Every 40 minutes
 @Cron('0 0 1 1 *') // adjust as needed
 async fetchAndStoreStocks(): Promise<void> {

@@ -600,35 +600,55 @@ export class DataRepository {
   async createLunarPubStock(data: Partial<LunarCrushStockData>): Promise<void> {
     const collection = this.connection.collection(this.lunarPubStockCollectionName);
   
-    await collection.updateOne(
-      { id: data.id },
-      {
-        $set: {
-          ...data,
-          fetched_at: data.fetched_at,
-        },
-      },
-      { upsert: true }
-    );
+    await collection.insertOne({
+      ...data,
+      fetched_at: data.fetched_at,
+    });
   }
+  
+
+  // async createLunarPubStock(data: Partial<LunarCrushStockData>): Promise<void> {
+  //   const collection = this.connection.collection(this.lunarPubStockCollectionName);
+  
+  //   await collection.updateOne(
+  //     { id: data.id },
+  //     {
+  //       $set: {
+  //         ...data,
+  //         fetched_at: data.fetched_at,
+  //       },
+  //     },
+  //     { upsert: true }
+  //   );
+  // }
   
 
   async createLunarPubCoin(data: Partial<LunarCrushPublicCoinDto>): Promise<void> {
     const collection = this.connection.collection(this.lunarPubCoinCollectionName);
-
-    // Upsert data to avoid duplicates for the same sort and symbol
-    await collection.updateOne(
-      { id: data.id, fetched_sort: data.fetched_sort },
-      {
-        $set: {
-          ...data,
-          fetched_sort: data.fetched_sort,
-          fetched_at: data.fetched_at, // Store the exact fetch time
-        },
-      },
-      { upsert: true }
-    );
+  
+    await collection.insertOne({
+      ...data,
+      fetched_sort: data.fetched_sort,
+      fetched_at: data.fetched_at,
+    });
   }
+
+  // async createLunarPubCoin(data: Partial<LunarCrushPublicCoinDto>): Promise<void> {
+  //   const collection = this.connection.collection(this.lunarPubCoinCollectionName);
+
+  //   // Upsert data to avoid duplicates for the same sort and symbol
+  //   await collection.updateOne(
+  //     { id: data.id, fetched_sort: data.fetched_sort },
+  //     {
+  //       $set: {
+  //         ...data,
+  //         fetched_sort: data.fetched_sort,
+  //         fetched_at: data.fetched_at, // Store the exact fetch time
+  //       },
+  //     },
+  //     { upsert: true }
+  //   );
+  // }
 
   private resolveSortField(sort: string): string | null {
     const sortMap: Record<string, string> = {
