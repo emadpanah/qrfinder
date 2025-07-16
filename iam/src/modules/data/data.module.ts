@@ -32,6 +32,10 @@ import { AuthService } from '../iam/services/auth.service';
 import { CurrencyRepository } from '../iam/database/repositories/currency.repository';
 import { BalanceRepository } from '../iam/database/repositories/balance.repository';
 import { JwtService } from '@nestjs/jwt';
+import { SupportChatLog, SupportChatLogSchema } from './database/schema/support-chat-log.schema';
+import { KnowledgeItemService } from '../data/service/knowledge-item.service';
+import { KnowledgeItemRepository } from './database/repositories/knowledge-item.repository';
+
 
 @Module({
   imports: [
@@ -51,13 +55,15 @@ import { JwtService } from '@nestjs/jwt';
       { name: StochasticData.name, schema: StochasticDataSchema },
       { name: EMAData.name, schema: EMADataSchema },
       { name: SMAData.name, schema: SMADataSchema },
+      { name: SupportChatLog.name, schema: SupportChatLogSchema },
     ], 'service')
   ],
   providers: [FngService, DataService, DataRepository, 
     LunarCrushService, IamService, BalanceService, IamRepository,
     UserLoginRepository, AuthService, CurrencyRepository, BalanceRepository,
-    JwtService  ],
+    JwtService, KnowledgeItemService,
+    KnowledgeItemRepository  ],
   controllers: [DataController],
-  exports: [DataService, DataRepository],
+  exports: [DataService, DataRepository, KnowledgeItemService, KnowledgeItemRepository],
 })
 export class DataModule {}

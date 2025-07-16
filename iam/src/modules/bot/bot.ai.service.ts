@@ -1613,13 +1613,13 @@ export class BotAIService implements OnModuleInit {
           case 'getCryptoPrice': {
             const effectiveDate = parameters.date || new Date().toISOString().split('T')[0];
             const timestamp1 = new Date(effectiveDate).getTime() / 1000;
-            console.log('parameters.symbol', parameters.symbol);
+            //console.log('parameters.symbol', parameters.symbol);
             const mappedSymbol = mapSymbol(parameters.symbol.toLowerCase(), 'pair');
-            console.log('mappedSymbol:', mappedSymbol);
+            //console.log('mappedSymbol:', mappedSymbol);
             functionResponse = await this.getCryptoPrice(mappedSymbol, timestamp1);
-            console.log('functionResponse:', functionResponse);
+            //console.log('functionResponse:', functionResponse);
             const his = await this.dataRepository.getLast7DaysDailyPriceOptimized(mappedSymbol, timestamp1);
-            console.log('his:', his);
+            //console.log('his:', his);
             return {
               responseText: await this.getDynamicInterpretation(his, prompt, functionResponse, 'Crypto Price', mappedSymbol, parameters.date, parameters.language),
               calledFunc,
@@ -3111,7 +3111,7 @@ Please respond in ${language} language.
 
       const adminTelegramIds = process.env.TELEGRAM_ADMIN_IDS?.split(',').map(id => id.trim()) || [];
 
-  console.log('adminTelegramIds :', adminTelegramIds);
+  //console.log('adminTelegramIds :', adminTelegramIds);
   if (adminTelegramIds.includes(this.currentTelegramId)) {
 
     let adminChatId = null;
@@ -3122,7 +3122,7 @@ Please respond in ${language} language.
     // Pattern matching
     let commandMatch = null;
 
-    console.log('admin text :', text);
+    //console.log('admin text :', text);
     if (text.toLowerCase() === '/adminhelp') {
       const helpMessage = `
     🛠 *Admin Commands Help / راهنمای دستورات ادمین* 🛠

@@ -25,6 +25,7 @@ import { ADXDto } from '../dto/adx.dto';
 import { isValidUnixTimestamp, sanitizeString } from 'src/shared/helper';
 import { ST1Dto } from '../dto/st1.dto';
 import { LunarCrushStockData } from '../schema/lunarcrush-stock.schema';
+import { SupportChatLogDto } from '../dto/support-chat-log.dto';
 
 @Injectable()
 export class DataRepository {
@@ -44,6 +45,7 @@ export class DataRepository {
   private readonly lunarPubStockCollectionName = '_lunarpublicStocksdata';
   private readonly lunarNewsCollectionName = "_lunarpublicnewsdata";
   private readonly translationCollectionName = '_translationsdata';
+  private readonly supportChatCollectionName = '_supportchatlogdata';
   private readonly logger = new Logger(DataRepository.name);
 
   constructor(@InjectConnection('service') private readonly connection: Connection) { }
@@ -1489,6 +1491,83 @@ async saveUserChatLog(log: UserChatLogDto): Promise<void> {
   await collection.insertOne(log);
 }
 
+// INSERT log
+async saveSupportChatLog(data: SupportChatLogDto): Promise<void> {
+  const collection = this.connection.collection(this.supportChatCollectionName);
+  await collection.insertOne(data);
+}
+
+// GET by Telegram ID
+async getSupportChatsByTelegramId(telegramId: string, limit = 20): Promise<SupportChatLogDto[]> {
+  try {
+    const collection = this.connection.collection(this.supportChatCollectionName);
+    const results = await collection
+      .find({ telegramId })
+      .sort({ save_at: -1 })
+      .limit(limit)
+      .toArray();
+
+    return results.map((result) => ({
+      userId: result.userId?.toString?.() || '',
+      telegramId: result.telegramId as string,
+      chatId: result.chatId as string,
+      query: result.query as string,
+      response: result.response as string,
+      calledFunction: result.calledFunction,
+      parameters: result.parameters,
+      newParameters: result.newParameters,
+      save_at: result.save_at as number,
+
+      // optional fields
+      conversationId: result.conversationId,
+      isResolved: result.isResolved,
+      resolutionNote: result.resolutionNote,
+      tags: result.tags,
+      source: result.source,
+      rating: result.rating,
+    }));
+  } catch (error) {
+    this.logger.error('Failed to retrieve support chats:', error);
+    throw error;
+  }
+}
+
+// GET by Conversation ID
+async getSupportChatsByConversationId(conversationId: string): Promise<SupportChatLogDto[]> {
+  try {
+    const collection = this.connection.collection(this.supportChatCollectionName);
+    const results = await collection
+      .find({ conversationId })
+      .sort({ save_at: 1 })
+      .toArray();
+
+    return results.map((result) => ({
+      userId: result.userId?.toString?.() || '',
+      telegramId: result.telegramId as string,
+      chatId: result.chatId as string,
+      query: result.query as string,
+      response: result.response as string,
+      calledFunction: result.calledFunction,
+      parameters: result.parameters,
+      newParameters: result.newParameters,
+      save_at: result.save_at as number,
+
+      // optional fields
+      conversationId: result.conversationId,
+      isResolved: result.isResolved,
+      resolutionNote: result.resolutionNote,
+      tags: result.tags,
+      source: result.source,
+      rating: result.rating,
+    }));
+  } catch (error) {
+    this.logger.error('Failed to retrieve conversation chat logs:', error);
+    throw error;
+  }
+}
+
+
+
 
   async getChatHistory(telegramId: string, limit: number = 5): Promise<UserChatLogDto[]> {
     try {
@@ -1580,3 +1659,6 @@ async saveUserChatLog(log: UserChatLogDto): Promise<void> {
   }
 
 }
+
+
+

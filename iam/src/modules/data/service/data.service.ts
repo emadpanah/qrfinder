@@ -18,6 +18,7 @@ import { BalanceService } from 'src/modules/iam/services/iam-balance.service';
 import { UserChatLogDto } from '../database/dto/userchatlog.dto';
 import { UserDto } from 'src/modules/iam/dto/user.dto';
 import { escapeMarkdown } from 'src/shared/helper';
+import { SupportChatLogDto } from '../database/dto/support-chat-log.dto';
 @Injectable()
 export class DataService {
    private readonly telegramBot = new TelegramBot(process.env.
@@ -308,6 +309,22 @@ async updateAllSignalsAndCalculateWinRate(): Promise<{ winRate: number; totalSig
   
   async getADXBySymbolAndDate(symbol: string, date?: number): Promise<ADXData | null> {
     return await this.dataRepository.getADXBySymbolAndDate(symbol, date);
+  }
+
+
+  // Save a new support chat entry
+  async logSupportChat(chat: SupportChatLogDto): Promise<void> {
+    await this.dataRepository.saveSupportChatLog(chat);
+  }
+
+  // Retrieve recent chat history by Telegram ID
+  async getChatHistoryByTelegramId(telegramId: string, limit = 20): Promise<SupportChatLogDto[]> {
+    return this.dataRepository.getSupportChatsByTelegramId(telegramId, limit);
+  }
+
+  // Retrieve chat messages by conversation ID
+  async getChatHistoryByConversationId(conversationId: string): Promise<SupportChatLogDto[]> {
+    return this.dataRepository.getSupportChatsByConversationId(conversationId);
   }
 
 }
