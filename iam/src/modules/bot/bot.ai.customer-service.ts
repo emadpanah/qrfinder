@@ -7,6 +7,7 @@ import { SupportChatLogDto } from '../data/database/dto/support-chat-log.dto';
 import { Types } from 'mongoose';
 import OpenAI from 'openai';
 import { KnowledgeItemService } from '../data/service/knowledge-item.service';
+import * as fs from 'fs'; // Import fs for file existence check
 
 const adminTelegramIds = process.env.TELEGRAM_ADMIN_IDS?.split(',') || [];
 
@@ -19,7 +20,9 @@ export class CustomerSupportBot implements OnModuleInit {
   private bot: TelegramBot;
   private readonly logger = new Logger(CustomerSupportBot.name);
   private readonly botToken = process.env.TELEGRAM_SUPPORT_BOT_TOKEN;
-  private readonly openai = new OpenAI({ apiKey: process.env.CHATGPT_API_KEY_CRM });
+  private readonly openai = new OpenAI({
+    apiKey: process.env.CHATGPT_API_KEY_CRM,
+  });
 
   constructor(
     private readonly iamService: IamService,
@@ -43,26 +46,35 @@ export class CustomerSupportBot implements OnModuleInit {
       const userEntity = await this.iamService.findUserByTelegramID(telegramID);
       if (!userEntity || !userEntity.mobile) {
         if (!contactRequested.has(telegramID)) {
-          const sent = await this.bot.sendMessage(chatId, 'برای استفاده از پشتیبانی لطفاً شماره موبایل خود را به اشتراک بگذارید.', {
-            reply_markup: {
-              keyboard: [
-                [
-                  {
-                    text: '📞 اشتراک شماره موبایل',
-                    request_contact: true,
-                  },
+          const sent = await this.bot.sendMessage(
+            chatId,
+            'برای استفاده از پشتیبانی لطفاً شماره موبایل خود را به اشتراک بگذارید.',
+            {
+              reply_markup: {
+                keyboard: [
+                  [
+                    {
+                      text: '📞 اشتراک شماره موبایل',
+                      request_contact: true,
+                    },
+                  ],
                 ],
-              ],
-              resize_keyboard: true,
-              one_time_keyboard: true,
+                resize_keyboard: true,
+                one_time_keyboard: true,
+              },
             },
-          });
+          );
           await this.bot.pinChatMessage(chatId, sent.message_id);
           contactRequested.add(telegramID);
         }
       } else {
         // User is registered and has mobile, send greeting video and buttons
-        await this.sendGreetingVideo(chatId, telegramID, userEntity.mobile, msg.from?.first_name || 'دوست عزیز');
+        await this.sendGreetingVideo(
+          chatId,
+          telegramID,
+          userEntity.mobile,
+          msg.from?.first_name || 'دوست عزیز',
+        );
       }
     });
 
@@ -72,105 +84,61 @@ export class CustomerSupportBot implements OnModuleInit {
       const telegramID = query.from?.id?.toString();
 
       if (!chatId || !telegramID) return;
-
       switch (query.data) {
-        case 'btn_info':
-          try {
-            await this.bot.sendVideo(chatId, 'https://sample-videos.com/video321/mp4/720/big_buck_bunny_720p_1mb.mp4', {
-              caption: '📘 ربات‌های ما ابزارهایی هستند برای ترید هوشمند در کریپتو، فارکس و طلا.',
+        case 'btn_free_signup':
+          await this.bot.sendMessage(
+            chatId,
+            'لطفاً صرافی مورد نظر خود را برای ثبت‌نام رایگان انتخاب کنید:',
+            {
               reply_markup: {
                 inline_keyboard: [
-                  [
-                    { text: 'بازگشت به منو', callback_data: 'btn_menu' },
-                    { text: 'شروع چت', callback_data: 'btn_unlock' },
-                  ],
+                  [{ text: 'LBank', callback_data: 'btn_lbank' }],
+                  [{ text: 'Wallex', callback_data: 'btn_wallex' }],
+                  [{ text: 'AMarket', callback_data: 'btn_amarket' }],
                 ],
               },
-            });
-          } catch (err) {
-            this.logger.error('❌ Failed to send info video', err);
-            await this.bot.sendMessage(chatId, '❌ خطا در ارسال ویدیو. لطفاً بعداً دوباره امتحان کنید.');
-          }
+            },
+          );
           break;
-        case 'btn_prices':
-          try {
-            await this.bot.sendVideo(chatId, 'https://sample-videos.com/video321/mp4/720/big_buck_bunny_720p_1mb.mp4', {
-              caption: `💰 لیست قیمت‌ها در لینک زیر:\nhttps://trade-ai.link/prices`,
+        case 'btn_lbank':
+          await this.bot.sendMessage(
+            chatId,
+            'لینک‌های LBank:\n- YouTube: https://www.youtube.com/watch?v=example_lbank\n- Referral: https://lbank.com/referral\n- Support: https://lbank.com/support',
+            {
+              parse_mode: 'Markdown',
+            },
+          );
+          break;
+        case 'btn_wallex':
+          await this.bot.sendMessage(
+            chatId,
+            'لینک‌های Wallex:\n- YouTube: https://www.youtube.com/watch?v=example_wallex\n- Referral: https://wallex.com/referral\n- Support: https://wallex.com/support',
+            {
+              parse_mode: 'Markdown',
+            },
+          );
+          break;
+        case 'btn_amarket':
+          await this.bot.sendMessage(
+            chatId,
+            'لینک‌های AMarket:\n- YouTube: https://www.youtube.com/watch?v=example_amarket\n- Referral: https://amarket.com/referral\n- Support: https://amarket.com/support',
+            {
+              parse_mode: 'Markdown',
+            },
+          );
+          break;
+        case 'btn_direct_buy':
+          await this.bot.sendMessage(
+            chatId,
+            'برای خرید مستقیم، لطفاً به سایت مراجعه کنید:',
+            {
               reply_markup: {
                 inline_keyboard: [
-                  [
-                    { text: 'بازگشت به منو', callback_data: 'btn_menu' },
-                    { text: 'شروع چت', callback_data: 'btn_unlock' },
-                  ],
+                  [{ text: 'خرید از Trade AI', url: 'https://trade-ai.bot' }],
                 ],
               },
-            });
-          } catch (err) {
-            this.logger.error('❌ Failed to send prices video', err);
-            await this.bot.sendMessage(chatId, '❌ خطا در ارسال ویدیو. لطفاً بعداً دوباره امتحان کنید.');
-          }
-          break;
-        case 'btn_compare':
-          try {
-            await this.bot.sendVideo(chatId, 'https://sample-videos.com/video321/mp4/720/big_buck_bunny_720p_1mb.mp4', {
-              caption: `📊 مقایسه کامل ربات‌ها:\nhttps://trade-ai.link/compare`,
-              reply_markup: {
-                inline_keyboard: [
-                  [
-                    { text: 'بازگشت به منو', callback_data: 'btn_menu' },
-                    { text: 'شروع چت', callback_data: 'btn_unlock' },
-                  ],
-                ],
-              },
-            });
-          } catch (err) {
-            this.logger.error('❌ Failed to send compare video', err);
-            await this.bot.sendMessage(chatId, '❌ خطا در ارسال ویدیو. لطفاً بعداً دوباره امتحان کنید.');
-          }
-          break;
-        case 'btn_connect':
-          try {
-            await this.bot.sendVideo(chatId, 'https://sample-videos.com/video321/mp4/720/big_buck_bunny_720p_1mb.mp4', {
-              caption: `🔌 آموزش اتصال ربات به صرافی در لینک زیر:\nhttps://trade-ai.link/connect`,
-              reply_markup: {
-                inline_keyboard: [
-                  [
-                    { text: 'بازگشت به منو', callback_data: 'btn_menu' },
-                    { text: 'شروع چت', callback_data: 'btn_unlock' },
-                  ],
-                ],
-              },
-            });
-          } catch (err) {
-            this.logger.error('❌ Failed to send connect video', err);
-            await this.bot.sendMessage(chatId, '❌ خطا در ارسال ویدیو. لطفاً بعداً دوباره امتحان کنید.');
-          }
-          break;
-        case 'btn_unlock':
-          unlockedUsers.add(telegramID);
-          await this.bot.sendMessage(chatId, '🔓 اکنون می‌توانید سوالات خود را از گنجول بپرسید! ✨');
-          break;
-        case 'btn_menu':
-          const firstName = query.from?.first_name || 'دوست عزیز';
-          try {
-            await this.bot.sendVideo(chatId, 'https://sample-videos.com/video321/mp4/720/big_buck_bunny_720p_1mb.mp4', {
-              caption: `🎬 خوش‌آمدید ${firstName}! من ربات پشتیبانی Ganjool هستم. برای شروع از دکمه‌های زیر استفاده کنید:`,
-              reply_markup: {
-                inline_keyboard: [
-                  [
-                    { text: '🧠 درباره ربات‌ها', callback_data: 'btn_info' },
-                    { text: '💵 قیمت‌ها', callback_data: 'btn_prices' },
-                  ],
-                  [{ text: '📊 مقایسه محصولات', callback_data: 'btn_compare' }],
-                  [{ text: '🔧 نحوه اتصال', callback_data: 'btn_connect' }],
-                  [{ text: 'شروع چت', callback_data: 'btn_unlock' }],
-                ],
-              },
-            });
-          } catch (err) {
-            this.logger.error('❌ Failed to send menu video', err);
-            await this.bot.sendMessage(chatId, '❌ خطا در ارسال ویدیو. لطفاً بعداً دوباره امتحان کنید.');
-          }
+            },
+          );
           break;
       }
 
@@ -195,13 +163,16 @@ export class CustomerSupportBot implements OnModuleInit {
 
         try {
           if (cmd === '/addprompt') {
-            const [q, a] = full.split('=>').map(s => s.trim());
-            await this.knowledgeService.createPrompt({ question: q, answer: a });
+            const [q, a] = full.split('=>').map((s) => s.trim());
+            await this.knowledgeService.createPrompt({
+              question: q,
+              answer: a,
+            });
             await this.bot.sendMessage(chatId, `✅ Prompt added.`);
             return;
           }
           if (cmd === '/updateprompt') {
-            const [q, a] = full.split('=>').map(s => s.trim());
+            const [q, a] = full.split('=>').map((s) => s.trim());
             await this.knowledgeService.updatePromptByQuestion(q, a);
             await this.bot.sendMessage(chatId, `🔄 Prompt updated.`);
             return;
@@ -231,24 +202,31 @@ export class CustomerSupportBot implements OnModuleInit {
 
       if (!userMobile) {
         if (!contactRequested.has(telegramID)) {
-          const sent = await this.bot.sendMessage(chatId, 'برای استفاده از پشتیبانی لطفاً شماره موبایل خود را به اشتراک بگذارید.', {
-            reply_markup: {
-              keyboard: [
-                [
-                  {
-                    text: '📞 اشتراک شماره موبایل',
-                    request_contact: true,
-                  },
+          const sent = await this.bot.sendMessage(
+            chatId,
+            'برای استفاده از پشتیبانی لطفاً شماره موبایل خود را به اشتراک بگذارید.',
+            {
+              reply_markup: {
+                keyboard: [
+                  [
+                    {
+                      text: '📞 اشتراک شماره موبایل',
+                      request_contact: true,
+                    },
+                  ],
                 ],
-              ],
-              resize_keyboard: true,
-              one_time_keyboard: true,
+                resize_keyboard: true,
+                one_time_keyboard: true,
+              },
             },
-          });
+          );
           await this.bot.pinChatMessage(chatId, sent.message_id);
           contactRequested.add(telegramID);
         } else {
-          await this.bot.sendMessage(chatId, 'لطفاً شماره موبایل خود را به اشتراک بگذارید تا ادامه دهیم.');
+          await this.bot.sendMessage(
+            chatId,
+            'لطفاً شماره موبایل خود را به اشتراک بگذارید تا ادامه دهیم.',
+          );
         }
         return;
       }
@@ -273,14 +251,22 @@ export class CustomerSupportBot implements OnModuleInit {
 
         if (msg.contact) {
           // 📹 Send greeting video and buttons after contact is shared
-          await this.sendGreetingVideo(chatId, telegramID, userMobile, telegramFirstName);
+          await this.sendGreetingVideo(
+            chatId,
+            telegramID,
+            userMobile,
+            telegramFirstName,
+          );
           return;
         }
 
-        if (!unlockedUsers.has(telegramID) && msg.text) {
-          await this.bot.sendMessage(chatId, '⛔ لطفاً ابتدا دکمه "شروع چت" را فشار دهید تا چت فعال شود.');
-          return;
-        }
+        // if (!unlockedUsers.has(telegramID) && msg.text) {
+        //   await this.bot.sendMessage(
+        //     chatId,
+        //     '⛔ لطفاً ابتدا دکمه "شروع چت" را فشار دهید تا چت فعال شود.',
+        //   );
+        //   return;
+        // }
 
         if (msg.text && unlockedUsers.has(telegramID)) {
           const timestamp = Math.floor(Date.now() / 1000);
@@ -301,7 +287,9 @@ export class CustomerSupportBot implements OnModuleInit {
             messages,
           });
 
-          const aiReply = completion.choices[0].message.content?.trim() || '🤖 پاسخی پیدا نشد.';
+          const aiReply =
+            completion.choices[0].message.content?.trim() ||
+            '🤖 پاسخی پیدا نشد.';
           await this.bot.sendMessage(chatId, aiReply);
 
           const chatLog: SupportChatLogDto = {
@@ -318,33 +306,73 @@ export class CustomerSupportBot implements OnModuleInit {
         }
       } catch (err) {
         this.logger.error('❌ Failed to register/login user', err);
-        await this.bot.sendMessage(chatId, '❌ خطا در پردازش درخواست. لطفاً دوباره تلاش کنید.');
+        await this.bot.sendMessage(
+          chatId,
+          '❌ خطا در پردازش درخواست. لطفاً دوباره تلاش کنید.',
+        );
       }
     });
-
-    
   }
+  async sendGreetingVideo(
+    chatId: number,
+    telegramID: string,
+    mobile: string,
+    firstName: string,
+  ) {
+    const localVideoPath = './asset/videos/greeting-lbank.mp4'; // Path to local video file
 
-  // Helper method to send greeting video and buttons
-    async sendGreetingVideo(chatId: number, telegramID: string, mobile: string, firstName: string) {
-      try {
-        await this.bot.sendVideo(chatId, 'https://sample-videos.com/video321/mp4/720/big_buck_bunny_720p_1mb.mp4', {
-          caption: `🎬 خوش‌آمدید ${firstName}! من ربات پشتیبانی Ganjool هستم. برای شروع از دکمه‌های زیر استفاده کنید:`,
-          reply_markup: {
-            inline_keyboard: [
-              [
-                { text: '🧠 درباره ربات‌ها', callback_data: 'btn_info' },
-                { text: '💵 قیمت‌ها', callback_data: 'btn_prices' },
-              ],
-              [{ text: '📊 مقایسه محصولات', callback_data: 'btn_compare' }],
-              [{ text: '🔧 نحوه اتصال', callback_data: 'btn_connect' }],
-              [{ text: 'شروع چت', callback_data: 'btn_unlock' }],
-            ],
-          },
-        });
-      } catch (err) {
-        this.logger.error('❌ Failed to send greeting video', err);
-        await this.bot.sendMessage(chatId, '❌ خطا در ارسال ویدیو خوش‌آمدگویی. لطفاً بعداً دوباره امتحان کنید.');
-      }
+    // Log: Starting video send process
+    this.logger.log(
+      `Attempting to send greeting video from: ${localVideoPath} for user ${telegramID}`,
+    );
+
+    // Send preliminary message to indicate processing
+    await this.bot.sendMessage(
+      chatId,
+      '⏳ در حال آماده‌سازی ویدیو، لطفاً صبر کنید...',
+    );
+
+    // Debug: Check if file exists
+    if (!fs.existsSync(localVideoPath)) {
+      this.logger.error(`Video file not found at: ${localVideoPath}`);
+      await this.bot.sendMessage(
+        chatId,
+        '❌ فایل ویدیویی یافت نشد. لطفاً مسیر فایل را بررسی کنید.',
+      );
+      return;
     }
+    this.logger.log(`Video file found at: ${localVideoPath}`);
+
+    // Debug: Check file stats
+    const stats = fs.statSync(localVideoPath);
+    this.logger.log(
+      `File size: ${stats.size} bytes, isFile: ${stats.isFile()}`,
+    );
+
+    try {
+      // Log: Starting video upload
+      this.logger.log(`Starting upload of video to chatId: ${chatId}`);
+      await this.bot.sendVideo(chatId, localVideoPath, {
+        caption: `🎬 خوش‌آمدید ${firstName}! من ربات پشتیبانی Ganjool هستم.\n\n💣 ۵۰ دلار بده، تا ۱۰۰ میلیون ببر!\n🤖 ربات‌های ترید هوش مصنوعی رایگان Trade AI به افتخار ۵۰۰K شدن شبکه های اجتماعی با اسپانسرینگ LBank\n\n🔥 فقط یه ترید بزن و وارد تورنمنت ویژه شو!\n🎁 جایزه نقدی برای ۳۰ نفر اول\n💥 فرصت خیلی محدوده!\n\n📈 رده‌بندی زنده تو شبکه‌هامونه!`,
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: 'ثبت نام رایگان', callback_data: 'btn_free_signup' }],
+            [{ text: 'خرید مستقیم از سایت', callback_data: 'btn_direct_buy' }],
+          ],
+        },
+      });
+      this.logger.log(`Video successfully sent to chatId: ${chatId}`);
+    } catch (err) {
+      this.logger.error('❌ Failed to send greeting video', err);
+      if (err.response && err.response.body) {
+        this.logger.error('Telegram API Error:', err.response.body);
+      } else {
+        this.logger.error('Unknown error during sendVideo:', err.message);
+      }
+      await this.bot.sendMessage(
+        chatId,
+        '❌ خطا در ارسال ویدیو خوش‌آمدگویی. لطفاً بعداً دوباره امتحان کنید.',
+      );
+    }
+  }
 }
