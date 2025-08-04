@@ -107,15 +107,15 @@ export class DataController {
     }
 
     // Fetch the last signal for the same symbol
-     const lastSignal = await this.dataService.getLastST1BySymbol(st1Data.symbol);
+    //  const lastSignal = await this.dataService.getLastST1BySymbol(st1Data.symbol);
        
-    if (lastSignal) {
-      const isTargetReached =
-        (lastSignal.signal === 'Buy' && price >= lastSignal.target) ||
-        (lastSignal.signal === 'Sell' && price <= lastSignal.target);
-          console.log('isTargetReached: ', isTargetReached);
-        await this.dataService.updateST1IsDone(lastSignal._id.toString(), isTargetReached);
-     }
+    // if (lastSignal) {
+    //   const isTargetReached =
+    //     (lastSignal.signal === 'Buy' && price >= lastSignal.target) ||
+    //     (lastSignal.signal === 'Sell' && price <= lastSignal.target);
+    //       console.log('isTargetReached: ', isTargetReached);
+    //     await this.dataService.updateST1IsDone(lastSignal._id.toString(), isTargetReached);
+    //  }
 
     return { message: 'ST1 data received and saved successfully' };
 

@@ -29,6 +29,7 @@ export class CustomerSupportBot implements OnModuleInit {
     private readonly dataService: DataService,
     private readonly knowledgeService: KnowledgeItemService,
   ) {
+    process.env.NTBA_FIX_350 = '1';
     const TelegramBotConstructor = (TelegramBot as any).default || TelegramBot;
     this.bot = new TelegramBotConstructor(this.botToken, { polling: true });
   }
@@ -67,15 +68,11 @@ export class CustomerSupportBot implements OnModuleInit {
           await this.bot.pinChatMessage(chatId, sent.message_id);
           contactRequested.add(telegramID);
         }
-      } else {
-        // User is registered and has mobile, send greeting video and buttons
-        await this.sendGreetingVideo(
-          chatId,
-          telegramID,
-          userEntity.mobile,
-          msg.from?.first_name || 'دوست عزیز',
-        );
-      }
+      } 
+      // else {
+      //   // User is registered and has mobile, send greeting video and buttons
+      //   await this.sendGreetingVideo(chatId, telegramID, userEntity.mobile, msg.from?.first_name || 'دوست عزیز');
+      // }
     });
 
     // 🔘 Handle buttons
@@ -84,6 +81,7 @@ export class CustomerSupportBot implements OnModuleInit {
       const telegramID = query.from?.id?.toString();
 
       if (!chatId || !telegramID) return;
+
       switch (query.data) {
         case 'btn_free_signup':
           await this.bot.sendMessage(
@@ -92,53 +90,62 @@ export class CustomerSupportBot implements OnModuleInit {
             {
               reply_markup: {
                 inline_keyboard: [
-                  [{ text: 'LBank', callback_data: 'btn_lbank' }],
-                  [{ text: 'Wallex', callback_data: 'btn_wallex' }],
-                  [{ text: 'AMarket', callback_data: 'btn_amarket' }],
+                  [{ text: '(LBank) ال بنک', callback_data: 'btn_lbank' }],
+                  [{ text: '(Wallex) والکس', callback_data: 'btn_wallex' }],
+                  [{ text: '(AMarket) آ مارکت', callback_data: 'btn_amarket' }],
                 ],
               },
             },
           );
           break;
         case 'btn_lbank':
-          await this.bot.sendMessage(
+         await this.bot.sendMessage(
             chatId,
-            'لینک‌های LBank:\n- YouTube: https://www.youtube.com/watch?v=example_lbank\n- Referral: https://lbank.com/referral\n- Support: https://lbank.com/support',
-            {
-              parse_mode: 'Markdown',
-            },
-          );
-          break;
-        case 'btn_wallex':
-          await this.bot.sendMessage(
-            chatId,
-            'لینک‌های Wallex:\n- YouTube: https://www.youtube.com/watch?v=example_wallex\n- Referral: https://wallex.com/referral\n- Support: https://wallex.com/support',
-            {
-              parse_mode: 'Markdown',
-            },
-          );
-          break;
-        case 'btn_amarket':
-          await this.bot.sendMessage(
-            chatId,
-            'لینک‌های AMarket:\n- YouTube: https://www.youtube.com/watch?v=example_amarket\n- Referral: https://amarket.com/referral\n- Support: https://amarket.com/support',
-            {
-              parse_mode: 'Markdown',
-            },
-          );
-          break;
-        case 'btn_direct_buy':
-          await this.bot.sendMessage(
-            chatId,
-            'برای خرید مستقیم، لطفاً به سایت مراجعه کنید:',
+            '🟢 بهترین صرافی کریپتو با خدمات فوق العاده،صرافی ال بنک :',
             {
               reply_markup: {
                 inline_keyboard: [
-                  [{ text: 'خرید از Trade AI', url: 'https://trade-ai.bot' }],
+                  [{ text: ' لینک آموزش ثبت نام(یوتیوب) ', url: 'https://www.youtube.com/watch?v=eiX8KdOEbjc&pp=2AaSAw%3D%3D' }],
+                  [{ text: 'لینک رفرال', url: 'https://lbank.com/ref/565WO' }],
+                  [{ text: 'چت با پشتیبانی', callback_data: 'btn_support_chat' }],
                 ],
               },
             },
           );
+          break;
+        case 'btn_wallex':
+         await this.bot.sendMessage(
+            chatId,
+            '1️⃣ از طریق لینک زیر تو صرافی والکس ثبت‌نام کن :',
+            {
+              reply_markup: {
+                inline_keyboard: [
+                  [{ text: ' لینک آموزش ثبت نام(یوتیوب) ', url: 'https://www.youtube.com/watch?v=6M_4yig2OkI' }],
+                  [{ text: 'لینک رفرال', url: 'https://wallex.ir/signup?ref=k09o9gp' }],
+                  [{ text: 'چت با پشتیبانی', callback_data: 'btn_support_chat' }],
+                ],
+              },
+            },
+          );
+          break;
+        case 'btn_amarket':
+         await this.bot.sendMessage(
+            chatId,
+            '🟢بهترین بروکر برای کسایی که فارکس کار میکنند😍🔥',
+            {
+              reply_markup: {
+                inline_keyboard: [
+                  [{ text: ' لینک آموزش ثبت نام(یوتیوب) ', url: 'https://www.youtube.com/watch?v=q22kqp4XEjg' }],
+                  [{ text: 'لینک رفرال', url: 'https://fa.amarketsworld.com/open-an-account-standard-fa/?g=TRADEAI&utm_source=TRAI-Inf-PA&utm_medium=SM-TRAI&utm_campaign=TR-H-Mar' }],
+                  [{ text: 'چت با پشتیبانی', callback_data: 'btn_support_chat' }],
+                ],
+              },
+            },
+          );
+          break;
+        case 'btn_support_chat':
+          unlockedUsers.add(telegramID);
+          await this.bot.sendMessage(chatId, '🔓 چت با پشتیبانی هوش مصنوعی فعال شد! حالا می‌توانید سؤالات خود را بپرسید.');
           break;
       }
 
@@ -260,14 +267,18 @@ export class CustomerSupportBot implements OnModuleInit {
           return;
         }
 
-        // if (!unlockedUsers.has(telegramID) && msg.text) {
-        //   await this.bot.sendMessage(
-        //     chatId,
-        //     '⛔ لطفاً ابتدا دکمه "شروع چت" را فشار دهید تا چت فعال شود.',
-        //   );
-        //   return;
-        // }
+        // Send greeting video/buttons for /start or any text if not unlocked
+        if (msg.text && !unlockedUsers.has(telegramID)) {
+          await this.sendGreetingVideo(
+            chatId,
+            telegramID,
+            userMobile,
+            telegramFirstName,
+          );
+          return;
+        }
 
+        // Process AI chat only if unlocked
         if (msg.text && unlockedUsers.has(telegramID)) {
           const timestamp = Math.floor(Date.now() / 1000);
 
@@ -313,66 +324,57 @@ export class CustomerSupportBot implements OnModuleInit {
       }
     });
   }
+
   async sendGreetingVideo(
     chatId: number,
     telegramID: string,
     mobile: string,
     firstName: string,
   ) {
-    const localVideoPath = './asset/videos/greeting-lbank.mp4'; // Path to local video file
-
-    // Log: Starting video send process
-    this.logger.log(
-      `Attempting to send greeting video from: ${localVideoPath} for user ${telegramID}`,
-    );
+    const localVideoPath = './assets/videos/greeting-lbank.MP4'; // Corrected path
 
     // Send preliminary message to indicate processing
-    await this.bot.sendMessage(
-      chatId,
-      '⏳ در حال آماده‌سازی ویدیو، لطفاً صبر کنید...',
-    );
+    //await this.bot.sendMessage(chatId, '⏳ در حال ارسال ویدیو خوش‌آمدگویی...');
 
     // Debug: Check if file exists
     if (!fs.existsSync(localVideoPath)) {
-      this.logger.error(`Video file not found at: ${localVideoPath}`);
       await this.bot.sendMessage(
         chatId,
-        '❌ فایل ویدیویی یافت نشد. لطفاً مسیر فایل را بررسی کنید.',
+        `❌ فایل ویدیویی یافت نشد: ${localVideoPath}. لطفاً مسیر را بررسی کنید.`,
       );
       return;
     }
-    this.logger.log(`Video file found at: ${localVideoPath}`);
 
-    // Debug: Check file stats
-    const stats = fs.statSync(localVideoPath);
-    this.logger.log(
-      `File size: ${stats.size} bytes, isFile: ${stats.isFile()}`,
-    );
+    // Create a read stream for the file
+    const videoStream = fs.createReadStream(localVideoPath);
 
     try {
-      // Log: Starting video upload
-      this.logger.log(`Starting upload of video to chatId: ${chatId}`);
-      await this.bot.sendVideo(chatId, localVideoPath, {
-        caption: `🎬 خوش‌آمدید ${firstName}! من ربات پشتیبانی Ganjool هستم.\n\n💣 ۵۰ دلار بده، تا ۱۰۰ میلیون ببر!\n🤖 ربات‌های ترید هوش مصنوعی رایگان Trade AI به افتخار ۵۰۰K شدن شبکه های اجتماعی با اسپانسرینگ LBank\n\n🔥 فقط یه ترید بزن و وارد تورنمنت ویژه شو!\n🎁 جایزه نقدی برای ۳۰ نفر اول\n💥 فرصت خیلی محدوده!\n\n📈 رده‌بندی زنده تو شبکه‌هامونه!`,
-        reply_markup: {
-          inline_keyboard: [
-            [{ text: 'ثبت نام رایگان', callback_data: 'btn_free_signup' }],
-            [{ text: 'خرید مستقیم از سایت', callback_data: 'btn_direct_buy' }],
-          ],
+      await this.bot.sendVideo(
+        chatId,
+        videoStream,
+        {
+          caption: `🎬 خوش‌آمدید ${firstName}!\n\n🎁 ربات‌های هوش مصنوعی رایگان در Trade-AI آماده‌اند.\n\n💰 ۵۰ دلار بده، تا 100 میلیون ببر!\n🤖 ربات‌های ترید هوش مصنوعی رایگان Trade AI به افتخار ۵۰۰K شدن شبکه های اجتماعی با اسپانسرینگ LBank\n🔥 فقط یه ترید بزن و وارد تورنمنت ویژه شو!\n🏆 جایزه نقدی برای 30 نفر اول\n⏳ فرصت خیلی محدوده!\n📊 رده‌بندی زنده تو شبکه‌هامونه!`,  
+          reply_markup: {
+            inline_keyboard: [
+              [{ text: 'ثبت نام رایگان', callback_data: 'btn_free_signup' }],
+              [{ text: 'خرید مستقیم از سایت', url: 'https://trade-ai.bot/product/%D8%B1%D8%A8%D8%A7%D8%AA-%D8%AA%D8%B1%DB%8C%D8%AF-%D8%A7%D8%B3%D9%BE%DB%8C%D8%B3-%D8%A7%DB%8C%DA%A9%D8%B3-%D9%81%D8%A7%D8%B1%DA%A9%D8%B3-%DA%A9%D8%B1%DB%8C%D9%BE%D8%AA%D9%88-%D9%88-%D8%B3%D9%87%D8%A7%D9%85-%D8%A2%D9%85%D8%B1%DB%8C%DA%A9%D8%A7'}],
+              [{ text: 'چت با پشتیبانی', callback_data: 'btn_support_chat' }],
+            ],
+          },
+          contentType: 'video/mp4',
         },
-      });
-      this.logger.log(`Video successfully sent to chatId: ${chatId}`);
+      );
     } catch (err) {
-      this.logger.error('❌ Failed to send greeting video', err);
-      if (err.response && err.response.body) {
-        this.logger.error('Telegram API Error:', err.response.body);
-      } else {
-        this.logger.error('Unknown error during sendVideo:', err.message);
-      }
       await this.bot.sendMessage(
         chatId,
-        '❌ خطا در ارسال ویدیو خوش‌آمدگویی. لطفاً بعداً دوباره امتحان کنید.',
+        `❌ خطا در ارسال ویدیو: ${err.message}. لطفاً بعداً دوباره امتحان کنید.`,
       );
+      if (err.response && err.response.body) {
+        await this.bot.sendMessage(
+          chatId,
+          `❗️ خطای API تلگرام: ${JSON.stringify(err.response.body)}`,
+        );
+      }
     }
   }
 }

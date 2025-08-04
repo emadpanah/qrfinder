@@ -191,29 +191,29 @@ export class DataService {
 
   
 
-async updateAllSignalsAndCalculateWinRate(): Promise<{ winRate: number; totalSignals: number; winningSignals: number }> {
-  const signals = await this.dataRepository.getAllST1Signals();
+// async updateAllSignalsAndCalculateWinRate(): Promise<{ winRate: number; totalSignals: number; winningSignals: number }> {
+//   const signals = await this.dataRepository.getAllST1Signals();
 
-  let winningSignals = 0;
+//   let winningSignals = 0;
 
-  for (const signal of signals) {
-    const isTargetReached =
-      (signal.signal === 'Buy' && signal.price >= signal.target) ||
-      (signal.signal === 'Sell' && signal.price <= signal.target);
+//   for (const signal of signals) {
+//     const isTargetReached =
+//       (signal.signal === 'Buy' && signal.price >= signal.target) ||
+//       (signal.signal === 'Sell' && signal.price <= signal.target);
 
-    if (isTargetReached) {
-      winningSignals++;
-    }
+//     if (isTargetReached) {
+//       winningSignals++;
+//     }
 
-    // Update the isDone status in the database
-    await this.dataRepository.updateST1IsDone(signal._id.toString(), isTargetReached);
-  }
+//     // Update the isDone status in the database
+//     await this.dataRepository.updateST1IsDone(signal._id.toString(), isTargetReached);
+//   }
 
-  const totalSignals = signals.length;
-  const winRate = totalSignals > 0 ? (winningSignals / totalSignals) * 100 : 0;
+//   const totalSignals = signals.length;
+//   const winRate = totalSignals > 0 ? (winningSignals / totalSignals) * 100 : 0;
 
-  return { winRate, totalSignals, winningSignals };
-}
+//   return { winRate, totalSignals, winningSignals };
+// }
 
   async saveST1Data(st1Data: ST1Dto): Promise<void> {
     const timestamp = new Date(st1Data.time).getTime() / 1000;
