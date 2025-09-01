@@ -18,6 +18,7 @@ import { DataRepository } from '../data/database/repositories/data.repository';
 import { CustomerSupportBot } from './bot.ai.customer-service';
 import { KnowledgeItemService } from '../data/service/knowledge-item.service';
 import { KnowledgeItemRepository } from '../data/database/repositories/knowledge-item.repository';
+import { CalendarRepository } from '../data/database/repositories/calendar.repository';
 
 @Module({
   imports: [ProductModule, DataModule],
@@ -36,9 +37,10 @@ import { KnowledgeItemRepository } from '../data/database/repositories/knowledge
     AuthService,
     JwtService,
     //ChatGptBotService
-    CustomerSupportBot,
+    //CustomerSupportBot,
     KnowledgeItemService,
-    KnowledgeItemRepository
+    KnowledgeItemRepository,
+    CalendarRepository
     ],
     exports: [BotAIService],
 })

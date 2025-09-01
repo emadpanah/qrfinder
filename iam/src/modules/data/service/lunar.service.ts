@@ -250,6 +250,11 @@ export class LunarCrushService {
       'https://lunarcrush.com/api4/public/category/cryptocurrencies/news/v1',
       'https://lunarcrush.com/api4/public/topic/bitcoin/news/v1',
       'https://lunarcrush.com/api4/public/topic/memecoin/news/v1',
+      'https://lunarcrush.com/api4/public/topic/forex/news/v1',
+      'https://lunarcrush.com/api4/public/topic/stocks/news/v1',
+      'https://lunarcrush.com/api4/public/topic/cryptonews/news/v1',
+      'https://lunarcrush.com/api4/public/topic/ethereum/news/v1',
+      'https://lunarcrush.com/api4/public/topic/altcoins/news/v1',
       'https://lunarcrush.com/api4/public/category/stocks/news/v1',
     ];
   

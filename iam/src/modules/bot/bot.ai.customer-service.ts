@@ -99,6 +99,7 @@ export class CustomerSupportBot implements OnModuleInit {
           );
           break;
         case 'btn_lbank':
+         await this.bot.sendPhoto(chatId, './assets/img/lbank.jpg'); // Local image path
          await this.bot.sendMessage(
             chatId,
             '🟢 بهترین صرافی کریپتو با خدمات فوق العاده،صرافی ال بنک :',
@@ -106,7 +107,7 @@ export class CustomerSupportBot implements OnModuleInit {
               reply_markup: {
                 inline_keyboard: [
                   [{ text: ' لینک آموزش ثبت نام(یوتیوب) ', url: 'https://www.youtube.com/watch?v=eiX8KdOEbjc&pp=2AaSAw%3D%3D' }],
-                  [{ text: 'لینک رفرال', url: 'https://lbank.com/ref/565WO' }],
+                  [{ text: 'لینک رفرال', url: 'https://www.lbank.com/fa/signup?icode=565WO' }],
                   [{ text: 'چت با پشتیبانی', callback_data: 'btn_support_chat' }],
                 ],
               },
@@ -114,6 +115,7 @@ export class CustomerSupportBot implements OnModuleInit {
           );
           break;
         case 'btn_wallex':
+         await this.bot.sendPhoto(chatId, './assets/img/wallex.jpg'); 
          await this.bot.sendMessage(
             chatId,
             '1️⃣ از طریق لینک زیر تو صرافی والکس ثبت‌نام کن :',
@@ -129,6 +131,7 @@ export class CustomerSupportBot implements OnModuleInit {
           );
           break;
         case 'btn_amarket':
+         await this.bot.sendPhoto(chatId, './assets/img/amarket.jpg'); 
          await this.bot.sendMessage(
             chatId,
             '🟢بهترین بروکر برای کسایی که فارکس کار میکنند😍🔥',
@@ -144,8 +147,9 @@ export class CustomerSupportBot implements OnModuleInit {
           );
           break;
         case 'btn_support_chat':
-          unlockedUsers.add(telegramID);
-          await this.bot.sendMessage(chatId, '🔓 چت با پشتیبانی هوش مصنوعی فعال شد! حالا می‌توانید سؤالات خود را بپرسید.');
+          await this.bot.sendMessage(chatId, '📩 برای پشتیبانی، لطفاً به حساب @Trade_Ai_bot_support پیام دهید.');
+          //unlockedUsers.add(telegramID);
+          //await this.bot.sendMessage(chatId, '🔓 چت با پشتیبانی هوش مصنوعی فعال شد! حالا می‌توانید سؤالات خود را بپرسید.');
           break;
       }
 

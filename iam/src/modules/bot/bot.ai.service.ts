@@ -2,7 +2,7 @@ import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
 import * as TelegramBot from 'node-telegram-bot-api';
 import { OpenAI } from 'openai';
 import { ProductService } from '../product/services/product.service';
-import { DataRepository } from '../data/database/repositories/data.repository'; // Import DataRepository
+import { DataRepository } from '../data/database/repositories/data.repository'; 
 import { isEmpty } from 'validator';
 import { DominanceDto } from '../data/database/dto/dominance.dto';
 import { UserChatLogDto } from '../data/database/dto/userchatlog.dto';
@@ -16,6 +16,7 @@ import { title } from 'process';
 import { Console } from 'console';
 import { DataService } from '../data/service/data.service';
 import { min } from 'class-validator';
+import { CalendarRepository } from '../data/database/repositories/calendar.repository';
 
 
 
@@ -212,7 +213,8 @@ export class BotAIService implements OnModuleInit {
     private readonly iamService: IamService,
     private readonly dataService: DataService,
     private readonly balanceService: BalanceService,
-    private readonly dataRepository: DataRepository // Inject DataRepository
+    private readonly dataRepository: DataRepository,
+    private readonly calendarRepository: CalendarRepository // Inject DataRepository
   ) {
     this.bot = new TelegramBot(
       process.env.TELEGRAM_BOT_TOKEN,
@@ -307,8 +309,7 @@ export class BotAIService implements OnModuleInit {
     If a user asks a question in Persian, you must answer in Persian, and if a user asks in English, you answer in English.
     If a user asks a question in Persian but with English characters (Finglish), you answer in Persian language.
     Your tone is always polite, engaging, and professional, but you remain approachable and relatable to users of all experience levels.
-    If the user asks questions like 'Do I buy Bitcoin or sell Bitcoin now' or other similar queries, you must analyze the requested symbol and generate trading signals using the analyzeAndCreateSignals function,
-    Nabzar is recieving data in 5min time frame. 
+    If the user asks questions like 'Do I buy Bitcoin or sell Bitcoin now' or other similar queries, you must analyze the requested symbol and generate trading signals using the analyzeAndCreateSignals function, 
     for buying Nabzar they must go to https://trade-ai.bot/ site and buy membership.
     You are committed to guiding users step-by-step, offering them insights, explanations, and knowledge about crypto and blockchain in a way that enhances their confidence and understanding.
     Today's date is ${new Date().toLocaleDateString('en-US', {
@@ -928,7 +929,7 @@ export class BotAIService implements OnModuleInit {
       {
         name: 'analyzeAndCreateSignals',
         description: 'Analyzing or in persin تحلیل or technical Analyzing or trading signals generation (e.g., Buy, Sell, Hold, Target, Stop) for'
-          + 'given crypto or forex symbols up to 10',
+          + 'given crypto or forex symbols up to 10 and in given timeframe (default is 1hour).',
         parameters: {
           type: 'object',
           properties: {
@@ -942,8 +943,12 @@ export class BotAIService implements OnModuleInit {
               type: 'string',
               description: 'The language of the user query, e.g., "en" for English, "fa" for Persian, etc.',
             },
+            timeframe: {
+              type: 'string',
+              description: 'The timeframe of the user query for signal or analyze default is 1h, e.g., 15m, 1h, 4h, 1d etc.',
+            },
           },
-          required: ['symbols', 'language'],
+          required: ['symbols', 'language', 'timefarme'],
         },
       },
       {
@@ -1721,7 +1726,7 @@ export class BotAIService implements OnModuleInit {
           }
 
           case 'analyzeAndCreateSignals':
-            functionResponse = await this.analyzeAndCreateSignals(parameters.symbols, parameters.language, prompt);
+            functionResponse = await this.analyzeAndCreateSignals(parameters.symbols, parameters.language, parameters.timeframe, prompt);
             return {
               responseText: functionResponse,
               calledFunc,
@@ -1980,15 +1985,306 @@ export class BotAIService implements OnModuleInit {
   }
 
 
-  async analyzeAndCreateSignals(symbols: string[], language: string, userPrompt: string): Promise<string> {
+//   async analyzeAndCreateSignals(symbols: string[], language: string, userPrompt: string): Promise<string> {
+//     let sym;
+//     if (symbols.length >= 1) {
+//       sym = symbols[0];
+//     }
+//     const effectiveDate = new Date().toISOString().split('T')[0];
+//     const timestamp1 = new Date(effectiveDate).getTime() / 1000;
+
+
+
+//     // Start timing for FNG data retrieval
+//     const fngStart = Date.now();
+//     const fngData = await this.dataRepository.findFngByDate();
+//     const fngHis = await this.dataRepository.getLast7DaysFngDataOptimized(timestamp1);
+//     const fngEnd = Date.now();
+//     this.logDuration(fngStart, fngEnd, 'Fetching FNG data');
+//     const fng = fngData
+//       ? { value: fngData.value || "0", value_classification: fngData.value_classification || "Neutral" }
+//       : { value: "0", value_classification: "Neutral" };
+
+//     let responseText = ``;
+//     //console.log('sym:', sym);
+//     const symbol = mapSymbol(sym.toLowerCase(), 'pair');
+
+//     const indicatorsStart = Date.now();
+//     const [rsi, sorts, macd, adx, cci, stochastic, ema, price] = await Promise.all([
+//       this.dataRepository.getRSIBySymbolAndDate(symbol),
+//       this.dataRepository.getAllSortsForSymbol(symbol),
+//       this.dataRepository.getMACDBySymbolAndDate(symbol),
+//       this.dataRepository.getADXBySymbolAndDate(symbol),
+//       this.dataRepository.getCCIBySymbolAndDate(symbol),
+//       this.dataRepository.getStochasticBySymbolAndDate(symbol),
+//       this.dataRepository.getEMABySymbolAndDate(symbol),
+//       this.dataRepository.getLatestPriceBySymbol(symbol, timestamp1), // Raw price history
+//     ]);
+
+//     const indicatorsEnd = Date.now();
+//     this.logDuration(indicatorsStart, indicatorsEnd, 'Fetching indicators data');
+
+//     // Transform priceHistoryRaw into the expected format
+//     const priceHistoryStart = Date.now();
+//     const priceHistory = await this.dataRepository.getLast7DaysDailyPriceOptimized(symbol, timestamp1);
+//     const priceHistoryEnd = Date.now();
+//     this.logDuration(priceHistoryStart, priceHistoryEnd, 'Transforming price history data');
+
+
+
+//     // // Validate data
+//     // if (!cci || !stochastic || !rsi || !ema 
+//     //   || Object.keys(sorts).length === 0
+//     //    || !macd || !adx || priceHistory.length === 0) {
+//     //   return `⚠️ Insufficient data (RSI, MACD, ADX, sorts, or price history) for ${symbol}.`;
+//     // }
+
+//     // Start timing for historical data retrieval
+//     const historicalDataStart = Date.now();
+//     const historicalData = {
+//       priceHistory,
+//       RSIHistory: await this.dataRepository.getLast7DaysRSI(symbol, timestamp1),
+//       MACDHistory: await this.dataRepository.getLast7DaysMACD(symbol, timestamp1),
+//       ADXHistory: await this.dataRepository.getLast7DaysADX(symbol, timestamp1),
+//       CCIHistory: await this.dataRepository.getLast7DaysCCI(symbol, timestamp1),
+//       EMAHistory: await this.dataRepository.getLast7DaysEMA(symbol, timestamp1),
+//       StochasticHistory: await this.dataRepository.getLast7DaysStochastic(symbol, timestamp1)
+//     };
+//     const historicalDataEnd = Date.now();
+//     this.logDuration(historicalDataStart, historicalDataEnd, 'Fetching historical data');
+
+//     // Fetch last 10 news articles for the symbol
+//     const newsStart = Date.now();
+//     const news = await this.dataRepository.getLatestNews(5, symbol); // Assuming this method exists
+//     const newsEnd = Date.now();
+//     this.logDuration(newsStart, newsEnd, 'Fetching news data');
+
+
+//     // Format news data
+//     const formattedNews = await Promise.all(
+//       news.map(async (item) => {
+//         // Translate the title if the language is not English
+//         let title;
+//         if (language === 'en') {
+//           title = item.post_title;
+//         } else {
+//           title = await this.getTranslatedText(item.id, item.post_title, language);
+//         }
+//         return `
+//   📰 *News Title*: ${title}
+//   - *Sentiment*: ${item.post_sentiment}
+//   - *Interactions*: ${item.post_interactions || 'N/A'}
+//   - *Link*: [Read more](${item.post_link})
+//       `;
+//       })
+//     );
+
+//     const formattedNewsString = formattedNews.join('\n\n');
+
+//     function formatHistoricalData(historicalData: any[], indicator: string): string {
+//       if (!historicalData || historicalData.length === 0) {
+//         return `No historical ${indicator} data available for the last 7 days.`;
+//       }
+
+//       return `Here is the historical ${indicator} data for the past 7 days:\n${historicalData
+//         .map((entry, index) => {
+//           const time = entry.time ? new Date(entry.time * 1000).toLocaleString() : 'N/A';
+//           const valueString = Object.entries(entry)
+//             .filter(([key]) => key !== 'time')
+//             .map(([key, value]) => `${key}: ${value !== undefined ? value : 'N/A'}`)
+//             .join(', ');
+//           return `Day ${index + 1}: ${valueString}, Time: ${time}`;
+//         })
+//         .join('\n')}`;
+//     }
+
+
+
+
+//     // Format individual indicators
+//     const formattedRSIHistory = formatHistoricalData(historicalData.RSIHistory, 'RSI');
+//     const formattedMACDHistory = formatHistoricalData(historicalData.MACDHistory, 'MACD');
+//     const formattedADXHistory = formatHistoricalData(historicalData.ADXHistory, 'ADX');
+//     const formattedCCIHistory = formatHistoricalData(historicalData.CCIHistory, 'CCI');
+//     const formattedStochasticHistory = formatHistoricalData(historicalData.StochasticHistory, 'Stochastic');
+//     const formattedEMAHistory = formatHistoricalData(historicalData.EMAHistory, 'EMA');
+//     const formattedPriceHistory = formatHistoricalData(historicalData.priceHistory, 'Price');
+//     const formattedFNGHistory = formatHistoricalData(fngHis, 'FNG');
+
+//     const analyzeSorts = (sortLabel: string, current: any, previous: any = null) => {
+//       if (current === "No data") {
+//         return `${sortLabel}: No data available for analysis.`;
+//       }
+//       if (previous !== null) {
+//         const trend = current > previous ? "an upward trend" : "a downward trend";
+//         return `${sortLabel}: The current value is ${current}, showing ${trend} compared to the previous value (${previous}).`;
+//       }
+//       return `${sortLabel}: The current value is ${current}.`;
+//     };
+//     const currentPrice = price;
+
+//     const prompt = `
+//  As you are a trading assistant specializing in cryptocurrency analysis. Use the following methodologies, indicators, and data points to generate a comprehensive trading signal for the symbol ${symbol}:
+
+//   ### **Price Data**
+// - **Price Analysis**: The current price is ${currentPrice.price}. Historical data indicates:
+// ${formattedPriceHistory}
+
+// ### **Indicators Analysis**
+// - **RSI Analysis**: Current RSI value is ${JSON.stringify(rsi)}. Historical data:
+// ${formattedRSIHistory}
+
+// - **MACD Analysis**: Current MACD values are ${JSON.stringify(macd)}. Historical data:
+// ${formattedMACDHistory}
+
+// - **ADX Analysis**: Current ADX value is ${JSON.stringify(adx)}. Historical data:
+// ${formattedADXHistory}
+
+// - **CCI Analysis**: Current CCI value is ${JSON.stringify(cci)}. Historical data:
+// ${formattedCCIHistory}
+
+// - **Stochastic Analysis**: Current Stochastic values are ${JSON.stringify(stochastic)}. Historical data:
+// ${formattedStochasticHistory}
+
+// - **EMA Analysis**: Current EMA value is ${JSON.stringify(ema)}. Historical data:
+// ${formattedEMAHistory}
+//    ### **Sentiment**
+//   - **Fear and Greed Index (FNG)**: ${fng.value} (${fng.value_classification}). Historical data:
+//   ${formattedFNGHistory}
+
+//    ### **Sorts data**
+//   - ${analyzeSorts("Volume (24h)", sorts.volume_24h)}
+//   - ${analyzeSorts("Volatility", sorts.volatility)}
+//   - ${analyzeSorts("Circulating Supply", sorts.circulating_supply)}
+//   - ${analyzeSorts("Max Supply", sorts.max_supply)}
+//   - ${analyzeSorts("Market Cap", sorts.market_cap)}
+//   - ${analyzeSorts("Market Cap Rank", sorts.market_cap_rank)}
+//   - ${analyzeSorts(
+//       "Market Dominance",
+//       sorts.market_dominance,
+//       sorts.market_dominance_prev
+//     )}
+//   - ${analyzeSorts(
+//       "Galaxy Score",
+//       sorts.galaxy_score,
+//       sorts.galaxy_score_previous
+//     )}
+//   - ${analyzeSorts(
+//       "Alt Rank",
+//       sorts.alt_rank,
+//       sorts.alt_rank_previous
+//     )}
+//   - ${analyzeSorts("Sentiment", sorts.sentiment)}
+
+//   ### **Latest News**
+//   Here are the latest 5 news articles for ${symbol}:
+//   ${formattedNewsString}
+
+//    ### **Analysis Instructions**
+//   Based on the above data and user prompt: ${userPrompt}, analyze the market conditions for ${symbol} including:
+
+// - **News Analysis**  
+// - Friendly formatting of all data  
+// - A detailed explanation of price movement over the past 7 days  
+// - Indicator-by-indicator evaluation comparing current and historical values  
+// - Sorts analysis, including changes over time  
+
+// ### **Trading Action Section Instructions**
+// At the end, generate a trading action section with one of the following actions:
+// - **Buy**
+// - **Strong Buy**
+// - **Sell**
+// - **Strong Sell**
+// - **Hold**
+
+// 📌 Based on the chosen action, apply this logic:
+
+// - For **Buy**:
+//   - 🎯 Target = currentPrice × 1.01
+//   - 🛑 Stop Loss = currentPrice × 0.9905
+
+// - For **Strong Buy**:
+//   - 🎯 Target = currentPrice × 1.0102
+//   - 🛑 Stop Loss = currentPrice × 0.9905
+
+// - For **Sell**:
+//   - 🎯 Target = currentPrice × 0.99
+//   - 🛑 Stop Loss = currentPrice × 1.0095
+
+// - For **Strong Sell**:
+//   - 🎯 Target = currentPrice × 0.9898
+//   - 🛑 Stop Loss = currentPrice × 1.0095
+
+// - For **Hold**: Do not provide target or stop loss. Just summarize the reason for holding.
+
+// 📝 Format the trading action section like this:
+
+// \`\`\`
+// 📊 Trading Action: [ACTION]
+
+// 🎯 Target Price: $[value] ([percentage])
+// 🛑 Stop Loss: $[value] ([percentage])
+
+// 📋 Summary:
+// [Short summary of reasoning for the action.]
+
+// 🧠 Explanation:
+// [Detailed explanation combining technical indicators, price movement, sentiment, sorts, and news.]
+// \`\`\`
+
+// 🛑 Risk :
+// This analysis is generated by AI and does not constitute financial advice.  
+// You trade at your own risk.
+
+// Please respond in ${language} language.
+//   `;
+
+//     console.log("Analyze prompt:", prompt);
+
+
+
+//     try {
+//       const aiResponseStart = Date.now();
+//       const response = await this.openai.chat.completions.create({
+//         messages: [
+//           {
+//             role: "system",
+//             content: `You are a trading assistant specializing in cryptocurrency analysis.
+//             you are a crypto assistant that provides detailed technical analysis and trading insights based on the given data.`,
+//           },
+//           {
+//             role: "user",
+//             content: prompt,
+//           },
+//         ],
+//         model: "gpt-4o-mini-2024-07-18",
+//       });
+
+//       const analysis = response.choices[0].message.content.trim();
+
+//       const aiResponseEnd = Date.now();
+//       this.logDuration(aiResponseStart, aiResponseEnd, 'Fetching ai response');
+
+
+
+//       // Append the formatted analysis to the response text
+//       responseText += `💡 **${symbol} Analysis**:\n${this.formatAnalysis(analysis)}\n\n`;
+//     } catch (error) {
+//       console.error("Error fetching analysis from ChatGPT:", error);
+//       responseText += `❌ **${symbol}**: Error generating analysis. Please try again later.\n\n`;
+//     }
+
+
+//     return responseText;
+//   }
+
+async analyzeAndCreateSignals(symbols: string[], language: string, timeframe: '15m'|'1h'|'4h'|'1d' = '1h', userPrompt: string): Promise<string> {
     let sym;
     if (symbols.length >= 1) {
       sym = symbols[0];
     }
     const effectiveDate = new Date().toISOString().split('T')[0];
     const timestamp1 = new Date(effectiveDate).getTime() / 1000;
-
-
 
     // Start timing for FNG data retrieval
     const fngStart = Date.now();
@@ -2001,7 +2297,6 @@ export class BotAIService implements OnModuleInit {
       : { value: "0", value_classification: "Neutral" };
 
     let responseText = ``;
-    //console.log('sym:', sym);
     const symbol = mapSymbol(sym.toLowerCase(), 'pair');
 
     const indicatorsStart = Date.now();
@@ -2015,7 +2310,6 @@ export class BotAIService implements OnModuleInit {
       this.dataRepository.getEMABySymbolAndDate(symbol),
       this.dataRepository.getLatestPriceBySymbol(symbol, timestamp1), // Raw price history
     ]);
-
     const indicatorsEnd = Date.now();
     this.logDuration(indicatorsStart, indicatorsEnd, 'Fetching indicators data');
 
@@ -2024,15 +2318,6 @@ export class BotAIService implements OnModuleInit {
     const priceHistory = await this.dataRepository.getLast7DaysDailyPriceOptimized(symbol, timestamp1);
     const priceHistoryEnd = Date.now();
     this.logDuration(priceHistoryStart, priceHistoryEnd, 'Transforming price history data');
-
-
-
-    // // Validate data
-    // if (!cci || !stochastic || !rsi || !ema 
-    //   || Object.keys(sorts).length === 0
-    //    || !macd || !adx || priceHistory.length === 0) {
-    //   return `⚠️ Insufficient data (RSI, MACD, ADX, sorts, or price history) for ${symbol}.`;
-    // }
 
     // Start timing for historical data retrieval
     const historicalDataStart = Date.now();
@@ -2054,7 +2339,6 @@ export class BotAIService implements OnModuleInit {
     const newsEnd = Date.now();
     this.logDuration(newsStart, newsEnd, 'Fetching news data');
 
-
     // Format news data
     const formattedNews = await Promise.all(
       news.map(async (item) => {
@@ -2073,14 +2357,39 @@ export class BotAIService implements OnModuleInit {
       `;
       })
     );
-
     const formattedNewsString = formattedNews.join('\n\n');
+
+   // Fetch calendar events for the next 30 days
+    const calendarStart = Date.now();
+    const currentTimestamp = Date.now(); // Use milliseconds
+    const thirtyDaysLater = currentTimestamp + 30 * 24 * 60 * 60 * 1000; // 30 days in milliseconds
+    const calendarEvents = await this.calendarRepository.getEventsBySymbol(symbol);
+    console.log(`Fetched ${calendarEvents.length} calendar events for ${symbol} at runtime`);
+    const upcomingEvents = calendarEvents
+      .filter(event => event.fetched_at >= currentTimestamp && event.fetched_at <= thirtyDaysLater)
+      .sort((a, b) => a.fetched_at - b.fetched_at);
+    console.log(`Upcoming events for ${symbol}:`, upcomingEvents);
+    const calendarEnd = Date.now();
+    this.logDuration(calendarStart, calendarEnd, 'Fetching calendar events');
+
+    // Format calendar events
+    const formattedCalendarEvents = upcomingEvents.length > 0
+      ? upcomingEvents.map(event => `
+  📅 *Event*: ${event.name}
+  - *Date*: ${new Date(event.event_date).toLocaleDateString(language === 'fa' ? 'fa-IR' : 'en-US')}
+  - *Type*: ${event.event_type}
+  - *Description*: ${event.event_description}
+  - *Impact Level*: ${event.impact_level}
+  - *Expected Price Impact*: ${event.expected_price_impact > 0 ? '+' : ''}${event.expected_price_impact}%
+  - *Sentiment Score*: ${event.sentiment_score}
+  - *Related Assets*: ${event.related_assets.join(', ')}
+  `).join('\n\n')
+      : `No upcoming events found for ${symbol} in the next 30 days.`;
 
     function formatHistoricalData(historicalData: any[], indicator: string): string {
       if (!historicalData || historicalData.length === 0) {
         return `No historical ${indicator} data available for the last 7 days.`;
       }
-
       return `Here is the historical ${indicator} data for the past 7 days:\n${historicalData
         .map((entry, index) => {
           const time = entry.time ? new Date(entry.time * 1000).toLocaleString() : 'N/A';
@@ -2092,9 +2401,6 @@ export class BotAIService implements OnModuleInit {
         })
         .join('\n')}`;
     }
-
-
-
 
     // Format individual indicators
     const formattedRSIHistory = formatHistoricalData(historicalData.RSIHistory, 'RSI');
@@ -2119,73 +2425,16 @@ export class BotAIService implements OnModuleInit {
     const currentPrice = price;
 
     const prompt = `
- As you are a trading assistant specializing in cryptocurrency analysis. Use the following methodologies, indicators, and data points to generate a comprehensive trading signal for the symbol ${symbol}:
+    [Timeframe]: ${timeframe} (always mention the timeframe in the result)
+As you are a trading assistant specializing in cryptocurrency analysis. Use the following methodologies, indicators, and data points to generate a comprehensive trading signal for the symbol ${symbol}
+ :
 
-  ### **Price Data**
-- **Price Analysis**: The current price is ${currentPrice.price}. Historical data indicates:
+### **Price Data**
+- **Price Analysis**: The current price is ${currentPrice?.price || 'N/A'}. Historical data indicates:
 ${formattedPriceHistory}
-
-### **Indicators Analysis**
-- **RSI Analysis**: Current RSI value is ${JSON.stringify(rsi)}. Historical data:
-${formattedRSIHistory}
-
-- **MACD Analysis**: Current MACD values are ${JSON.stringify(macd)}. Historical data:
-${formattedMACDHistory}
-
-- **ADX Analysis**: Current ADX value is ${JSON.stringify(adx)}. Historical data:
-${formattedADXHistory}
-
-- **CCI Analysis**: Current CCI value is ${JSON.stringify(cci)}. Historical data:
-${formattedCCIHistory}
-
-- **Stochastic Analysis**: Current Stochastic values are ${JSON.stringify(stochastic)}. Historical data:
-${formattedStochasticHistory}
-
-- **EMA Analysis**: Current EMA value is ${JSON.stringify(ema)}. Historical data:
-${formattedEMAHistory}
-   ### **Sentiment**
-  - **Fear and Greed Index (FNG)**: ${fng.value} (${fng.value_classification}). Historical data:
-  ${formattedFNGHistory}
-
-   ### **Sorts data**
-  - ${analyzeSorts("Volume (24h)", sorts.volume_24h)}
-  - ${analyzeSorts("Volatility", sorts.volatility)}
-  - ${analyzeSorts("Circulating Supply", sorts.circulating_supply)}
-  - ${analyzeSorts("Max Supply", sorts.max_supply)}
-  - ${analyzeSorts("Market Cap", sorts.market_cap)}
-  - ${analyzeSorts("Market Cap Rank", sorts.market_cap_rank)}
-  - ${analyzeSorts(
-      "Market Dominance",
-      sorts.market_dominance,
-      sorts.market_dominance_prev
-    )}
-  - ${analyzeSorts(
-      "Galaxy Score",
-      sorts.galaxy_score,
-      sorts.galaxy_score_previous
-    )}
-  - ${analyzeSorts(
-      "Alt Rank",
-      sorts.alt_rank,
-      sorts.alt_rank_previous
-    )}
-  - ${analyzeSorts("Sentiment", sorts.sentiment)}
-
-  ### **Latest News**
-  Here are the latest 5 news articles for ${symbol}:
-  ${formattedNewsString}
-
-   ### **Analysis Instructions**
-  Based on the above data and user prompt: ${userPrompt}, analyze the market conditions for ${symbol} including:
-
-- **News Analysis**  
-- Friendly formatting of all data  
-- A detailed explanation of price movement over the past 7 days  
-- Indicator-by-indicator evaluation comparing current and historical values  
-- Sorts analysis, including changes over time  
-
+(always mention  "Trading Action Section Instructions" data then go for showing other explanation)
 ### **Trading Action Section Instructions**
-At the end, generate a trading action section with one of the following actions:
+generate a trading action section with one of the following actions:
 - **Buy**
 - **Strong Buy**
 - **Sell**
@@ -2193,50 +2442,165 @@ At the end, generate a trading action section with one of the following actions:
 - **Hold**
 
 📌 Based on the chosen action, apply this logic:
-
 - For **Buy**:
   - 🎯 Target = currentPrice × 1.01
   - 🛑 Stop Loss = currentPrice × 0.9905
-
 - For **Strong Buy**:
   - 🎯 Target = currentPrice × 1.0102
   - 🛑 Stop Loss = currentPrice × 0.9905
-
 - For **Sell**:
   - 🎯 Target = currentPrice × 0.99
   - 🛑 Stop Loss = currentPrice × 1.0095
-
 - For **Strong Sell**:
   - 🎯 Target = currentPrice × 0.9898
   - 🛑 Stop Loss = currentPrice × 1.0095
-
 - For **Hold**: Do not provide target or stop loss. Just summarize the reason for holding.
 
 📝 Format the trading action section like this:
-
 \`\`\`
 📊 Trading Action: [ACTION]
-
 🎯 Target Price: $[value] ([percentage])
 🛑 Stop Loss: $[value] ([percentage])
-
+⏲ TimeFrame : ${timeframe} 
 📋 Summary:
 [Short summary of reasoning for the action.]
-
 🧠 Explanation:
-[Detailed explanation combining technical indicators, price movement, sentiment, sorts, and news.]
+[Detailed explanation combining technical indicators, price movement, sentiment, sorts, news, and calendar events.]
 \`\`\`
 
-🛑 Risk :
-This analysis is generated by AI and does not constitute financial advice.  
-You trade at your own risk.
+### **Indicators Analysis**
+- **RSI Analysis**: Current RSI value is ${JSON.stringify(rsi) || 'N/A'}. Historical data:
+${formattedRSIHistory}
+- **MACD Analysis**: Current MACD values are ${JSON.stringify(macd) || 'N/A'}. Historical data:
+${formattedMACDHistory}
+- **ADX Analysis**: Current ADX value is ${JSON.stringify(adx) || 'N/A'}. Historical data:
+${formattedADXHistory}
+- **CCI Analysis**: Current CCI value is ${JSON.stringify(cci) || 'N/A'}. Historical data:
+${formattedCCIHistory}
+- **Stochastic Analysis**: Current Stochastic values are ${JSON.stringify(stochastic) || 'N/A'}. Historical data:
+${formattedStochasticHistory}
+- **EMA Analysis**: Current EMA value is ${JSON.stringify(ema) || 'N/A'}. Historical data:
+${formattedEMAHistory}
+
+### **Sentiment**
+- **Fear and Greed Index (FNG)**: ${fng.value} (${fng.value_classification}). Historical data:
+${formattedFNGHistory}
+
+### **Social and Market Live Data** (always mention galaxy score and altrank in this section add one line of simple description for them)
+-**Volume (24h)**: ${analyzeSorts("Volume (24h)", sorts?.volume_24h || 'N/A')}
+-**Volatility**: ${analyzeSorts("Volatility", sorts?.volatility || 'N/A')}
+-**Circulating Supply**: ${analyzeSorts("Circulating Supply", sorts?.circulating_supply || 'N/A')}
+-**Max Supply**: ${analyzeSorts("Max Supply", sorts?.max_supply || 'N/A')}
+-**Market Cap**: ${analyzeSorts("Market Cap", sorts?.market_cap || 'N/A')}
+-**Market Dominance**: ${analyzeSorts("Market Dominance", sorts?.market_dominance || 'N/A', sorts?.market_dominance_prev)}
+-**Galaxy Score**: ${analyzeSorts("Galaxy Score", sorts?.galaxy_score || 'N/A', sorts?.galaxy_score_previous)}
+-**Alt Rank**: ${analyzeSorts("Alt Rank", sorts?.alt_rank || 'N/A', sorts?.alt_rank_previous)}
+-**Sentiment**: ${analyzeSorts("Sentiment", sorts?.sentiment || 'N/A')}
+
+### **Latest News**
+Here are the latest 5 news articles for ${symbol}:
+${formattedNewsString}
+
+### **Calendar Events**
+Here are the upcoming events for ${symbol} in the next 30 days:
+${formattedCalendarEvents}
+
+### **Analysis Instructions**
+Based on the above data and user prompt: ${userPrompt}, analyze the market conditions for ${symbol} including:
+- **News Analysis**: Evaluate the sentiment and impact of recent news.
+- **Calendar Events Analysis**: Explicitly mention upcoming related events, their expected price impact, and sentiment score in the analysis results. Consider how these events (e.g., conferences, token unlocks, economic reports) may affect market sentiment and price.
+- Friendly formatting of all data.
+- A detailed explanation of price movement over the past 7 days.
+- Indicator-by-indicator evaluation comparing current and historical values.
+- Sorts analysis, including changes over time.
+- Event-driven insights from the calendar, factoring in expected price impact and sentiment score.
+- Adapt reasoning and risk commentary according to [Timeframe].
+
+🛑 Risk:
+This analysis is generated by AI and does not constitute financial advice. You trade at your own risk.
 
 Please respond in ${language} language.
   `;
+  const systemPromptG5 = `
+ROLE
+You are Nabzar’s senior trading assistant. Your role is to analyze all provided market, indicator, sentiment, and event data and generate actionable trading signals.
+
+TASK
+- Start with the "Trading Action Section" exactly as described in the user prompt.
+- Select one action: Strong Buy | Buy | Hold | Sell | Strong Sell.
+- Use the formulas in the user prompt for target and stop loss.
+- Provide a clear summary, then detailed explanation.
+
+CONTEXT
+- Data you will receive in the user message includes:
+  • Price & 7-day history
+  • Indicators: RSI, MACD, ADX, CCI, Stochastic, EMA
+  • Sentiment (FNG + history)
+  • Social/market metrics: volume, volatility, supply, market cap, dominance, Galaxy Score, AltRank, sentiment
+  • Latest 5 news articles (title, sentiment, interactions, link)
+  • Upcoming 30-day calendar events (date, type, description, impact, sentiment score, related assets)
+- Always mention Galaxy Score and AltRank in the social/market section, with a one-line interpretation.
+- Respect the exact section order provided in the user prompt.
+- Respond in the requested language (${language}).
+
+TIMEFRAME POLICY
+- You may receive a timeframe (e.g. 15m, 1h, 4h, 1d) in the user prompt or data context.
+- Align analysis and confidence to it:
+
+Signal horizon
+• 15m → scalp (hours)  
+• 1h → intraday (same day)  
+• 4h → swing-lite (1–3 days)  
+• 1d → swing/position (days–weeks)  
+
+Indicator emphasis
+• 15m: short EMAs (9/21), RSI(7–10), fast Stochastic, OI/funding/liquidations; news low impact unless sudden.  
+• 1h: EMA 20/50, RSI(14), MACD fast; FNG somewhat relevant; news/events medium.  
+• 4h: EMA 50/100, MACD slope, ADX>20, trend structure; news/events meaningful.  
+• 1d: EMA 100/200, ADX>25, divergences; macro/news/events very high impact.  
+
+Confirmation strictness
+• 15m: 2 aligned signals enough; be quick to HOLD if conflicting.  
+• 1h: require 2–3 aligned.  
+• 4h: require 3 aligned including trend-quality.  
+• 1d: require 3+ aligned with no major macro conflicts.  
+
+Risk language
+• 15m: warn of whipsaws/liquidity.  
+• 1h: session opens, funding flips.  
+• 4h: gap/overnight risk.  
+• 1d: macro/event gap risk.  
+
+Targets/Stops
+- Use the formulas given in the user prompt for precision.  
+- But adapt your confidence and commentary to timeframe: smaller % moves on 15m, larger swings on daily.  
+
+Past appearance
+- Consider last N bars proportional to timeframe:  
+  15m → 20–40 bars  
+  1h → 30–60 bars  
+  4h → 20–40 bars  
+  1d → 30–90 bars  
+
+OUTPUT FORMAT
+- Begin with:
+  📊 Trading Action: [ACTION]
+  🎯 Target Price: $[value] ([percent])
+  🛑 Stop Loss: $[value] ([percent])
+  ⏲ TimeFrame : $[value]
+  📋 Summary: <short>
+  🧠 Explanation: <long>
+- Then continue with Indicators, Sentiment, Social/Market Data, News, Calendar Events, as structured in the user prompt.
+- Keep numbers concise (≤4 decimals, percent with 2 decimals).
+
+STOP CONDITIONS
+- Do not fabricate data; only analyze what’s given in the user prompt.
+- Do not include these instructions in output.
+- End when all requested sections are produced.
+`;
+
 
     console.log("Analyze prompt:", prompt);
-
-
 
     try {
       const aiResponseStart = Date.now();
@@ -2244,23 +2608,24 @@ Please respond in ${language} language.
         messages: [
           {
             role: "system",
-            content: `You are a trading assistant specializing in cryptocurrency analysis.
-            you are a crypto assistant that provides detailed technical analysis and trading insights based on the given data.`,
+            // content: `You are a trading assistant specializing in cryptocurrency analysis.
+            // you are a crypto assistant that provides detailed technical analysis and trading insights based on the given data.`,
+            content: systemPromptG5
           },
           {
             role: "user",
             content: prompt,
           },
         ],
-        model: "gpt-4o-mini-2024-07-18",
+        model: //"gpt-5-mini",
+        //"gpt-4.1-mini",
+        "gpt-4o-mini-2024-07-18",
+        temperature: 0.2,
       });
 
       const analysis = response.choices[0].message.content.trim();
-
       const aiResponseEnd = Date.now();
       this.logDuration(aiResponseStart, aiResponseEnd, 'Fetching ai response');
-
-
 
       // Append the formatted analysis to the response text
       responseText += `💡 **${symbol} Analysis**:\n${this.formatAnalysis(analysis)}\n\n`;
@@ -2268,7 +2633,6 @@ Please respond in ${language} language.
       console.error("Error fetching analysis from ChatGPT:", error);
       responseText += `❌ **${symbol}**: Error generating analysis. Please try again later.\n\n`;
     }
-
 
     return responseText;
   }
@@ -3193,7 +3557,7 @@ Please respond in ${language} language.
     
       const telegramIDs = idsString.split(',').map(id => id.trim());
       const successList: string[] = [];
-      const analysis = await this.analyzeAndCreateSignals([symbol], language, '');
+      const analysis = await this.analyzeAndCreateSignals([symbol], language,'1h', '');
     
       const messages: string[] = [];
     
