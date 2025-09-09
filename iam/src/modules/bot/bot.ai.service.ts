@@ -3306,11 +3306,58 @@ STOP CONDITIONS
     }
   }
 
+      // Persian main menu (ReplyKeyboard)
+      // Put inside your class
+      private getMainMenuMarkup() {
+        return {
+          reply_markup: {
+            keyboard: [
+              ['📈 سیگنال بیت‌کوین', '📉 سیگنال اتریوم'],
+              ['🔮 سیگنال ریپل', '🔥 سیگنال سولانا'],
+              ['🌊 سیگنال کاردانو', '🟡 سیگنال بایننس‌کوین'],
+              ['🆘 ارتباط با پشتیبانی'],
+              ['ℹ️ راهنما'],
+            ],
+            resize_keyboard: true,
+            one_time_keyboard: false,
+            is_persistent: true,
+          },
+        };
+      }
+
+
+      private normalizeFa(input: string) {
+        return (input || '')
+          .replace(/\u200c/g, '') // remove ZWNJ
+          .replace(/ي/g, 'ی')
+          .replace(/ك/g, 'ک')
+          .replace(/[ ]+/g, ' ')
+          .trim();
+      }
+
+
+     
+
+
+    private estimateAiCostIRT(inputText: string, outputText: string) {
+          const charsToTokens = (s: string) => Math.ceil((s ? s.length : 0) / 4);
+          const inputTokens = charsToTokens(inputText);
+          const outputTokens = charsToTokens(outputText);
+
+          const inputCostUSD = (inputTokens / 1_000_000) * 0.15; // $0.15 / 1M tokens
+          const outputCostUSD = (outputTokens / 1_000_000) * 0.60; // $0.60 / 1M tokens
+          const totalUSD = inputCostUSD + outputCostUSD;
+
+          const conversionRateToIRT = 5_000_000; // keep in sync with your system
+          return Math.ceil(totalUSD * conversionRateToIRT);
+        }
+
+
   async onModuleInit() {
     const me = await this.bot.getMe();
     this.botUsername = me.username;
     this.logger.log(`Bot username: @${this.botUsername}`);
-
+    
 
 
 
@@ -3319,9 +3366,49 @@ STOP CONDITIONS
     
 
     this.bot.on('message', async (msg) => {
-      const chatId = msg.chat.id;
-      const text = msg.text?.toLowerCase();
 
+      
+      const raw = msg.text.trim();
+      const chatId = msg.chat.id;
+      var text = msg.text?.trim().toLowerCase();
+      text = this.normalizeFa(text);
+
+  // 2) map Persian UI labels to your existing English handler strings
+  const faToEnQuick: Record<string, string> = {
+    '📈 سیگنال بیت‌کوین': '📈 btc signal',
+    'سیگنال بیت‌کوین': '📈 btc signal',
+    'سیگنال بیت کوین': '📈 btc signal',
+    'سیگنال بیتکوین': '📈 btc signal',
+
+    '📉 سیگنال اتریوم': '📉 eth signal',
+    'سیگنال اتریوم': '📉 eth signal',
+
+    '🔮 سیگنال ریپل': '🔮 xrp signal',
+    'سیگنال ریپل': '🔮 xrp signal',
+
+    '🔥 سیگنال سولانا': '🔥 sol signal',
+    'سیگنال سولانا': '🔥 sol signal',
+
+    '🌊 سیگنال کاردانو': '🌊 ada signal',
+    'سیگنال کاردانو': '🌊 ada signal',
+
+    '🟡 سیگنال بایننس‌کوین': '🟡 bnb signal',
+    'سیگنال بایننس‌کوین': '🟡 bnb signal',
+    'سیگنال بایننس کوین': '🟡 bnb signal',
+
+    'ℹ️ راهنما': 'ℹ️ /help',
+    'راهنما': 'ℹ️ /help',
+
+    '🆘 ارتباط با پشتیبانی': '🆘 goto support',
+    'ارتباط با پشتیبانی': '🆘 goto support',
+  };
+
+  // 3) produce an English alias (fallback to original if not Persian label)
+  const textForHandlers = faToEnQuick[text] || raw;
+
+  // 4) from here on, use textForHandlers instead of msg.text in your existing English handlers
+  //    e.g.:
+  const t = textForHandlers.toLowerCase();
 
 
       // Extract user info from the Telegram message
@@ -3385,8 +3472,6 @@ STOP CONDITIONS
       //   }
       // }
 
-
-
       // Register or login the user
       const userInsertDto = {
         telegramID,
@@ -3448,25 +3533,45 @@ STOP CONDITIONS
           }
         }
         var userCh = await this.iamService.getUser(this.userId);
+        
         //console.log('userCh.mobile', userCh.mobile);
         if (!userCh.mobile) {
           // Ask the user to share their contact
-          await this.bot.sendMessage(chatId, 'برای استفاده از ربات نبضار شماره موبایل خود را به اشتراک بگذارید', {
-            reply_markup: {
-              keyboard: [
-                [
-                  {
-                    text: '📞 اشتراک شماره موبایل',
-                    request_contact: true, // Requests the user's contact information
-                  },
+          // await this.bot.sendMessage(chatId, 'برای استفاده از ربات نبضار شماره موبایل خود را به اشتراک بگذارید', {
+          //   reply_markup: {
+          //     keyboard: [
+          //       [
+          //         {
+          //           text: '📞 اشتراک شماره موبایل',
+          //           request_contact: true, // Requests the user's contact information
+          //         },
+          //       ],
+          //     ],
+          //     resize_keyboard: true, // Adjust keyboard size for better display
+          //     one_time_keyboard: true, // Hides the keyboard after interaction
+          //   },
+          // });
+          await this.bot.sendPhoto(chatId, 'https://yourdomain.com/path-to-image.jpg', {
+              caption: `برای استفاده از ربات نبضار شماره موبایل خود را به اشتراک بگذارید.\n\n📸 برای اشتراک شماره موبایل مطابق تصویر از دکمه منو استفاده کنید.`,
+              reply_markup: {
+                keyboard: [
+                  [
+                    {
+                      text: '📞 اشتراک شماره موبایل',
+                      request_contact: true,
+                    },
+                  ],
                 ],
-              ],
-              resize_keyboard: true, // Adjust keyboard size for better display
-              one_time_keyboard: true, // Hides the keyboard after interaction
-            },
-          });
+                resize_keyboard: true,
+                one_time_keyboard: true,
+              },
+            });
           return;
-        }
+        } 
+
+        //if (msg.contact?.phone_number) {
+          //await this.pushKeyboardSilently(chatId, this.getMainMenuMarkup());
+        //}
 
       } catch (error) {
         this.logger.error('Error during user registration/login:', error.message);
@@ -3564,7 +3669,7 @@ STOP CONDITIONS
       for (const id of telegramIDs) {
         const loginInfo = await this.iamService.findLatestLoginByTelegramId(id);
         if (loginInfo?.chatId) {
-          await this.bot.sendMessage(loginInfo.chatId, analysis);
+          await this.bot.sendMessage(loginInfo.chatId, analysis, this.getMainMenuMarkup());
           successList.push(id);
     
           const chatLog: UserChatLogDto = {
@@ -3610,7 +3715,7 @@ STOP CONDITIONS
       const expires = await this.handleGetExpiredUsers(n);
       console.log("expires :", expires );
       if (!expires.length) {
-        await this.bot.sendMessage(adminChatId, `No expired users found.`);
+        await this.bot.sendMessage(adminChatId, `No expired users found.`, this.getMainMenuMarkup() );
         return;
       }
     
@@ -3625,9 +3730,9 @@ STOP CONDITIONS
       const loginInfo = await this.iamService.findLatestLoginByTelegramId(telegramId);
       const result = await this.handleMakeExpired(loginInfo.chatId, telegramId);
       if (result) {
-        await this.bot.sendMessage(adminChatId, `User ${telegramId} marked as expired.`);
+        await this.bot.sendMessage(adminChatId, `User ${telegramId} marked as expired.`, this.getMainMenuMarkup());
       } else {
-        await this.bot.sendMessage(adminChatId, `Failed to mark ${telegramId} as expired.`);
+        await this.bot.sendMessage(adminChatId, `Failed to mark ${telegramId} as expired.`, this.getMainMenuMarkup());
       }
       return;
   
@@ -3668,7 +3773,7 @@ STOP CONDITIONS
       const loginInfo = await this.iamService.findLatestLoginByTelegramId(telegramId);
     
       if (loginInfo?.chatId) {
-        await this.bot.sendMessage(loginInfo.chatId, message);
+        await this.bot.sendMessage(loginInfo.chatId, message, this.getMainMenuMarkup());
     
         // Save to user chat log
         const chatLog: UserChatLogDto = {
@@ -3682,9 +3787,9 @@ STOP CONDITIONS
         };
         await this.dataRepository.saveUserChatLog(chatLog);
     
-        await this.bot.sendMessage(adminChatId, `✅ Message sent to ${telegramId}`);
+        await this.bot.sendMessage(adminChatId, `✅ Message sent to ${telegramId}`, this.getMainMenuMarkup());
       } else {
-        await this.bot.sendMessage(adminChatId, `❌ User ${telegramId} not found or no active chatId.`);
+        await this.bot.sendMessage(adminChatId, `❌ User ${telegramId} not found or no active chatId.`, this.getMainMenuMarkup());
       }
       return;
     }    
@@ -3695,24 +3800,8 @@ STOP CONDITIONS
 
   }
 
-      // Handle /help command
-      if (msg.text === '/help') {
-        // Create inline keyboard for categories
-        // const inlineKeyboard = Object.keys(this.categories).map((category) => [
-        //   {
-        //     text: category,
-        //     callback_data: `category_${category}`,
-        //   },
-        // ]);
-
-        // await this.bot.sendMessage(chatId, 'لطفاً یک دسته‌بندی را انتخاب کنید:', {
-        //   reply_markup: {
-        //     inline_keyboard: inlineKeyboard,
-        //   },
-        // });
-        await this.sendMenu(chatId);
-        return;
-      }
+  
+      
 
 
       // General message handling
@@ -3720,14 +3809,175 @@ STOP CONDITIONS
         //this.logger.log('Received text message:', msg.text);
         //check balance 
         // Get the last ask for this user (if any)
+        // Handle /help command
 
         if (this.userBalance < 10000) {
-          await this.bot.sendMessage(chatId, 'اعتبار شما رو به پایان است٫ لطفا اعتبار خود را شارژ کنید.');
+          await this.bot.sendMessage(chatId, 'اعتبار شما رو به پایان است٫ لطفا اعتبار خود را شارژ کنید.', this.getMainMenuMarkup());
         }
 
         if (this.userBalance < 1000) {
           return;
         }
+
+        //   //help text handler
+        // if (text === '/help') {
+        //   await this.sendMenu(chatId);
+        //   return;
+        // }
+        
+         // Map possible button labels/variants -> symbols
+          const labelToSymbol: Record<string, string> = {
+            '📈 btc signal': 'BTC',
+            'btc signal': 'BTC',
+            'btc': 'BTC',
+
+            '📉 eth signal': 'ETH',
+            'eth signal': 'ETH',
+            'eth': 'ETH',
+
+            '🔮 xrp signal': 'XRP',
+            'xrp signal': 'XRP',
+            'xrp': 'XRP',
+
+            '🔥 sol signal': 'SOL',
+            'sol signal': 'SOL',
+            'sol': 'SOL',
+
+            '🌊 ada signal': 'ADA',
+            'ada signal': 'ADA',
+            'ada': 'ADA',
+
+            '🟡 bnb signal': 'BNB',
+            'bnb signal': 'BNB',
+            'bnb': 'BNB',
+          };
+          
+          
+            
+             // common runner for signals with ad message + deletion
+                const handleSignal = async (symbol: string) => {
+                  let adMsgId: any = null;
+                  try {
+                    // show waiting/ad message
+                    const analysisMsg = await this.bot.sendMessage(
+                    chatId,
+                    `🚀 <b>در حال پردازش درخواست شما...</b>\n\n✨ از <a href="https://trade-ai.bot/">برترین پلتفرم ایران</a> برای خرید ربات‌های معامله‌گر و دستیاران حرفه‌ای تریدر استفاده کنید! 🌟`,
+                    {
+                      parse_mode: 'HTML',
+                      reply_markup: {
+                        inline_keyboard: [
+                          [
+                            {
+                              text: 'بازدید از اسپانسر',
+                              url: 'https://trade-ai.bot/',
+                            },
+                          ],
+                        ],
+                      },
+                    }
+                  );
+                  adMsgId = analysisMsg.message_id;
+                  await this.bot.sendChatAction(chatId, 'typing');
+
+                  // Build a tiny "synthetic prompt" string so cost calc matches your model
+                  const syntheticPrompt = `analyzeAndCreateSignals symbols=[${symbol}] timeframe=1h lang=fa`;
+
+                  // Run your analyzer (uses GPT internally)
+                  const result = await this.analyzeAndCreateSignals([symbol], 'fa', '1h', syntheticPrompt);
+
+                  // Compute cost in IRT using the same formula as your general flow
+                  const totalCostInIRT = this.estimateAiCostIRT(syntheticPrompt, result);
+
+                  // Final balance check (exact) before sending the analysis
+                  if (this.userBalance < totalCostInIRT) {
+                    await this.bot.sendMessage(chatId, 'موجودی شما برای این درخواست کافی نیست. لطفاً حساب خود را شارژ کنید.', this.getMainMenuMarkup());
+                    return;
+                  }
+
+                  // Deduct balance
+                  const remainingBalance = this.userBalance - totalCostInIRT;
+                  await this.balanceService.addTransaction({
+                    userId: this.userId,
+                    transactionType: 'payment',
+                    amount: -totalCostInIRT,
+                    currency: this.curId,
+                    transactionEntityId: new Types.ObjectId().toString(),
+                    balanceAfterTransaction: remainingBalance,
+                    timestamp: Math.floor(Date.now() / 1000),
+                    _id: new Types.ObjectId(),
+                  });
+                  this.userBalance = remainingBalance;
+
+                  // Save user chat log
+                  const chatLog: UserChatLogDto = {
+                    telegramId: this.currentTelegramId,
+                    calledFunction: 'analyzeAndCreateSignals',
+                    query: `menu-signal: ${symbol} timeframe=1h lang=${telegramLanCode}`,
+                    response: result,
+                    queryType: 'menu-signal',
+                    newParameters: [],
+                    save_at: Math.floor(Date.now() / 1000),
+                  };
+                  try {
+                    await this.dataRepository.saveUserChatLog(chatLog);
+                  } catch (err) {
+                    this.logger.error('Failed to save user chat log (menu-signal):', err);
+                  }
+
+                  // send the final AI response
+                  await this.bot.sendMessage(chatId, result, this.getMainMenuMarkup());
+                } catch (err) {
+                  this.logger.error(`Signal generation failed for ${symbol}:`, err?.message || err);
+                  await this.bot.sendMessage(
+                    chatId,
+                    `⚠️ در تولید سیگنال ${symbol} خطایی رخ داد. لطفاً بعداً دوباره تلاش کنید.`, this.getMainMenuMarkup()
+                  );
+                } finally {
+                  // delete the waiting/ad message
+                  if (adMsgId) {
+                    this.bot.deleteMessage(chatId, String(adMsgId)).catch(() => {});
+                  }
+                }
+              };
+
+              // 1) Signal buttons
+              if (labelToSymbol[text]) {
+                await handleSignal(labelToSymbol[text]);
+                return;
+              }
+
+              if (text && (text === '/menu')) {
+                await this.bot.sendMessage(
+                chatId,
+                '✅ منوی سریع به‌روزرسانی شد. از گزینه‌های زیر استفاده کنید:',
+                this.getMainMenuMarkup()
+              );
+                return;
+              }
+
+              // 2) /help button (reply-keyboard label or slash command)
+              if (text === 'ℹ️ /help' || text === '/help') {
+                await this.sendMenu(chatId);
+                return;
+              }
+
+              // 3) Goto support button
+              if (text === '🆘 goto support' || text === 'goto support' || text === 'support') {
+                const supportHandle = //process.env.TELEGRAM_SUPPORT_HANDLE || 
+                'Ganjool';
+                await this.bot.sendMessage(
+                  chatId,
+                  `برای ارتباط با پشتیبانی، روی دکمه زیر بزنید یا به @${supportHandle} پیام دهید.`,
+                  {
+                    reply_markup: {
+                      inline_keyboard: [
+                        [{ text: 'ارتباط با پشتیبانی', url: `https://t.me/${supportHandle}` }],
+                      ],
+                    },
+                  }
+                );
+                return;
+              }
 
         // Retrieve chat history
         const chatHistory = await this.getUserChatHistory(telegramID, 1); // Retrieve last 5 messages
@@ -3797,7 +4047,7 @@ STOP CONDITIONS
         }
         // Check user balance
         if (this.userBalance < totalCostInIRT) {
-          await this.bot.sendMessage(chatId, 'Insufficient balance for this request. Please recharge to continue.');
+          await this.bot.sendMessage(chatId, 'Insufficient balance for this request. Please recharge to continue.', this.getMainMenuMarkup());
           return;
         }
 
@@ -3842,10 +4092,12 @@ STOP CONDITIONS
           , 'getLatestNewsBySymbol', 'getTopNewsByInteractionsAndTitle', 'getLatestNewsByTitle']);
         if (newsFunctions.has(responseText.calledFunc)) {
           if (Array.isArray(responseText.responseArray)) {
-            // Iterate through each news item
-            responseText.responseArray.forEach((newsItem) => {
-              this.bot.sendMessage(chatId, newsItem)
-                .catch((err) => {
+            
+            let first = true;
+            for (const newsItem of responseText.responseArray) {
+              const extra = first ? this.getMainMenuMarkup() : {};
+              await this.bot.sendMessage(chatId, newsItem, extra).catch((err) => {
+                
                   if (err.code === 'ETELEGRAM' && err.message.includes('message is too long')) {
                     this.logger.error('Message too long, splitting and sending in parts.');
 
@@ -3861,8 +4113,30 @@ STOP CONDITIONS
                   } else {
                     this.logger.error('Failed to send message', err);
                   }
-                });
-            });
+              });
+              first = false;
+            }
+            // // Iterate through each news item
+            // responseText.responseArray.forEach((newsItem) => {
+            //   this.bot.sendMessage(chatId, newsItem)
+            //     .catch((err) => {
+            //       if (err.code === 'ETELEGRAM' && err.message.includes('message is too long')) {
+            //         this.logger.error('Message too long, splitting and sending in parts.');
+
+            //         const maxLength = 1000; // Telegram's max message length
+            //         const messageParts = splitTelegramMessage(newsItem, maxLength);
+
+            //         // Send each part sequentially
+            //         messageParts.reduce((promise, part) => {
+            //           return promise.then(() => this.bot.sendMessage(chatId, part));
+            //         }, Promise.resolve()).catch((err) => {
+            //           this.logger.error('Failed to send split messages', err);
+            //         });
+            //       } else {
+            //         this.logger.error('Failed to send message', err);
+            //       }
+            //     });
+            // });
           } else {
             this.logger.error('responseText.responseText is not an array of news items.');
           }
@@ -3870,7 +4144,7 @@ STOP CONDITIONS
         }
         else {
 
-          this.bot.sendMessage(chatId, responseText.responseText)
+          this.bot.sendMessage(chatId, responseText.responseText, this.getMainMenuMarkup())
             .catch((err) => {
               if (err.code === 'ETELEGRAM' && err.message.includes('message is too long')) {
                 this.logger.error('Message too long, splitting and sending in parts.');
@@ -3880,6 +4154,7 @@ STOP CONDITIONS
 
                 // Send each part sequentially
                 messageParts.reduce((promise, part) => {
+                  
                   return promise.then(() => this.bot.sendMessage(chatId, part));
                 }, Promise.resolve()).catch((err) => {
                   this.logger.error('Failed to send split messages', err);
@@ -3944,6 +4219,7 @@ STOP CONDITIONS
           // Add this to .env if not already present
         };
 
+
         try {
           const { token, isNewToken, userId, alias } = await this.iamService.registerOrLogin(userInsertDto);
           this.userId = new Types.ObjectId(userId);
@@ -3954,9 +4230,10 @@ STOP CONDITIONS
 
           this.curId = (await this.balanceService.getCurrencyByName('Toman'))._id;
           this.userBalance = await this.balanceService.getUserBalance(this.userId, this.curId);
+          
           // Check user balance
           if (this.userBalance < 10000) {
-            await this.bot.sendMessage(chatId, 'اعتبار شما رو به پایان است٫ لطفا اعتبار خود را شارژ کنید.');
+            await this.bot.sendMessage(chatId, 'اعتبار شما رو به پایان است٫ لطفا اعتبار خود را شارژ کنید.', this.getMainMenuMarkup());
           }
 
           if (this.userBalance < 1000) {
@@ -3968,7 +4245,7 @@ STOP CONDITIONS
           return;
         }
 
-      }
+      
       // Extract user info from the Telegram message
       //console.log('start');
       //
@@ -4073,7 +4350,7 @@ STOP CONDITIONS
 
         // Check user balance
         if (this.userBalance < totalCostInIRT) {
-          await this.bot.sendMessage(chatId, 'موجودی شما برای این درخواست کافی نیست. لطفاً حساب خود را شارژ کنید.');
+          await this.bot.sendMessage(chatId, 'موجودی شما برای این درخواست کافی نیست. لطفاً حساب خود را شارژ کنید.', this.getMainMenuMarkup());
           return;
         }
 
@@ -4187,7 +4464,8 @@ STOP CONDITIONS
           },
         });
       }
-    });
+    }
+  });
 
 
     // Callback query handler
