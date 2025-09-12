@@ -1,5 +1,12 @@
 export function mapSymbol(input: string, mode: 'pair' | 'plain'): string {
   const symbolMapping: { [key: string]: string } = {
+
+    // US100 / Nasdaq 100
+    us100: 'US100',
+    US100: 'US100',
+    'نزدک ۱۰۰': 'US100',
+    'نزدک 100': 'US100',
+
     usdcad:'USDCAD',
     USDCAD:'USDCAD',
     usdjpy:'USDJPY',

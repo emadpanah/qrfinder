@@ -334,10 +334,33 @@ export class BotAIService implements OnModuleInit {
     newParameters?: string[]; language: string, advertingMsgId: string, responseArray?: string[]
   }> {
 
+
+
     let queryType = 'in-scope'; // Default to in-scope
     let newParameters: string[] = [];
     let calledFunc: string = '';
     let advertingMsgId = '';
+    // const analysisMsg = await this.bot.sendMessage(
+    //         chatId,
+    //         `🚀 <b>در حال پردازش درخواست شما...</b>\n\n✨ از <a href="https://trade-ai.bot/">برترین پلتفرم ایران</a> برای خرید ربات‌های معامله‌گر و دستیاران حرفه‌ای تریدر استفاده کنید! 🌟`,
+    //         {
+    //           parse_mode: 'HTML',
+    //           reply_markup: {
+    //             inline_keyboard: [
+    //               [
+    //                 {
+    //                   text: 'بازدید از اسپانسر',
+    //                   url: 'https://trade-ai.bot/',
+    //                 },
+    //               ],
+    //             ],
+    //           },
+    //         }
+    //       );
+    //       advertingMsgId = analysisMsg.message_id;
+          
+        
+    await this.bot.sendChatAction(chatId, 'typing');
 
 
     const functions = [
@@ -3292,54 +3315,156 @@ STOP CONDITIONS
 
   
   async sendChunkedMessage(bot: TelegramBot, chatId: number | string, content: string, chunkSize = 3500) {
-    const lines = content.split('\n\n');
-    let chunk = '';
-    for (const line of lines) {
-      if ((chunk + '\n\n' + line).length > chunkSize) {
-        await bot.sendMessage(chatId, chunk, { parse_mode: 'Markdown' });
-        chunk = '';
-      }
-      chunk += '\n\n' + line;
-    }
-    if (chunk.trim()) {
-      await bot.sendMessage(chatId, chunk, { parse_mode: 'Markdown' });
-    }
+        const lines = content.split('\n\n');
+        let chunk = '';
+        for (const line of lines) {
+          if ((chunk + '\n\n' + line).length > chunkSize) {
+            await bot.sendMessage(chatId, chunk, { parse_mode: 'Markdown' });
+            chunk = '';
+          }
+          chunk += '\n\n' + line;
+        }
+        if (chunk.trim()) {
+          await bot.sendMessage(chatId, chunk, { parse_mode: 'Markdown' });
+        }
   }
 
-      // Persian main menu (ReplyKeyboard)
-      // Put inside your class
-      private getMainMenuMarkup() {
-        return {
-          reply_markup: {
-            keyboard: [
-              ['📈 سیگنال بیت‌کوین', '📉 سیگنال اتریوم'],
-              ['🔮 سیگنال ریپل', '🔥 سیگنال سولانا'],
-              ['🌊 سیگنال کاردانو', '🟡 سیگنال بایننس‌کوین'],
-              ['🆘 ارتباط با پشتیبانی'],
-              ['ℹ️ راهنما'],
-            ],
-            resize_keyboard: true,
-            one_time_keyboard: false,
-            is_persistent: true,
-          },
-        };
-      }
+  // Persian main menu (ReplyKeyboard)
+  // Put inside your class
+  // private getMainMenuMarkup() {
+  //     return {
+  //       reply_markup: {
+  //         keyboard: [
+  //           ['سیگنال بیت‌کوین (BTC)', 'سیگنال طلا (XAUUSD)'],
+  //           ['سیگنال اتریوم (ETH)', 'سیگنال نزدک ۱۰۰ (US100)', 'سیگنال سولانا (SOL)'],
+  //           ['سیگنال دوج‌کوین (DOGE)'],
+  //           ['🆘 ارتباط با پشتیبانی'],
+  //           ['ℹ️ راهنما'],
+  //         ],
+  //         resize_keyboard: true,
+  //         one_time_keyboard: false,
+  //         is_persistent: true,
+  //         selective: true,
+  //       },
+  //     };
+  // }
+
+  // map "qm1_*" -> symbol + pretty title
+private quickMenuSymbolMap: Record<string, { symbol: string; title: string }> = {
+  qm1_btc:   { symbol: 'BTC',    title: 'بیت‌کوین (BTC)' },
+  qm1_xau:   { symbol: 'XAUUSD', title: 'طلا (XAUUSD)' },
+  qm1_eth:   { symbol: 'ETH',    title: 'اتریوم (ETH)' },
+  qm1_us100: { symbol: 'US100',  title: 'نزدک ۱۰۰ (US100)' },
+  qm1_sol:   { symbol: 'SOL',    title: 'سولانا (SOL)' },
+  qm1_doge:  { symbol: 'DOGE',   title: 'دوج‌کوین (DOGE)' },
+};
+
+private async sendSymbolChildMenu(chatId: number | string, itemKey: string) {
+  const meta = this.quickMenuSymbolMap[itemKey];
+  if (!meta) return;
+
+  const sym = meta.symbol;
+
+  return this.bot.sendMessage(
+    chatId,
+    `یکی از گزینه‌ها را برای ${meta.title} انتخاب کنید:`,
+    {
+      reply_markup: {
+        inline_keyboard: [
+          [
+            { text: 'سیگنال ۱۵ دقیقه', callback_data: `qm2:${sym}:tf15m` },
+            { text: 'سیگنال ۱ ساعته', callback_data: `qm2:${sym}:tf1h` },
+          ],
+          [
+            { text: 'سیگنال ۴ ساعته', callback_data: `qm2:${sym}:tf4h` },
+            { text: 'سیگنال روزانه',   callback_data: `qm2:${sym}:tf1d` },
+          ],
+          [
+            { text: 'MACD',        callback_data: `qm2:${sym}:macd` },
+            { text: 'Stochastic',  callback_data: `qm2:${sym}:sto` },
+            { text: 'RSI',         callback_data: `qm2:${sym}:rsi` },
+          ],
+          [
+            { text: 'پرامپت‌های نمونه /help', callback_data: `qm2:help` },
+          ],
+        ],
+      },
+    }
+  );
+}
 
 
-      private normalizeFa(input: string) {
+  // Persian main menu (ReplyKeyboard) — 1st level only
+  // Replace your getMainMenuMarkup() with this:
+  private getMainMenuMarkup() {
+    return {
+      reply_markup: {
+        keyboard: [
+          ['بیت‌کوین (BTC)', 'طلا (XAUUSD)'],
+          ['اتریوم (ETH)', 'نزدک ۱۰۰ (US100)', 'سولانا (SOL)'],
+          ['دوج‌کوین (DOGE)'],
+          //['پشتیبانی گنجول'],
+          //['پرامپت های نبضار(/help)'],
+        ],
+        resize_keyboard: true,
+        one_time_keyboard: false,
+        is_persistent: true,
+      },
+    };
+  }
+
+private makeQuickTopMap(dict: Record<string, string>) {
+  const out: Record<string, string> = {};
+  for (const k of Object.keys(dict)) {
+    const nk = this.normalizeFa(k.toLowerCase()); // same pipeline as incoming text
+    out[nk] = dict[k];
+  }
+  return out;
+}
+
+// Use it to define your top-level map (write the pretty labels here)
+private quickTopMap = this.makeQuickTopMap({
+  'بیت‌کوین (BTC)': 'BTC',
+  'طلا (XAUUSD)': 'XAUUSD',
+  'اتریوم (ETH)': 'ETH',
+  'نزدک ۱۰۰ (US100)': 'US100',
+  'نزدک 100 (US100)': 'US100', // latin digits fallback
+  'سولانا (SOL)': 'SOL',
+  'دوج‌کوین (DOGE)': 'DOGE',
+});
+
+// Minimal child buttons (text = full prompt we want to send to AI)
+private async sendQm2Buttons(chatId: number, symbol: string) {
+  const A = (label: string) => ({ text: `${symbol} ${label}`, callback_data: `qm2_${symbol} ${label}` });
+
+  await this.bot.sendMessage(
+    chatId,
+    `یکی از گزینه‌ها را برای ${symbol} انتخاب کنید:`,
+    {
+      reply_markup: {
+        inline_keyboard: [
+          [ A('سیگنال ۱۵ دقیقه')],[ A('سیگنال ۱ ساعته') ],
+          [ A('سیگنال ۴ ساعته')],[ A('سیگنال ۱ روزه') ],
+          [ A('تحلیل MACD')],[ A('تحلیل RSI') ],
+          [  A('تحلیل Stochastic') ],
+        ],
+      },
+    }
+  );
+}
+
+
+
+  private normalizeFa(input: string) {
         return (input || '')
           .replace(/\u200c/g, '') // remove ZWNJ
           .replace(/ي/g, 'ی')
           .replace(/ك/g, 'ک')
           .replace(/[ ]+/g, ' ')
           .trim();
-      }
+  }
 
-
-     
-
-
-    private estimateAiCostIRT(inputText: string, outputText: string) {
+  private estimateAiCostIRT(inputText: string, outputText: string) {
           const charsToTokens = (s: string) => Math.ceil((s ? s.length : 0) / 4);
           const inputTokens = charsToTokens(inputText);
           const outputTokens = charsToTokens(outputText);
@@ -3350,8 +3475,7 @@ STOP CONDITIONS
 
           const conversionRateToIRT = 5_000_000; // keep in sync with your system
           return Math.ceil(totalUSD * conversionRateToIRT);
-        }
-
+  }
 
   async onModuleInit() {
     const me = await this.bot.getMe();
@@ -3372,43 +3496,13 @@ STOP CONDITIONS
       const chatId = msg.chat.id;
       var text = msg.text?.trim().toLowerCase();
       text = this.normalizeFa(text);
+       
+      const sym = this.quickTopMap[text];
+      if (sym) {
+        await this.sendQm2Buttons(chatId, sym);
+        return;
+      }
 
-  // 2) map Persian UI labels to your existing English handler strings
-  const faToEnQuick: Record<string, string> = {
-    '📈 سیگنال بیت‌کوین': '📈 btc signal',
-    'سیگنال بیت‌کوین': '📈 btc signal',
-    'سیگنال بیت کوین': '📈 btc signal',
-    'سیگنال بیتکوین': '📈 btc signal',
-
-    '📉 سیگنال اتریوم': '📉 eth signal',
-    'سیگنال اتریوم': '📉 eth signal',
-
-    '🔮 سیگنال ریپل': '🔮 xrp signal',
-    'سیگنال ریپل': '🔮 xrp signal',
-
-    '🔥 سیگنال سولانا': '🔥 sol signal',
-    'سیگنال سولانا': '🔥 sol signal',
-
-    '🌊 سیگنال کاردانو': '🌊 ada signal',
-    'سیگنال کاردانو': '🌊 ada signal',
-
-    '🟡 سیگنال بایننس‌کوین': '🟡 bnb signal',
-    'سیگنال بایننس‌کوین': '🟡 bnb signal',
-    'سیگنال بایننس کوین': '🟡 bnb signal',
-
-    'ℹ️ راهنما': 'ℹ️ /help',
-    'راهنما': 'ℹ️ /help',
-
-    '🆘 ارتباط با پشتیبانی': '🆘 goto support',
-    'ارتباط با پشتیبانی': '🆘 goto support',
-  };
-
-  // 3) produce an English alias (fallback to original if not Persian label)
-  const textForHandlers = faToEnQuick[text] || raw;
-
-  // 4) from here on, use textForHandlers instead of msg.text in your existing English handlers
-  //    e.g.:
-  const t = textForHandlers.toLowerCase();
 
 
       // Extract user info from the Telegram message
@@ -3536,36 +3630,36 @@ STOP CONDITIONS
         
         //console.log('userCh.mobile', userCh.mobile);
         if (!userCh.mobile) {
-          // Ask the user to share their contact
-          // await this.bot.sendMessage(chatId, 'برای استفاده از ربات نبضار شماره موبایل خود را به اشتراک بگذارید', {
-          //   reply_markup: {
-          //     keyboard: [
-          //       [
-          //         {
-          //           text: '📞 اشتراک شماره موبایل',
-          //           request_contact: true, // Requests the user's contact information
-          //         },
-          //       ],
-          //     ],
-          //     resize_keyboard: true, // Adjust keyboard size for better display
-          //     one_time_keyboard: true, // Hides the keyboard after interaction
-          //   },
-          // });
-          await this.bot.sendPhoto(chatId, 'https://yourdomain.com/path-to-image.jpg', {
-              caption: `برای استفاده از ربات نبضار شماره موبایل خود را به اشتراک بگذارید.\n\n📸 برای اشتراک شماره موبایل مطابق تصویر از دکمه منو استفاده کنید.`,
-              reply_markup: {
-                keyboard: [
-                  [
-                    {
-                      text: '📞 اشتراک شماره موبایل',
-                      request_contact: true,
-                    },
-                  ],
+          //Ask the user to share their contact
+          await this.bot.sendMessage(chatId, 'برای دسترسی به سیگنال‌های سیستم معاملاتی و دستیار هوش مصنوعی شماره تماست رو واسم بفرست. کافیه از منوی پایین دگمه ارسال شماره موبایل رو بزنی', {
+            reply_markup: {
+              keyboard: [
+                [
+                  {
+                    text: '📞 ارسال شماره موبایل',
+                    request_contact: true, // Requests the user's contact information
+                  },
                 ],
-                resize_keyboard: true,
-                one_time_keyboard: true,
-              },
-            });
+              ],
+              resize_keyboard: true, // Adjust keyboard size for better display
+              one_time_keyboard: true, // Hides the keyboard after interaction
+            },
+          });
+          // await this.bot.sendPhoto(chatId, 'https://yourdomain.com/path-to-image.jpg', {
+          //     caption: `برای استفاده از ربات نبضار شماره موبایل خود را به اشتراک بگذارید.\n\n📸 برای اشتراک شماره موبایل مطابق تصویر از دکمه منو استفاده کنید.`,
+          //     reply_markup: {
+          //       keyboard: [
+          //         [
+          //           {
+          //             text: '📞 اشتراک شماره موبایل',
+          //             request_contact: true,
+          //           },
+          //         ],
+          //       ],
+          //       resize_keyboard: true,
+          //       one_time_keyboard: true,
+          //     },
+          //   });
           return;
         } 
 
@@ -3825,126 +3919,7 @@ STOP CONDITIONS
         //   return;
         // }
         
-         // Map possible button labels/variants -> symbols
-          const labelToSymbol: Record<string, string> = {
-            '📈 btc signal': 'BTC',
-            'btc signal': 'BTC',
-            'btc': 'BTC',
-
-            '📉 eth signal': 'ETH',
-            'eth signal': 'ETH',
-            'eth': 'ETH',
-
-            '🔮 xrp signal': 'XRP',
-            'xrp signal': 'XRP',
-            'xrp': 'XRP',
-
-            '🔥 sol signal': 'SOL',
-            'sol signal': 'SOL',
-            'sol': 'SOL',
-
-            '🌊 ada signal': 'ADA',
-            'ada signal': 'ADA',
-            'ada': 'ADA',
-
-            '🟡 bnb signal': 'BNB',
-            'bnb signal': 'BNB',
-            'bnb': 'BNB',
-          };
-          
-          
-            
-             // common runner for signals with ad message + deletion
-                const handleSignal = async (symbol: string) => {
-                  let adMsgId: any = null;
-                  try {
-                    // show waiting/ad message
-                    const analysisMsg = await this.bot.sendMessage(
-                    chatId,
-                    `🚀 <b>در حال پردازش درخواست شما...</b>\n\n✨ از <a href="https://trade-ai.bot/">برترین پلتفرم ایران</a> برای خرید ربات‌های معامله‌گر و دستیاران حرفه‌ای تریدر استفاده کنید! 🌟`,
-                    {
-                      parse_mode: 'HTML',
-                      reply_markup: {
-                        inline_keyboard: [
-                          [
-                            {
-                              text: 'بازدید از اسپانسر',
-                              url: 'https://trade-ai.bot/',
-                            },
-                          ],
-                        ],
-                      },
-                    }
-                  );
-                  adMsgId = analysisMsg.message_id;
-                  await this.bot.sendChatAction(chatId, 'typing');
-
-                  // Build a tiny "synthetic prompt" string so cost calc matches your model
-                  const syntheticPrompt = `analyzeAndCreateSignals symbols=[${symbol}] timeframe=1h lang=fa`;
-
-                  // Run your analyzer (uses GPT internally)
-                  const result = await this.analyzeAndCreateSignals([symbol], 'fa', '1h', syntheticPrompt);
-
-                  // Compute cost in IRT using the same formula as your general flow
-                  const totalCostInIRT = this.estimateAiCostIRT(syntheticPrompt, result);
-
-                  // Final balance check (exact) before sending the analysis
-                  if (this.userBalance < totalCostInIRT) {
-                    await this.bot.sendMessage(chatId, 'موجودی شما برای این درخواست کافی نیست. لطفاً حساب خود را شارژ کنید.', this.getMainMenuMarkup());
-                    return;
-                  }
-
-                  // Deduct balance
-                  const remainingBalance = this.userBalance - totalCostInIRT;
-                  await this.balanceService.addTransaction({
-                    userId: this.userId,
-                    transactionType: 'payment',
-                    amount: -totalCostInIRT,
-                    currency: this.curId,
-                    transactionEntityId: new Types.ObjectId().toString(),
-                    balanceAfterTransaction: remainingBalance,
-                    timestamp: Math.floor(Date.now() / 1000),
-                    _id: new Types.ObjectId(),
-                  });
-                  this.userBalance = remainingBalance;
-
-                  // Save user chat log
-                  const chatLog: UserChatLogDto = {
-                    telegramId: this.currentTelegramId,
-                    calledFunction: 'analyzeAndCreateSignals',
-                    query: `menu-signal: ${symbol} timeframe=1h lang=${telegramLanCode}`,
-                    response: result,
-                    queryType: 'menu-signal',
-                    newParameters: [],
-                    save_at: Math.floor(Date.now() / 1000),
-                  };
-                  try {
-                    await this.dataRepository.saveUserChatLog(chatLog);
-                  } catch (err) {
-                    this.logger.error('Failed to save user chat log (menu-signal):', err);
-                  }
-
-                  // send the final AI response
-                  await this.bot.sendMessage(chatId, result, this.getMainMenuMarkup());
-                } catch (err) {
-                  this.logger.error(`Signal generation failed for ${symbol}:`, err?.message || err);
-                  await this.bot.sendMessage(
-                    chatId,
-                    `⚠️ در تولید سیگنال ${symbol} خطایی رخ داد. لطفاً بعداً دوباره تلاش کنید.`, this.getMainMenuMarkup()
-                  );
-                } finally {
-                  // delete the waiting/ad message
-                  if (adMsgId) {
-                    this.bot.deleteMessage(chatId, String(adMsgId)).catch(() => {});
-                  }
-                }
-              };
-
-              // 1) Signal buttons
-              if (labelToSymbol[text]) {
-                await handleSignal(labelToSymbol[text]);
-                return;
-              }
+        
 
               if (text && (text === '/menu')) {
                 await this.bot.sendMessage(
@@ -4192,11 +4167,14 @@ STOP CONDITIONS
     });
 
     this.bot.on('callback_query', async (callbackQuery) => {
+      console.log('Callback query received:', callbackQuery.data);
       const msg = callbackQuery.message;
       const data = callbackQuery.data;
       const from = callbackQuery.from;
       const chatId = msg.chat.id;
-      if (!this.currentTelegramId) {
+      console.log('Before registering user from callback_query ', this.currentTelegramId);
+      //if (!this.currentTelegramId) {
+        console.log('Registering user from callback_query ', this.currentTelegramId);
         this.currentTelegramId = from.id?.toString();
         const telegramUserName = from.username || 'Unknown';
         const telegramFirstName = from.first_name || '';
@@ -4252,6 +4230,7 @@ STOP CONDITIONS
 
       // Handle category selection
       if (data.startsWith('category_')) {
+        console.log('Category selected:', data);
         const selectedCategory = data.split('_')[1];
         const prompts = this.categories[selectedCategory];
 
@@ -4279,10 +4258,22 @@ STOP CONDITIONS
       }
 
       // Handle prompt selection
-      else if (data.startsWith('prompt_')) {
-        const [_, promptIndex, category] = data.split('_');
-        const selectedPrompt = this.categories[category][parseInt(promptIndex, 10)];
+      else if (data.startsWith('prompt_') || data.startsWith('qm2_')) {
+        console.log('Prompt selected:', data);
+        const parts = data.split('_');
+        // parts[0] is "prompt" or "qm2"
+        const promptIndex = parts[1];         // for qm2_: this is the FULL PROMPT; for prompt_: this is the index
+        const category = parts[2];            // only exists for legacy prompt_
 
+        let selectedPrompt: string | undefined = undefined;
+
+        if (category && this.categories?.[category]) {
+          const i = parseInt(promptIndex, 10);
+          selectedPrompt = this.categories[category][i];
+        }
+        if (!selectedPrompt) {
+        selectedPrompt = promptIndex; 
+      }
         // Fetch user chat history
         const chatHistory = await this.getUserChatHistory(this.currentTelegramId, 1); // Retrieve last 3 messages
         const formattedChatHistory = chatHistory.map(log => {
@@ -4442,7 +4433,7 @@ STOP CONDITIONS
         }
 
         const allowedFunctions = new Set(["getUserAlias", "setUserAlias", "getUserBalance"]);
-        if (!allowedFunctions.has(chatGptResponse.calledFunc)) {
+        if (!allowedFunctions.has(chatGptResponse.calledFunc) && data.startsWith('prompt_')) {
           await this.sendChildMenu(chatId, category);
         }
 
@@ -4464,7 +4455,7 @@ STOP CONDITIONS
           },
         });
       }
-    }
+    //}
   });
 
 
@@ -4486,8 +4477,6 @@ STOP CONDITIONS
     //   }
     // });
   }
-
-
 
   private async sendChildMenu(chatId: number, category: string) {
     const prompts = this.categories[category];
