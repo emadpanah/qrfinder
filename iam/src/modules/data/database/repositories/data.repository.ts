@@ -516,45 +516,168 @@ export class DataRepository {
   }
 
   async getTopCoinsBySort(sort: string, limit: number): Promise<LunarCrushPublicCoinDto[]> {
-    const collection = this.connection.collection(this.lunarPubCoinCollectionName);
-  
-    const sortField = this.resolveSortField(sort);
-    const query = {
-      $or: [
-        { fetched_sort: sort }, // legacy
-        { fetched_sort: '', [sortField]: { $exists: true } } // new API fallback
-      ]
-    };
-  
-    const results = await collection
-      .find(query)
-      .sort(sortField ? { [sortField]: -1, fetched_at: -1 } : { fetched_at: -1 })
-      .limit(limit)
-      .toArray();
-  
-    return results.map(({ _id, ...rest }) => rest as LunarCrushPublicCoinDto);
+  const collection = this.connection.collection(this.lunarPubCoinCollectionName);
+
+  const sortField = this.resolveSortField(sort);
+  if (!sortField) {
+    throw new Error(`Unsupported sort: ${sort}`);
   }
+
+  // fields where "lower is better"
+  const ascFields = new Set<string>(['alt_rank', 'alt_rank_previous', 'market_cap_rank']);
+  const isAsc = ascFields.has(sortField);
+
+  // helpers to build computed keys for $match / $sort
+  const metricIsNumber: any = {};
+  metricIsNumber[sortField] = { $type: 'number' };
+
+  const rankSort: any = {};
+  rankSort[sortField] = isAsc ? 1 : -1;
+  rankSort['fetched_at'] = -1;
+
+  const pipeline = [
+    // find latest fetched_at among rows that HAVE a numeric value for the metric
+    { $match: metricIsNumber },
+    { $group: { _id: null, latestFetchedAt: { $max: '$fetched_at' } } },
+
+    // pull only that latest batch, dedupe by symbol, then rank by the metric
+    {
+      $lookup: {
+        from: this.lunarPubCoinCollectionName,
+        let: { latest: '$latestFetchedAt' },
+        pipeline: [
+          {
+            $match: {
+              $expr: { $eq: ['$fetched_at', '$$latest'] },
+              ...metricIsNumber,
+            },
+          },
+          // ensure one row per symbol (keep the newest per symbol within the batch)
+          { $sort: { symbol: 1, fetched_at: -1 } },
+          { $group: { _id: '$symbol', doc: { $first: '$$ROOT' } } },
+          { $replaceRoot: { newRoot: '$doc' } },
+
+          // final ranking
+          { $sort: rankSort },
+          { $limit: Math.max(1, limit | 0) },
+
+          // drop _id to mirror your previous map({_id,...rest}=>rest)
+          { $project: { _id: 0 } },
+        ],
+        as: 'coins',
+      },
+    },
+    { $unwind: '$coins' },
+    { $replaceRoot: { newRoot: '$coins' } },
+  ] as any[];
+
+  const results = await collection.aggregate(pipeline).toArray();
+  return results as unknown as LunarCrushPublicCoinDto[];
+}
+
+
+
+  // async getTopCoinsBySort(sort: string, limit: number): Promise<LunarCrushPublicCoinDto[]> {
+  //   const collection = this.connection.collection(this.lunarPubCoinCollectionName);
+  
+  //   const sortField = this.resolveSortField(sort);
+  //   const query = {
+  //     $or: [
+  //       { fetched_sort: sort }, // legacy
+  //       { fetched_sort: '', [sortField]: { $exists: true } } // new API fallback
+  //     ]
+  //   };
+  
+  //   const results = await collection
+  //     .find(query)
+  //     .sort(sortField ? { [sortField]: -1, fetched_at: -1 } : { fetched_at: -1 })
+  //     .limit(limit)
+  //     .toArray();
+  
+  //   return results.map(({ _id, ...rest }) => rest as LunarCrushPublicCoinDto);
+  // }
   
 
-  async getTopCoinsByCategoryAndSort(category: string, sort: string, limit: number): Promise<LunarCrushPublicCoinDto[]> {
-    const collection = this.connection.collection(this.lunarPubCoinCollectionName);
+  // async getTopCoinsByCategoryAndSort(category: string, sort: string, limit: number): Promise<LunarCrushPublicCoinDto[]> {
+  //   const collection = this.connection.collection(this.lunarPubCoinCollectionName);
   
-    const sortField = this.resolveSortField(sort);
-    const query = {
-      $or: [
-        { categories: { $regex: category }, fetched_sort: sort },
-        { categories: { $regex: category }, fetched_sort: '', [sortField]: { $exists: true } }
-      ]
-    };
+  //   const sortField = this.resolveSortField(sort);
+  //   const query = {
+  //     $or: [
+  //       { categories: { $regex: category }, fetched_sort: sort },
+  //       { categories: { $regex: category }, fetched_sort: '', [sortField]: { $exists: true } }
+  //     ]
+  //   };
   
-    const results = await collection
-      .find(query)
-      .sort(sortField ? { [sortField]: -1, fetched_at: -1 } : { fetched_at: -1 })
-      .limit(limit)
-      .toArray();
+  //   const results = await collection
+  //     .find(query)
+  //     .sort(sortField ? { [sortField]: -1, fetched_at: -1 } : { fetched_at: -1 })
+  //     .limit(limit)
+  //     .toArray();
   
-    return results.map(({ _id, ...rest }) => rest as LunarCrushPublicCoinDto);
-  }
+  //   return results.map(({ _id, ...rest }) => rest as LunarCrushPublicCoinDto);
+  // }
+
+  async getTopCoinsByCategoryAndSort(
+  category: string,
+  sort: string,
+  limit: number
+): Promise<LunarCrushPublicCoinDto[]> {
+  const collection = this.connection.collection(this.lunarPubCoinCollectionName);
+
+  // Map incoming sort name to the actual field (e.g., "galaxy_score")
+  const sortField = this.resolveSortField(sort) || 'galaxy_score';
+
+  // Build a token-aware regex for comma-separated `categories` (e.g., "...,meme,...")
+  const escapeRegex = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const catRe = new RegExp(`(?:^|,)${escapeRegex(category)}(?:,|$)`, 'i');
+
+  // Only keep rows where the chosen sortField is numeric
+  const numericGuard = { [sortField]: { $type: 'number' } };
+
+  const sortSpec: Record<string, 1 | -1> = { [sortField]: -1, fetched_at: -1 };
+
+  const pipeline = [
+    // 1) Find the most recent batch (latest fetched_at) within the category
+    { $match: { categories: catRe, ...numericGuard } },
+    { $group: { _id: null, latestFetchedAt: { $max: '$fetched_at' } } },
+
+    // 2) Pull rows from that same latest batch, dedupe by symbol, sort by sortField
+    {
+      $lookup: {
+        from: this.lunarPubCoinCollectionName, // "_lunarpublicoindata"
+        let: { latest: '$latestFetchedAt' },
+        pipeline: [
+          {
+            $match: {
+              $expr: { $eq: ['$fetched_at', '$$latest'] },
+              categories: catRe,
+              ...numericGuard,
+            },
+          },
+          // Ensure single row per symbol in case of duplicates
+          { $sort: { symbol: 1, fetched_at: -1 } },
+          { $group: { _id: '$symbol', doc: { $first: '$$ROOT' } } },
+          { $replaceRoot: { newRoot: '$doc' } },
+
+          // Rank by selected field within the latest batch
+          { $sort: sortSpec },
+          { $limit: limit },
+
+          // Return clean docs (no _id)
+          { $project: { _id: 0 } },
+        ],
+        as: 'coins',
+      },
+    },
+    { $unwind: '$coins' },
+    { $replaceRoot: { newRoot: '$coins' } },
+  ];
+
+  const results = await collection.aggregate(pipeline).toArray();
+  return results as unknown as LunarCrushPublicCoinDto[];
+}
+
   
 
 
@@ -713,43 +836,71 @@ export class DataRepository {
   
   
 
-  async getSortValueForSymbol(symbol: string, sort: string): Promise<LunarCrushPublicCoinDto | null> {
-    if (!symbol) {
-      console.error("getSortValueForSymbol: symbol is null or undefined");
-      return null;
-    }
+  // async getSortValueForSymbol(symbol: string, sort: string): Promise<LunarCrushPublicCoinDto | null> {
+  //   if (!symbol) {
+  //     console.error("getSortValueForSymbol: symbol is null or undefined");
+  //     return null;
+  //   }
   
-    const collection = this.connection.collection(this.lunarPubCoinCollectionName);
+  //   const collection = this.connection.collection(this.lunarPubCoinCollectionName);
   
-    console.log("sort :", sort);
-    const transformedSymbol = symbol.toUpperCase();
-    const legacySortFilter = { symbol: transformedSymbol, fetched_sort: sort };
-    const newApiFilter = { symbol: transformedSymbol, fetched_sort: '' };
+  //   console.log("sort :", sort);
+  //   const transformedSymbol = symbol.toUpperCase();
+  //   const legacySortFilter = { symbol: transformedSymbol, fetched_sort: sort };
+  //   const newApiFilter = { symbol: transformedSymbol, fetched_sort: '' };
   
-    const sortField = this.resolveSortField(sort);
-    console.log("sortField :", sortField);
+  //   const sortField = this.resolveSortField(sort);
+  //   console.log("sortField :", sortField);
   
-    const query = {
-      $or: [
-        legacySortFilter,
-        { ...newApiFilter },
-      ],
-    };
+  //   const query = {
+  //     $or: [
+  //       legacySortFilter,
+  //       { ...newApiFilter },
+  //     ],
+  //   };
   
-    const result = await collection
-      .find(query)
-      .sort(sortField ? { [sortField]: -1, fetched_at: -1 } : { fetched_at: -1 })
-      .limit(1)
-      .toArray();
+  //   const result = await collection
+  //     .find(query)
+  //     .sort(sortField ? { [sortField]: -1, fetched_at: -1 } : { fetched_at: -1 })
+  //     .limit(1)
+  //     .toArray();
   
-    if (result.length === 0) {
-      console.log("result :", result);
-      return null;
-    }
+  //   if (result.length === 0) {
+  //     console.log("result :", result);
+  //     return null;
+  //   }
   
-    return this.mapToDto(result[0]);
+  //   return this.mapToDto(result[0]);
+  // }
+  
+  async getSortValueForSymbol(symbol: string, _sort: string): Promise<LunarCrushPublicCoinDto | null> {
+  if (!symbol) {
+    console.error("getSortValueForSymbol: symbol is null or undefined");
+    return null;
   }
-  
+
+  const collection = this.connection.collection(this.lunarPubCoinCollectionName);
+
+  const transformedSymbol = symbol.toUpperCase();
+
+  // ✅ Only filter by symbol
+  const query = { symbol: transformedSymbol };
+
+  // ✅ Always sort only by fetched_at (latest first)
+  const result = await collection
+    .find(query)
+    .sort({ fetched_at: -1 })
+    .limit(1)
+    .toArray();
+
+  if (result.length === 0) {
+    console.log("result :", result);
+    return null;
+  }
+
+  return this.mapToDto(result[0]);
+}
+
   
   
   async getSortValueForSymbols(symbols: string[], sort: string): Promise<(LunarCrushPublicCoinDto | null)[]> {
@@ -796,7 +947,10 @@ export class DataRepository {
 
   async getAllSortsForSymbol(symbol: string): Promise<Record<string, any>> {
     //console.log("symbol :", symbol);
-    const transformedSymbol = symbol.replace(/USDT$/, '').replace(/USD$/, '').toUpperCase();
+    let transformedSymbol = '';
+    transformedSymbol = symbol.replace(/USDT$/, '').replace(/USD$/, '').toUpperCase();
+    if(transformedSymbol=='XAU')
+      transformedSymbol='XAUT';
     const collection = this.connection.collection(this.lunarPubCoinCollectionName);
     //console.log("transformed symbol :", transformedSymbol);
   
@@ -1389,7 +1543,7 @@ export class DataRepository {
     return await collection
       .find({ post_title: { $regex: regex } }) // Case-insensitive search
       .sort({ post_created: -1 }) // Sort by creation date descending
-      .limit(Math.min(limit, 10)) // Enforce max limit = 10
+      .limit(Math.min(limit, 30)) // Enforce max limit = 10
       .toArray();
   }
 

@@ -10,7 +10,7 @@ import { IamService } from '../iam/services/iam.service';
 import { Types } from 'mongoose';
 import { BalanceService } from '../iam/services/iam-balance.service';
 import { Balance } from '../iam/database/schemas/iam-balance.schema';
-import { escapeMarkdown, formatNumber, mapSymbol, sanitizeString, truncateText } from 'src/shared/helper';
+import { escapeMarkdown, formatNumber, mapSymbol, sanitizeString,  truncateText } from 'src/shared/helper';
 import { TradingViewAlertDto } from '../data/database/dto/traidingview-alert.dto';
 import { title } from 'process';
 import { Console } from 'console';
@@ -243,23 +243,23 @@ export class BotAIService implements OnModuleInit {
     //'price_btc',
     'volume_24h',
     'volatility',
-    //'circulating_supply',
-    //'max_supply',
-    //'percent_change_1h',
+    'circulating_supply',
+    'max_supply',
+    'percent_change_1h',
     'percent_change_24h',
-    //'percent_change_7d',
-    //'percent_change_30d',
+    'percent_change_7d',
+    'percent_change_30d',
     'market_cap',
-    //'market_cap_rank',
+    'market_cap_rank',
     'interactions_24h',
-    //'social_volume_24h',
+    'social_volume_24h',
     'social_dominance',
     'market_dominance',
-    //'market_dominance_prev',
+    'market_dominance_prev',
     'galaxy_score',
-    //'galaxy_score_previous',
+    'galaxy_score_previous',
     'alt_rank',
-    //'alt_rank_previous',
+    'alt_rank_previous',
     'sentiment',
   ];
   // = [
@@ -2322,19 +2322,64 @@ async analyzeAndCreateSignals(symbols: string[], language: string, timeframe: '1
     let responseText = ``;
     const symbol = mapSymbol(sym.toLowerCase(), 'pair');
 
-    const indicatorsStart = Date.now();
-    const [rsi, sorts, macd, adx, cci, stochastic, ema, price] = await Promise.all([
-      this.dataRepository.getRSIBySymbolAndDate(symbol),
-      this.dataRepository.getAllSortsForSymbol(symbol),
-      this.dataRepository.getMACDBySymbolAndDate(symbol),
-      this.dataRepository.getADXBySymbolAndDate(symbol),
-      this.dataRepository.getCCIBySymbolAndDate(symbol),
-      this.dataRepository.getStochasticBySymbolAndDate(symbol),
-      this.dataRepository.getEMABySymbolAndDate(symbol),
-      this.dataRepository.getLatestPriceBySymbol(symbol, timestamp1), // Raw price history
+    const overallStart = Date.now();
+
+    const rsiStart = Date.now();
+    const rsiPromise = this.dataRepository.getRSIBySymbolAndDate(symbol)
+      .then(res => { this.logDuration(rsiStart, Date.now(), 'RSI'); return res; });
+
+    const sortsStart = Date.now();
+    const sortsPromise = this.dataRepository.getAllSortsForSymbol(symbol)
+      .then(res => { this.logDuration(sortsStart, Date.now(), 'SORTS'); return res; });
+
+    const macdStart = Date.now();
+    const macdPromise = this.dataRepository.getMACDBySymbolAndDate(symbol)
+      .then(res => { this.logDuration(macdStart, Date.now(), 'MACD'); return res; });
+
+    const adxStart = Date.now();
+    const adxPromise = this.dataRepository.getADXBySymbolAndDate(symbol)
+      .then(res => { this.logDuration(adxStart, Date.now(), 'ADX'); return res; });
+
+    const cciStart = Date.now();
+    const cciPromise = this.dataRepository.getCCIBySymbolAndDate(symbol)
+      .then(res => { this.logDuration(cciStart, Date.now(), 'CCI'); return res; });
+
+    const stoStart = Date.now();
+    const stochasticPromise = this.dataRepository.getStochasticBySymbolAndDate(symbol)
+      .then(res => { this.logDuration(stoStart, Date.now(), 'Stochastic'); return res; });
+
+    const emaStart = Date.now();
+    const emaPromise = this.dataRepository.getEMABySymbolAndDate(symbol)
+      .then(res => { this.logDuration(emaStart, Date.now(), 'EMA'); return res; });
+
+    const priceStart = Date.now();
+    const pricePromise = this.dataRepository.getLatestPriceBySymbol(symbol, timestamp1)
+      .then(res => { this.logDuration(priceStart, Date.now(), 'Price'); return res; });
+
+    // Preserve your original destructuring order/names
+    const [
+      rsi, 
+      sorts, 
+      macd, 
+      adx, 
+      cci, 
+      stochastic, 
+      ema, 
+      price
+    ] = await Promise.all([
+      rsiPromise,
+      sortsPromise,
+      macdPromise,
+      adxPromise,
+      cciPromise,
+      stochasticPromise,
+      emaPromise,
+      pricePromise,
     ]);
-    const indicatorsEnd = Date.now();
-    this.logDuration(indicatorsStart, indicatorsEnd, 'Fetching indicators data');
+
+    this.logDuration(overallStart, Date.now(), 'Fetching indicators data (overall)');
+
+
 
     // Transform priceHistoryRaw into the expected format
     const priceHistoryStart = Date.now();
@@ -2447,6 +2492,266 @@ async analyzeAndCreateSignals(symbols: string[], language: string, timeframe: '1
     };
     const currentPrice = price;
 
+     const isCFD = /^(XAUUSD|US100)$/i.test(symbol);
+     console.log('--symbol Detection : is gold or US100 : ', isCFD)
+    //  const cryptoActionBlock = `
+    //       ### **Trading Action Section Instructions (Crypto)**
+    //       Generate a trading action section with one of the following actions:
+    //       - **Buy**
+    //       - **Strong Buy**
+    //       - **Sell**
+    //       - **Strong Sell**
+    //       - **Hold**
+
+    //       📌 Based on the chosen action, apply this logic:
+    //       - For **Buy**:
+    //         - 🎯 Target = currentPrice × 1.01
+    //         - 🛑 Stop Loss = currentPrice × 0.9905
+    //       - For **Strong Buy**:
+    //         - 🎯 Target = currentPrice × 1.0102
+    //         - 🛑 Stop Loss = currentPrice × 0.9905
+    //       - For **Sell**:
+    //         - 🎯 Target = currentPrice × 0.99
+    //         - 🛑 Stop Loss = currentPrice × 1.0095
+    //       - For **Strong Sell**:
+    //         - 🎯 Target = currentPrice × 0.9898
+    //         - 🛑 Stop Loss = currentPrice × 1.0095
+    //       - For **Hold**: Do not provide target or stop loss. Just summarize the reason for holding.
+
+    //       📝 Format the trading action section like this:
+    //       \`\`\`
+    //       📊 Trading Action: [ACTION]
+    //       🎯 Target Price: $[value] ([percentage])
+    //       🛑 Stop Loss: $[value] ([percentage])
+    //       ⏲ TimeFrame : ${timeframe}
+    //       📋 Summary:
+    //       [Short summary of reasoning for the action.]
+    //       🧠 Explanation:
+    //       [Detailed explanation combining technical indicators, price movement, sentiment, sorts, news, and calendar events.]
+    //       \`\`\`
+    //         `.trim();
+
+    const cryptoActionBlock = `
+  ### Trading Action Section Instructions (Crypto) — 3 Targets
+
+  Choose exactly ONE action:
+  - Buy | Strong Buy | Sell | Strong Sell | Hold
+
+  Let currentPrice be the live price.
+
+  Rules (TP2 matches your original single target; TP1 is softer, TP3 is more ambitious):
+
+  - Buy:
+    • TP1 = currentPrice × 1.0050
+    • TP2 = currentPrice × 1.0100
+    • TP3 = currentPrice × 1.0150
+    • SL  = currentPrice × 0.9905
+
+  - Strong Buy:
+    • TP1 = currentPrice × 1.0070
+    • TP2 = currentPrice × 1.0102
+    • TP3 = currentPrice × 1.0180
+    • SL  = currentPrice × 0.9905
+
+  - Sell:
+    • TP1 = currentPrice × 0.9950
+    • TP2 = currentPrice × 0.9900
+    • TP3 = currentPrice × 0.9850
+    • SL  = currentPrice × 1.0095
+
+  - Strong Sell:
+    • TP1 = currentPrice × 0.9940
+    • TP2 = currentPrice × 0.9898
+    • TP3 = currentPrice × 0.9840
+    • SL  = currentPrice × 1.0095
+
+  - Hold:
+    • Do NOT return SL or Targets. Provide a brief reason only.
+
+  Percent formula (show sign, 2 decimals):
+  percent(x) = 100 * (x - currentPrice) / currentPrice
+
+  Output exactly in this format (prices ≤4 decimals; include percent vs currentPrice). No extra text:
+
+  \`\`\`
+  📊 Trading Action: [ACTION]
+  🎯 TP1: $[value] ([percent])   🎯 TP2: $[value] ([percent])   🎯 TP3: $[value] ([percent])
+  🛑 Stop Loss: $[value] ([percent])
+  ⏲ TimeFrame : ${timeframe}
+  📋 Summary:
+  [Short reason]
+  🧠 Explanation:
+  [Detailed reasoning combining technical indicators, price movement, sentiment, sorts, news, and calendar events.]
+  \`\`\`
+
+  If action is Hold: return only "📊 Trading Action", "⏲ TimeFrame", "📋 Summary", "🧠 Explanation".
+`.trim();
+
+
+//      const cfdActionBlock = `
+//   ### Trading Action Rules (XAUUSD & US100) — 3 Take-Profit Levels
+
+//   Select exactly ONE action:
+//   Buy | Strong Buy | Sell | Strong Sell | Hold
+
+//   Inputs:
+//   - currentPrice: number (live price)
+//   - tf ∈ {15m, 1h, 4h, 1d}  // timeframe
+//   - tick = 0.01             // pip/tick size
+
+//   Pip table by timeframe (SL and TP levels in pips):
+//   - 15m:  SL=25,  TP1=20,  TP2=30,  TP3=40
+//   - 1h :  SL=50,  TP1=40,  TP2=60,  TP3=80
+//   - 4h :  SL=100, TP1=120, TP2=160, TP3=200
+//   - 1d :  SL=200, TP1=240, TP2=320, TP3=400
+
+//   Use the row that matches \`${timeframe}\`. Let slPips,tp1Pips,tp2Pips,tp3Pips be from the table.
+
+//   If action == "Buy":
+//     SL  = currentPrice - slPips  * tick
+//     TP1 = currentPrice + tp1Pips * tick
+//     TP2 = currentPrice + tp2Pips * tick
+//     TP3 = currentPrice + tp3Pips * tick
+
+//   If action == "Sell":
+//     SL  = currentPrice + slPips  * tick
+//     TP1 = currentPrice - tp1Pips * tick
+//     TP2 = currentPrice - tp2Pips * tick
+//     TP3 = currentPrice - tp3Pips * tick
+
+//   If action == "Strong Buy":
+//     SL  = currentPrice - slPips * tick
+//     TP1 = currentPrice + (tp1Pips * tick * 1.02)
+//     TP2 = currentPrice + (tp2Pips * tick * 1.02)
+//     TP3 = currentPrice + (tp3Pips * tick * 1.02)
+
+//   If action == "Strong Sell":
+//     SL  = currentPrice + slPips * tick
+//     TP1 = currentPrice - (tp1Pips * tick * 1.02)
+//     TP2 = currentPrice - (tp2Pips * tick * 1.02)
+//     TP3 = currentPrice - (tp3Pips * tick * 1.02)
+
+//   If action == "Hold":
+//     Do NOT return SL or Targets; give only a brief reason.
+
+//   Percent formula (include sign, 2 decimals):
+//   percent(x) = 100 * (x - currentPrice) / currentPrice
+
+//   Output exactly in this format (prices with 2 decimals; include percent vs currentPrice in parentheses). No extra text:
+
+//   \`\`\`
+//   📊 Trading Action: [ACTION]
+//   🎯 TP1: $[value] ([percent])   🎯 TP2: $[value] ([percent])   🎯 TP3: $[value] ([percent])
+//   🛑 Stop Loss: $[value] ([percent])
+//   ⏲ TimeFrame : ${timeframe}
+//   📋 Summary:
+//   <short reason>
+//   🧠 Explanation:
+//   <detailed reasoning using indicators, price action, sentiment, sorts, news, and calendar>
+//   \`\`\`
+
+//   If action is Hold: return only "📊 Trading Action", "⏲ TimeFrame", "📋 Summary", "🧠 Explanation".
+// `.trim();
+
+
+const cfdActionBlock = `
+### **Trading Action Section (CFD)**
+
+**Inputs**
+- symbol (e.g., XAUUSD, US30, GER40, WTI)
+- currentPrice (number)
+- action: **Buy | Strong Buy | Sell | Strong Sell | Hold**
+
+**Rules**
+- Always produce **three targets (T1, T2, T3)** and **one Stop Loss (SL)** — except **Hold** (no targets/SL).
+- Levels are **percentages of entry (currentPrice)**.
+- Round to the instrument's **tickSize**.
+
+**Default Percent Sets (good starting point for Gold/XAUUSD)**
+- **Buy**:       T1 = +0.50%, T2 = +1.00%, T3 = +2.00%; **SL = –0.75%**
+- **Strong Buy**: T1 = +0.70%, T2 = +1.40%, T3 = +2.80%; **SL = –0.70%**
+- **Sell**:      T1 = –0.50%, T2 = –1.00%, T3 = –2.00%; **SL = +0.75%**
+- **Strong Sell**:T1 = –0.70%, T2 = –1.40%, T3 = –2.80%; **SL = +0.70%**
+- **Hold**: no targets, no SL.
+
+**Formulas**
+- For **Buy / Strong Buy**:
+  - Tn = currentPrice × (1 + pct_n)
+  - SL = currentPrice × (1 – sl_pct)
+- For **Sell / Strong Sell**:
+  - Tn = currentPrice × (1 – |pct_n|)
+  - SL = currentPrice × (1 + sl_pct)
+
+**Output (JSON)**
+- \`{ symbol, action, entry, targets: [T1,T2,T3], stopLoss, rrToT2 }\`
+- \`rrToT2\` = |(T2 – entry)| / |(entry – SL)|
+
+**TypeScript Helper**
+\`\`\`ts
+type Action = 'Buy' | 'Strong Buy' | 'Sell' | 'Strong Sell' | 'Hold';
+
+const pctSets: Record<Action, any> = {
+  Buy:          { t1: 0.005,  t2: 0.010,  t3: 0.020,  sl: 0.0075 },
+  'Strong Buy': { t1: 0.007,  t2: 0.014,  t3: 0.028,  sl: 0.007  },
+  Sell:         { t1:-0.005,  t2:-0.010,  t3:-0.020,  sl: 0.0075 },
+  'Strong Sell':{ t1:-0.007,  t2:-0.014,  t3:-0.028,  sl: 0.007  },
+  Hold:         null
+};
+
+// Optional: default tick sizes per common symbols (override as needed)
+const defaultTickSize: Record<string, number> = {
+  XAUUSD: 0.1,   // gold
+  XAGUSD: 0.001, // silver
+  US30:   1,
+  GER40:  1,
+  WTI:    0.01
+};
+
+function calcCFDLevels(
+  symbol: string,
+  currentPrice: number,
+  action: Action,
+  tickSize?: number
+) {
+  const set = pctSets[action];
+  if (!set) return { symbol, action, note: 'Hold — no targets/SL' };
+
+  const ts = tickSize ?? defaultTickSize[symbol] ?? 0.1;
+  const round = (p: number) => Math.round(p / ts) * ts;
+
+  const targets = [
+    round(currentPrice * (1 + set.t1)),
+    round(currentPrice * (1 + set.t2)),
+    round(currentPrice * (1 + set.t3)),
+  ];
+
+  const stopLoss =
+    action === 'Buy' || action === 'Strong Buy'
+      ? round(currentPrice * (1 - set.sl))
+      : round(currentPrice * (1 + set.sl));
+
+  const rrToT2 = Math.abs((targets[1] - currentPrice) / (currentPrice - stopLoss));
+
+  return {
+    symbol,
+    action,
+    entry: round(currentPrice),
+    targets,
+    stopLoss,
+    rrToT2: Number(rrToT2.toFixed(2))
+  };
+}
+\`\`\`
+
+**Example (Gold / XAUUSD)**
+- \`calcCFDLevels('XAUUSD', 2000, 'Buy')\`
+  → \`targets: [2010, 2020, 2040]\`, \`stopLoss: 1985\`, \`rrToT2 ≈ 1.33\`
+`;
+
+
+
+    const actionBlock = isCFD ? cfdActionBlock : cryptoActionBlock;
+
     const prompt = `
     [Timeframe]: ${timeframe} (always mention the timeframe in the result)
 As you are a trading assistant specializing in cryptocurrency analysis. Use the following methodologies, indicators, and data points to generate a comprehensive trading signal for the symbol ${symbol}
@@ -2457,40 +2762,7 @@ As you are a trading assistant specializing in cryptocurrency analysis. Use the 
 ${formattedPriceHistory}
 (always mention  "Trading Action Section Instructions" data then go for showing other explanation)
 ### **Trading Action Section Instructions**
-generate a trading action section with one of the following actions:
-- **Buy**
-- **Strong Buy**
-- **Sell**
-- **Strong Sell**
-- **Hold**
-
-📌 Based on the chosen action, apply this logic:
-- For **Buy**:
-  - 🎯 Target = currentPrice × 1.01
-  - 🛑 Stop Loss = currentPrice × 0.9905
-- For **Strong Buy**:
-  - 🎯 Target = currentPrice × 1.0102
-  - 🛑 Stop Loss = currentPrice × 0.9905
-- For **Sell**:
-  - 🎯 Target = currentPrice × 0.99
-  - 🛑 Stop Loss = currentPrice × 1.0095
-- For **Strong Sell**:
-  - 🎯 Target = currentPrice × 0.9898
-  - 🛑 Stop Loss = currentPrice × 1.0095
-- For **Hold**: Do not provide target or stop loss. Just summarize the reason for holding.
-
-📝 Format the trading action section like this:
-\`\`\`
-📊 Trading Action: [ACTION]
-🎯 Target Price: $[value] ([percentage])
-🛑 Stop Loss: $[value] ([percentage])
-⏲ TimeFrame : ${timeframe} 
-📋 Summary:
-[Short summary of reasoning for the action.]
-🧠 Explanation:
-[Detailed explanation combining technical indicators, price movement, sentiment, sorts, news, and calendar events.]
-\`\`\`
-
+${actionBlock}
 ### **Indicators Analysis**
 - **RSI Analysis**: Current RSI value is ${JSON.stringify(rsi) || 'N/A'}. Historical data:
 ${formattedRSIHistory}
@@ -2608,7 +2880,7 @@ Past appearance
 OUTPUT FORMAT
 - Begin with:
   📊 Trading Action: [ACTION]
-  🎯 Target Price: $[value] ([percent])
+  🎯 TP1: $[value] ([percent])   🎯 TP2: $[value] ([percent])   🎯 TP3: $[value] ([percent])
   🛑 Stop Loss: $[value] ([percent])
   ⏲ TimeFrame : $[value]
   📋 Summary: <short>
@@ -2781,7 +3053,6 @@ STOP CONDITIONS
 
 
   async getDynamicInterpretation(historicalData: any[], prompt: string, data: any, topic: string, symbol: string, date: string, language: string): Promise<string> {
-
 
     const historicalDataString = historicalData
       ? `Here is the historical ${topic} data for the past 7 days:\n${[...historicalData]
@@ -3329,70 +3600,19 @@ STOP CONDITIONS
         }
   }
 
-  // Persian main menu (ReplyKeyboard)
-  // Put inside your class
-  // private getMainMenuMarkup() {
-  //     return {
-  //       reply_markup: {
-  //         keyboard: [
-  //           ['سیگنال بیت‌کوین (BTC)', 'سیگنال طلا (XAUUSD)'],
-  //           ['سیگنال اتریوم (ETH)', 'سیگنال نزدک ۱۰۰ (US100)', 'سیگنال سولانا (SOL)'],
-  //           ['سیگنال دوج‌کوین (DOGE)'],
-  //           ['🆘 ارتباط با پشتیبانی'],
-  //           ['ℹ️ راهنما'],
-  //         ],
-  //         resize_keyboard: true,
-  //         one_time_keyboard: false,
-  //         is_persistent: true,
-  //         selective: true,
-  //       },
-  //     };
-  // }
+  
+  private estimateAiCostIRT(inputText: string, outputText: string) {
+          const charsToTokens = (s: string) => Math.ceil((s ? s.length : 0) / 4);
+          const inputTokens = charsToTokens(inputText);
+          const outputTokens = charsToTokens(outputText);
 
-  // map "qm1_*" -> symbol + pretty title
-private quickMenuSymbolMap: Record<string, { symbol: string; title: string }> = {
-  qm1_btc:   { symbol: 'BTC',    title: 'بیت‌کوین (BTC)' },
-  qm1_xau:   { symbol: 'XAUUSD', title: 'طلا (XAUUSD)' },
-  qm1_eth:   { symbol: 'ETH',    title: 'اتریوم (ETH)' },
-  qm1_us100: { symbol: 'US100',  title: 'نزدک ۱۰۰ (US100)' },
-  qm1_sol:   { symbol: 'SOL',    title: 'سولانا (SOL)' },
-  qm1_doge:  { symbol: 'DOGE',   title: 'دوج‌کوین (DOGE)' },
-};
+          const inputCostUSD = (inputTokens / 1_000_000) * 0.15; // $0.15 / 1M tokens
+          const outputCostUSD = (outputTokens / 1_000_000) * 0.60; // $0.60 / 1M tokens
+          const totalUSD = inputCostUSD + outputCostUSD;
 
-private async sendSymbolChildMenu(chatId: number | string, itemKey: string) {
-  const meta = this.quickMenuSymbolMap[itemKey];
-  if (!meta) return;
-
-  const sym = meta.symbol;
-
-  return this.bot.sendMessage(
-    chatId,
-    `یکی از گزینه‌ها را برای ${meta.title} انتخاب کنید:`,
-    {
-      reply_markup: {
-        inline_keyboard: [
-          [
-            { text: 'سیگنال ۱۵ دقیقه', callback_data: `qm2:${sym}:tf15m` },
-            { text: 'سیگنال ۱ ساعته', callback_data: `qm2:${sym}:tf1h` },
-          ],
-          [
-            { text: 'سیگنال ۴ ساعته', callback_data: `qm2:${sym}:tf4h` },
-            { text: 'سیگنال روزانه',   callback_data: `qm2:${sym}:tf1d` },
-          ],
-          [
-            { text: 'MACD',        callback_data: `qm2:${sym}:macd` },
-            { text: 'Stochastic',  callback_data: `qm2:${sym}:sto` },
-            { text: 'RSI',         callback_data: `qm2:${sym}:rsi` },
-          ],
-          [
-            { text: 'پرامپت‌های نمونه /help', callback_data: `qm2:help` },
-          ],
-        ],
-      },
-    }
-  );
-}
-
+          const conversionRateToIRT = 5_000_000; // keep in sync with your system
+          return Math.ceil(totalUSD * conversionRateToIRT);
+  }
 
   // Persian main menu (ReplyKeyboard) — 1st level only
   // Replace your getMainMenuMarkup() with this:
@@ -3401,10 +3621,10 @@ private async sendSymbolChildMenu(chatId: number | string, itemKey: string) {
       reply_markup: {
         keyboard: [
           ['بیت‌کوین (BTC)', 'طلا (XAUUSD)'],
-          ['اتریوم (ETH)', 'نزدک ۱۰۰ (US100)', 'سولانا (SOL)'],
-          ['دوج‌کوین (DOGE)'],
-          //['پشتیبانی گنجول'],
-          //['پرامپت های نبضار(/help)'],
+          ['اتریوم (ETH)', 'نزدک ۱۰۰ (US100)'],
+          ['دوج‌کوین (DOGE)', 'سولانا (SOL)'],
+          ['شکار کوین'],
+          ['پشتیبانی گنجول'],
         ],
         resize_keyboard: true,
         one_time_keyboard: false,
@@ -3412,6 +3632,46 @@ private async sendSymbolChildMenu(chatId: number | string, itemKey: string) {
       },
     };
   }
+// 👇 مپ کلید کوتاه -> پرامپت کامل (به انگلیسی؛ خروجی فارسی می‌خواد)
+private hunterPromptMap: Record<string, string> = {
+  memecoin:   'Give me top 5 memecoins in Persian language',
+  ai:         'Give me top 5 AI coins in Persian language',
+  madeinusa:  'Give me top 5 made-in-USA coins in Persian language',
+  volatility: 'Give me top 5 coins by highest volatility in Persian language',
+  pc24h:      'Give me top 5 coins by highest 24h percent change in Persian language',
+  inter24h:   'Give me top 5 coins by highest interactions_24h in Persian language',
+  socdom:     'Give me top 5 coins by highest social_dominance in Persian language',
+  galaxy:     'Give me top 5 coins by highest galaxy_score in Persian language',
+  altrank:    'Give me top 5 coins by best alt_rank in Persian language',
+  sentiment:  'Give me top 5 coins by highest sentiment in Persian language',
+};
+
+
+private async sendCoinHunterMenu(chatId: number) {
+  const items = [
+    { title: 'میم‌کوین های برتر',                key: 'memecoin'  },
+    { title: 'کوین های هوش مصنوعی برتر',         key: 'ai'        },
+    { title: 'کوین های برتر ساخت آمریکا',         key: 'madeinusa' },
+    { title: 'کوین ها با بیشترین نوسان',         key: 'volatility'},
+    { title: 'کوین ها با بیشترین تغییر ۲۴ساعته',             key: 'pc24h'     },
+    { title: 'کوین ها با بیشترین تعاملات ۲۴ساعته',           key: 'inter24h'  },
+    { title: 'کوین ها با بیشترین سلطه اجتماعی',               key: 'socdom'    },
+    { title: 'کوین های منتخب نبضار',               key: 'galaxy'    },
+    { title: 'کوین های منتخب بازار',                      key: 'altrank'   },
+    { title: 'کوین های دارای احساسات مثبت',        key: 'sentiment' },
+  ];
+
+  // one item per row
+  const inline_keyboard = items.map(it => ([
+    { text: it.title, callback_data: `qm2_${it.key}` }
+  ]));
+
+  await this.bot.sendMessage(chatId, 'یکی از شکارها را انتخاب کنید:', {
+    reply_markup: { inline_keyboard },
+  });
+}
+
+
 
 private makeQuickTopMap(dict: Record<string, string>) {
   const out: Record<string, string> = {};
@@ -3464,18 +3724,7 @@ private async sendQm2Buttons(chatId: number, symbol: string) {
           .trim();
   }
 
-  private estimateAiCostIRT(inputText: string, outputText: string) {
-          const charsToTokens = (s: string) => Math.ceil((s ? s.length : 0) / 4);
-          const inputTokens = charsToTokens(inputText);
-          const outputTokens = charsToTokens(outputText);
-
-          const inputCostUSD = (inputTokens / 1_000_000) * 0.15; // $0.15 / 1M tokens
-          const outputCostUSD = (outputTokens / 1_000_000) * 0.60; // $0.60 / 1M tokens
-          const totalUSD = inputCostUSD + outputCostUSD;
-
-          const conversionRateToIRT = 5_000_000; // keep in sync with your system
-          return Math.ceil(totalUSD * conversionRateToIRT);
-  }
+  
 
   async onModuleInit() {
     const me = await this.bot.getMe();
@@ -3492,11 +3741,34 @@ private async sendQm2Buttons(chatId: number, symbol: string) {
     this.bot.on('message', async (msg) => {
 
       
-      const raw = msg.text.trim();
+      //const raw = msg.text.trim();
       const chatId = msg.chat.id;
       var text = msg.text?.trim().toLowerCase();
       text = this.normalizeFa(text);
-       
+      
+      const supportLabel = this.normalizeFa('پشتیبانی گنجول');
+      if (text === supportLabel) {
+        const supportHandle = 'Trade_Ai_bot_support';
+        await this.bot.sendMessage(
+          chatId,
+          `برای ارتباط با پشتیبانی، روی دکمه زیر بزنید یا به @${supportHandle} پیام دهید.`,
+          {
+            reply_markup: {
+              inline_keyboard: [
+                [{ text: 'ارتباط با پشتیبانی', url: `https://t.me/${supportHandle}` }],
+              ],
+            },
+          }
+        );
+        return; // ✅ stop here, no submenu / no AI
+      }
+
+      const hunterLabel = this.normalizeFa('شکار کوین');
+      if (text === hunterLabel) {
+        await this.sendCoinHunterMenu(chatId);
+        return;
+      }
+
       const sym = this.quickTopMap[text];
       if (sym) {
         await this.sendQm2Buttons(chatId, sym);
@@ -4227,6 +4499,7 @@ private async sendQm2Buttons(chatId: number, symbol: string) {
       // Extract user info from the Telegram message
       //console.log('start');
       //
+      
 
       // Handle category selection
       if (data.startsWith('category_')) {
@@ -4271,6 +4544,12 @@ private async sendQm2Buttons(chatId: number, symbol: string) {
           const i = parseInt(promptIndex, 10);
           selectedPrompt = this.categories[category][i];
         }
+
+        // 👇 اضافه کن: اگر qm2_ بود، از مپ کوتاه بخون
+      if (!selectedPrompt && data.startsWith('qm2_')) {
+        selectedPrompt = this.hunterPromptMap[promptIndex] || promptIndex;
+      }
+
         if (!selectedPrompt) {
         selectedPrompt = promptIndex; 
       }

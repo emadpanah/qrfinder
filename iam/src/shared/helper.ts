@@ -139,6 +139,8 @@ export function mapSymbol(input: string, mode: 'pair' | 'plain'): string {
 }
 
 
+
+
 // Utility function to truncate text
 export function truncateText(text: string, maxLength: number = 100): string {
   if (text.length <= maxLength) {

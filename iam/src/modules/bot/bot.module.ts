@@ -37,7 +37,7 @@ import { CalendarRepository } from '../data/database/repositories/calendar.repos
     AuthService,
     JwtService,
     //ChatGptBotService
-    //CustomerSupportBot,
+    CustomerSupportBot,
     KnowledgeItemService,
     KnowledgeItemRepository,
     CalendarRepository

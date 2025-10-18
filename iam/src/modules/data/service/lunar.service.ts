@@ -249,7 +249,11 @@ export class LunarCrushService {
     const endpoints = [
       'https://lunarcrush.com/api4/public/category/cryptocurrencies/news/v1',
       'https://lunarcrush.com/api4/public/topic/bitcoin/news/v1',
+      'https://lunarcrush.com/api4/public/topic/sol/news/v1',
       'https://lunarcrush.com/api4/public/topic/memecoin/news/v1',
+      'https://lunarcrush.com/api4/public/topic/doge/news/v1',
+      'https://lunarcrush.com/api4/public/topic/US100/news/v1',
+      'https://lunarcrush.com/api4/public/topic/xau/news/v1',
       'https://lunarcrush.com/api4/public/topic/forex/news/v1',
       'https://lunarcrush.com/api4/public/topic/stocks/news/v1',
       'https://lunarcrush.com/api4/public/topic/cryptonews/news/v1',
