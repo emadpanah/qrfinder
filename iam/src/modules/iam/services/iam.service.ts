@@ -11,9 +11,6 @@ import { UserDto, UserInsertDto } from '../dto/user.dto'; // Import UserDto
 import { AuthService } from './auth.service';
 import { TokenExpiredError } from 'jsonwebtoken';
 import axios, { AxiosInstance } from 'axios';
-import { getOS } from 'mongodb-memory-server-core/lib/util/getos';
-import { Chat } from 'openai/resources';
-import { sanitizeString } from 'src/shared/helper';
 
 @Injectable()
 export class IamService {

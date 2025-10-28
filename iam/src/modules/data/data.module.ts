@@ -35,6 +35,8 @@ import { JwtService } from '@nestjs/jwt';
 import { SupportChatLog, SupportChatLogSchema } from './database/schema/support-chat-log.schema';
 import { KnowledgeItemService } from '../data/service/knowledge-item.service';
 import { KnowledgeItemRepository } from './database/repositories/knowledge-item.repository';
+import { SignalBacktestService } from './service/signal-backtest.service';
+import { SignalCronService } from './service/signal-cron.service';
 
 
 @Module({
@@ -61,9 +63,9 @@ import { KnowledgeItemRepository } from './database/repositories/knowledge-item.
   providers: [FngService, DataService, DataRepository, 
     LunarCrushService, IamService, BalanceService, IamRepository,
     UserLoginRepository, AuthService, CurrencyRepository, BalanceRepository,
-    JwtService, KnowledgeItemService,
+    JwtService, KnowledgeItemService, SignalBacktestService, SignalCronService,
     KnowledgeItemRepository  ],
   controllers: [DataController],
-  exports: [DataService, DataRepository, KnowledgeItemService, KnowledgeItemRepository],
+  exports: [DataService, DataRepository, KnowledgeItemService, KnowledgeItemRepository, SignalBacktestService],
 })
 export class DataModule {}

@@ -138,7 +138,39 @@ export function mapSymbol(input: string, mode: 'pair' | 'plain'): string {
     return mode === 'plain' ? mappedSymbol.replace(/USDT$/, '').replace(/USD$/, '') : mappedSymbol;
 }
 
+ export function cleanNabzarSignalJsonSection(text: string): string {
+  // Remove everything between the NABZAR_SIGNAL_JSON markers (including them)
+  return text.replace(
+    /<<<NABZAR_SIGNAL_JSON>>>[\s\S]*?<<<END_NABZAR_SIGNAL_JSON>>>/g,
+    ''
+  ).trim();
+}
 
+
+// somewhere in your service (private helper)
+export function extractSignalJsonEnvelope(text: string): {
+  symbol: string; timeframe: '15m'|'1h'|'4h'|'1d';
+  action: 'Buy'|'Strong Buy'|'Sell'|'Strong Sell'|'Hold';
+  entry: number; targets: number[]; stop: number|null;
+} | null {
+  const rx = /<<<NABZAR_SIGNAL_JSON>>>([\s\S]*?)<<<END_NABZAR_SIGNAL_JSON>>>/;
+  const m = text.match(rx);
+  if (!m) return null;
+  try {
+    const obj = JSON.parse(m[1].trim());
+    if (!obj || !obj.symbol || !obj.timeframe || !obj.action || typeof obj.entry !== 'number') return null;
+    if (obj.action === 'Hold') {
+      obj.targets = [];
+      obj.stop = null;
+    } else {
+      if (!Array.isArray(obj.targets) || obj.targets.length !== 3) return null;
+      if (typeof obj.stop !== 'number') return null;
+    }
+    return obj;
+  } catch {
+    return null;
+  }
+}
 
 
 // Utility function to truncate text

@@ -9,7 +9,8 @@ import { RSIData } from '../schema/rsi.schema';
 import { MACDData } from '../schema/macd.schema';
 import { DominanceData } from '../schema/dominance.schema';
 import { ST1Data } from '../schema/st1.schema';
-import { ObjectId } from 'mongodb';
+//import { ObjectId } from 'mongodb';
+import { Types } from 'mongoose';
 import { LunarCrushData } from '../schema/lunarcrush.schema';
 import { LunarCrushPublicCoinDto } from '../dto/lunarcrush.dto';
 import { LunarCrushNewsDto } from '../dto/lunarcrush-news.dto';
@@ -26,6 +27,7 @@ import { isValidUnixTimestamp, sanitizeString } from 'src/shared/helper';
 import { ST1Dto } from '../dto/st1.dto';
 import { LunarCrushStockData } from '../schema/lunarcrush-stock.schema';
 import { SupportChatLogDto } from '../dto/support-chat-log.dto';
+import { TradeSignal } from '../schema/trade-signal.schema';
 
 @Injectable()
 export class DataRepository {
@@ -46,6 +48,7 @@ export class DataRepository {
   private readonly lunarNewsCollectionName = "_lunarpublicnewsdata";
   private readonly translationCollectionName = '_translationsdata';
   private readonly supportChatCollectionName = '_supportchatlogdata';
+  private readonly tradeSignalCollectionName = '_tradesignals';
   private readonly logger = new Logger(DataRepository.name);
 
   constructor(@InjectConnection('service') private readonly connection: Connection) { }
@@ -95,6 +98,41 @@ export class DataRepository {
 
   //   return results;
   // }
+
+  async createTradeSignal(doc: Partial<TradeSignal>): Promise<string> {
+    const collection = this.connection.collection(this.tradeSignalCollectionName);
+    const res = await collection.insertOne(doc);
+    return res.insertedId?.toString?.() || '';
+  }
+
+  async updateTradeSignalResult(
+    id: string,
+    update: Partial<TradeSignal>
+  ): Promise<void> {
+    const collection = this.connection.collection(this.tradeSignalCollectionName);
+    await collection.updateOne(
+      { _id:  new Types.ObjectId(id) as any },
+      { $set: update }
+    );
+  }
+
+  async getOpenSignals(limit = 200): Promise<TradeSignal[]> {
+    const collection = this.connection.collection(this.tradeSignalCollectionName);
+    return await collection
+      .find({ status: 'open' })
+      .sort({ generated_at: 1 })
+      .limit(limit)
+      .toArray() as any;
+  }
+
+  async getSignalsBySymbol(symbol: string, limit = 100): Promise<TradeSignal[]> {
+    const collection = this.connection.collection(this.tradeSignalCollectionName);
+    return await collection
+      .find({ symbol })
+      .sort({ generated_at: -1 })
+      .limit(limit)
+      .toArray() as any;
+  }
 
   async getLast7DaysFngDataOptimized(endDate: number): Promise<FngData[]> {
     const collection = this.connection.collection(this.fngCollectionName);
@@ -389,11 +427,11 @@ export class DataRepository {
     return null;
   }
 
-  async updateST1IsDone(id: string, isDone: boolean): Promise<void> {
-    const collection = this.connection.collection(this.st1CollectionName);
-    const objectId = new ObjectId(id);
-    await collection.updateOne({ _id: objectId as any }, { $set: { isDone } });
-  }
+  // async updateST1IsDone(id: string, isDone: boolean): Promise<void> {
+  //   const collection = this.connection.collection(this.st1CollectionName);
+  //   const objectId = new ObjectId(id);
+  //   await collection.updateOne({ _id: objectId as any }, { $set: { isDone } });
+  // }
 
 
   async getRSIBySymbolAndDate(symbol: string, date?: number): Promise<RSIData | null> {

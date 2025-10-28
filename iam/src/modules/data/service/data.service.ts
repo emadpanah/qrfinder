@@ -235,9 +235,9 @@ export class DataService {
     return this.dataRepository.getLastST1BySymbol(symbol);
   }
 
-  async updateST1IsDone(id: string, isDone: boolean): Promise<void> {
-    await this.dataRepository.updateST1IsDone(id, isDone);
-  }
+  // async updateST1IsDone(id: string, isDone: boolean): Promise<void> {
+  //   await this.dataRepository.updateST1IsDone(id, isDone);
+  // }
   
     // Save EMA Data
     async saveEMAData(emaData: EMADto): Promise<void> {
