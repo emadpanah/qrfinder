@@ -19,6 +19,7 @@ import { CustomerSupportBot } from './bot.ai.customer-service';
 import { KnowledgeItemService } from '../data/service/knowledge-item.service';
 import { KnowledgeItemRepository } from '../data/database/repositories/knowledge-item.repository';
 import { CalendarRepository } from '../data/database/repositories/calendar.repository';
+import { AiSignalService } from '../ai/services/ai-signal.service';
 
 @Module({
   imports: [ProductModule, DataModule],
@@ -31,6 +32,7 @@ import { CalendarRepository } from '../data/database/repositories/calendar.repos
     AchievementRepository,
     BotAIService,
     IamService,
+    AiSignalService,
     IamRepository,
     UserLoginRepository,
     DataRepository,

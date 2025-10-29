@@ -37,6 +37,8 @@ import { KnowledgeItemService } from '../data/service/knowledge-item.service';
 import { KnowledgeItemRepository } from './database/repositories/knowledge-item.repository';
 import { SignalBacktestService } from './service/signal-backtest.service';
 import { SignalCronService } from './service/signal-cron.service';
+import { AiSignalService } from '../ai/services/ai-signal.service';
+import { CalendarRepository } from './database/repositories/calendar.repository';
 
 
 @Module({
@@ -63,9 +65,9 @@ import { SignalCronService } from './service/signal-cron.service';
   providers: [FngService, DataService, DataRepository, 
     LunarCrushService, IamService, BalanceService, IamRepository,
     UserLoginRepository, AuthService, CurrencyRepository, BalanceRepository,
-    JwtService, KnowledgeItemService, SignalBacktestService, SignalCronService,
-    KnowledgeItemRepository  ],
+    JwtService, KnowledgeItemService, SignalBacktestService, SignalCronService, AiSignalService,
+    KnowledgeItemRepository, CalendarRepository  ],
   controllers: [DataController],
-  exports: [DataService, DataRepository, KnowledgeItemService, KnowledgeItemRepository, SignalBacktestService],
+  exports: [DataService, DataRepository, KnowledgeItemService, KnowledgeItemRepository, SignalBacktestService, SignalCronService, AiSignalService],
 })
 export class DataModule {}

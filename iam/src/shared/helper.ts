@@ -146,6 +146,35 @@ export function mapSymbol(input: string, mode: 'pair' | 'plain'): string {
   ).trim();
 }
 
+export interface LoggerLike {
+  log: (message: string) => any;
+  warn?: (message: string) => any;
+  error?: (message: string) => any;
+}
+
+/**
+ * Logs a duration message. Does NOT rely on `this`.
+ */
+export function logDuration(
+  start: number,
+  end: number,
+  label: string,
+  logger?: LoggerLike
+): number {
+  const ms = end - start;
+  const msg = `${label} took ${ms}ms`;
+  if (logger && typeof logger.log === 'function') {
+    logger.log(msg);
+  } else {
+    console.log(msg);
+  }
+  return ms;
+}
+
+// export function logDuration(startTime: number, endTime: number, operation: string) {
+//     const duration = endTime - startTime;
+//     this.logger.log(`${operation} took ${duration}ms`);
+//   }
 
 // somewhere in your service (private helper)
 export function extractSignalJsonEnvelope(text: string): {

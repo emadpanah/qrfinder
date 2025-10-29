@@ -105,6 +105,14 @@ export class DataRepository {
     return res.insertedId?.toString?.() || '';
   }
 
+  async hasRecentOpen(symbol: string, timeframe: string, seconds: number): Promise<boolean> {
+    const since = Math.floor(Date.now()/1000) - seconds;
+    const found = await this.connection.collection(this.tradeSignalCollectionName).findOne({
+      symbol, timeframe, status: 'open', generated_at: { $gte: since },
+    });
+    return !!found;
+  }
+
   async updateTradeSignalResult(
     id: string,
     update: Partial<TradeSignal>
