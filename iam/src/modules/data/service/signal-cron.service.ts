@@ -6,7 +6,7 @@ import { DataRepository } from '../database/repositories/data.repository';
 import { AiSignalService } from 'src/modules/ai/services/ai-signal.service';
 import { extractSignalJsonEnvelope } from 'src/shared/helper';
 import { TradeSignal } from '../database/schema/trade-signal.schema';
-type TF = '15m'|'1h'|'4h'|'1d';
+type TF = '5m'|'15m'|'1h'|'4h'|'1d';
 @Injectable()
 export class SignalCronService {
   private readonly logger = new Logger(SignalCronService.name);
@@ -46,11 +46,11 @@ export class SignalCronService {
   }
 
 // src/modules/data/service/signal-cron.service.ts
-@Cron('0 */30 * * * *') // every minute; guarded by hasRecentOpen(25m)
+@Cron('0 */15 * * * *') // every minute; guarded by hasRecentOpen(25m)
 async generateSignals() {
   const startedAt = Date.now();
   const iso = new Date().toISOString();
-  const timeframe: TF = '15m';
+  const timeframe: TF = '5m';
   const language = process.env.NABZAR_LANG || 'fa';
 
   // <<< edit your list here >>>
@@ -116,9 +116,9 @@ async generateSignals() {
         }
 
         // 2) call AI with timeout
-        const userPrompt = 'Generate concise trading action first; keep explanations tight.';
+        const prompt = 'Generate concise trading action first; keep explanations tight.';
         const analysis = await timeout(
-          this.ai.analyzeAndCreateSignals([sym], language, timeframe, userPrompt),
+          this.ai.analyzeAndCreateSignals([sym], language, timeframe, prompt),
           TIMEOUT_MS,
           `AI ${sym}`
         );
@@ -140,10 +140,10 @@ async generateSignals() {
           stop: sig.stop ?? null,
           generated_at: nowSec,
           generated_iso: new Date().toISOString(),
-          source: 'gpt-4o-mini-2024-07-18',
+          source: 'gpt-4o-mini-2024-07-18-Automated',
           status: 'open',
           reached: { T1: false, T2: false, T3: false, SL: false },
-          extras: { analysis },
+          extras: { prompt, analysis },
         };
 
         await this.repo.createTradeSignal(doc as any);

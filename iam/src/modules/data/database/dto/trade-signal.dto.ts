@@ -1,6 +1,6 @@
 // src/modules/data/database/dto/trade-signal.dto.ts
 export type SignalSide = 'Buy' | 'Strong Buy' | 'Sell' | 'Strong Sell' | 'Hold';
-export type TF = '15m' | '1h' | '4h' | '1d';
+export type TF = '5m' | '15m' | '1h' | '4h' | '1d';
 export type SignalStatus = 'open' | 'hit' | 'stopped' | 'expired';
 
 export interface TradeSignalDto {

@@ -2,7 +2,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { DataRepository } from '../database/repositories/data.repository';
 
-type TF = '15m'|'1h'|'4h'|'1d';
+type TF = '5m'|'15m'|'1h'|'4h'|'1d';
 type HitLabel = 'T1'|'T2'|'T3'|'SL';
 
 interface TradeSignal {
@@ -23,14 +23,18 @@ export class SignalBacktestService {
   private readonly logger = new Logger(SignalBacktestService.name);
   constructor(private readonly repo: DataRepository) {}
 
-  private expiryHorizonSec(tf: TF): number {
-    switch (tf) {
-      case '15m': return 12 * 60 * 60;      // 12h
-      case '1h':  return 48 * 60 * 60;      // 2d
-      case '4h':  return 7  * 24 * 60 * 60; // 7d
-      case '1d':  return 21 * 24 * 60 * 60; // 21d
-    }
+       private expiryHorizonSec(tf: TF): number {
+  switch (tf) {
+    case '5m':  return 8 * 60;              // 8 minutes
+    case '15m': return 20 * 60;             // 20 minutes
+    case '1h':  return 60 * 60;             // 1 hour
+    case '4h':  return 4 * 60 * 60;         // 4 hours
+    case '1d':  return 24 * 60 * 60;        // 24 hours
+    default:    return 15 * 60;             // fallback (15 min)
   }
+}
+
+
 
   private serializeErr(e: any): string {
     if (!e) return 'unknown';
@@ -204,7 +208,7 @@ export class SignalBacktestService {
         return 0;
       }
       const col = conn.collection('_tradesignals');
-      const minHorizon = this.expiryHorizonSec('15m');
+      const minHorizon = this.expiryHorizonSec('5m');
 
       const res = await col.updateMany(
         {

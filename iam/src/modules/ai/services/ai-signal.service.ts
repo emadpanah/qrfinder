@@ -13,7 +13,7 @@ export class AiSignalService {
     this.openai = new OpenAI({ apiKey: process.env.CHATGPT_API_KEY });
   }
 
-async analyzeAndCreateSignals(symbols: string[], language: string, timeframe: '15m'|'1h'|'4h'|'1d' = '1h', userPrompt: string): Promise<string> {
+async analyzeAndCreateSignals(symbols: string[], language: string, timeframe: '5m'|'15m'|'1h'|'4h'|'1d' = '5m', userPrompt: string): Promise<string> {
     let sym;
     if (symbols.length >= 1) {
       sym = symbols[0];
@@ -558,43 +558,54 @@ CONTEXT
 - Respond in the requested language (${language}).
 
 TIMEFRAME POLICY
-- You may receive a timeframe (e.g. 15m, 1h, 4h, 1d) in the user prompt or data context.
+- You may receive a timeframe (e.g. 5m, 15m, 1h, 4h, 1d) in the user prompt or data context.
 - Align analysis and confidence to it:
 
 Signal horizon
-• 15m → scalp (hours)  
-• 1h → intraday (same day)  
-• 4h → swing-lite (1–3 days)  
-• 1d → swing/position (days–weeks)  
+• 5m  → micro-scalp (minutes to <2h)
+• 15m → scalp (hours)
+• 1h  → intraday (same day)
+• 4h  → swing-lite (1–3 days)
+• 1d  → swing/position (days–weeks)
 
 Indicator emphasis
-• 15m: short EMAs (9/21), RSI(7–10), fast Stochastic, OI/funding/liquidations; news low impact unless sudden.  
-• 1h: EMA 20/50, RSI(14), MACD fast; FNG somewhat relevant; news/events medium.  
-• 4h: EMA 50/100, MACD slope, ADX>20, trend structure; news/events meaningful.  
-• 1d: EMA 100/200, ADX>25, divergences; macro/news/events very high impact.  
+• 5m : ultra-short EMAs (5/9), VWAP, RSI(7–9), fast Stochastic (K=5,D=3), micro-structure (breakers/pullbacks), liquidity zones, basic order-flow (tapes/footprint if available); news only if breaking.
+• 15m: short EMAs (9/21), RSI(7–10), fast Stochastic, OI/funding/liquidations; news low impact unless sudden.
+• 1h : EMA 20/50, RSI(14), MACD fast; FNG somewhat relevant; news/events medium.
+• 4h : EMA 50/100, MACD slope, ADX>20, trend structure; news/events meaningful.
+• 1d : EMA 100/200, ADX>25, divergences; macro/news/events very high impact.
 
 Confirmation strictness
-• 15m: 2 aligned signals enough; be quick to HOLD if conflicting.  
-• 1h: require 2–3 aligned.  
-• 4h: require 3 aligned including trend-quality.  
-• 1d: require 3+ aligned with no major macro conflicts.  
+• 5m : require at least 2 fast confirmations (e.g., EMA(5/9) cross + VWAP reclaim + RSI impulse); if conflicting, default to HOLD quickly.
+• 15m: 2 aligned signals enough; be quick to HOLD if conflicting.
+• 1h : require 2–3 aligned.
+• 4h : require 3 aligned including trend-quality.
+• 1d : require 3+ aligned with no major macro conflicts.
 
 Risk language
-• 15m: warn of whipsaws/liquidity.  
-• 1h: session opens, funding flips.  
-• 4h: gap/overnight risk.  
-• 1d: macro/event gap risk.  
+• 5m : high noise/latency risk; spreads/fees matter; avoid chasing; expect whipsaws around session opens/levels.
+• 15m: warn of whipsaws/liquidity.
+• 1h : session opens, funding flips.
+• 4h : gap/overnight risk.
+• 1d : macro/event gap risk.
 
 Targets/Stops
-- Use the formulas given in the user prompt for precision.  
-- But adapt your confidence and commentary to timeframe: smaller % moves on 15m, larger swings on daily.  
+- Use the formulas given in the user prompt for precision.
+- Adapt granularity to timeframe:
+  • 5m : smallest % moves and tightest stops; scale out quickly at TP1, trail early.
+  • 15m: small % moves, tight stops.
+  • 1h : moderate % moves/stops.
+  • 4h : larger % moves; wider stops.
+  • 1d : largest swings; widest stops.
 
 Past appearance
-- Consider last N bars proportional to timeframe:  
-  15m → 20–40 bars  
-  1h → 30–60 bars  
-  4h → 20–40 bars  
-  1d → 30–90 bars  
+- Consider last N bars proportional to timeframe:
+  • 5m  → 40–80 bars
+  • 15m → 20–40 bars
+  • 1h  → 30–60 bars
+  • 4h  → 20–40 bars
+  • 1d  → 30–90 bars
+
 
 OUTPUT FORMAT
 - Begin with:

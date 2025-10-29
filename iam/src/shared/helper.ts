@@ -178,7 +178,7 @@ export function logDuration(
 
 // somewhere in your service (private helper)
 export function extractSignalJsonEnvelope(text: string): {
-  symbol: string; timeframe: '15m'|'1h'|'4h'|'1d';
+  symbol: string; timeframe: '5m'|'15m'|'1h'|'4h'|'1d';
   action: 'Buy'|'Strong Buy'|'Sell'|'Strong Sell'|'Hold';
   entry: number; targets: number[]; stop: number|null;
 } | null {

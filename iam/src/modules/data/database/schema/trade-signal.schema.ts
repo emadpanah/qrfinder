@@ -6,7 +6,7 @@ import { Document } from 'mongoose';
 @Schema({ timestamps: false, collection: '_tradesignals' })
 export class TradeSignal {
   @Prop({ required: true }) symbol: string;
-  @Prop({ required: true, enum: ['15m','1h','4h','1d'] }) timeframe: string;
+  @Prop({ required: true, enum: ['5m','15m','1h','4h','1d'] }) timeframe: string;
   @Prop({ required: true, enum: ['Buy','Strong Buy','Sell','Strong Sell','Hold'] }) side: string;
 
   @Prop({ required: true }) entry: number;
