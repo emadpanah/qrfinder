@@ -16,6 +16,10 @@ export class TradeSignal {
   @Prop({ required: true }) generated_at: number; // unix sec
   @Prop({ required: true }) generated_iso: string;
 
+  @Prop({ type: Number, default: null }) timeoutRate: number | null;
+  @Prop({ type: Number, default: null }) expectancy: number | null;
+
+
   @Prop({ default: 'analyzer-v1' }) source: string;
   @Prop({ type: Object }) extras: Record<string, any>;
 

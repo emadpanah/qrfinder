@@ -23,23 +23,41 @@ export class SignalBacktestService {
   private readonly logger = new Logger(SignalBacktestService.name);
   constructor(private readonly repo: DataRepository) {}
 
-       private expiryHorizonSec(tf: TF): number {
-  switch (tf) {
-    case '5m':  return 8 * 60;              // 8 minutes
-    case '15m': return 20 * 60;             // 20 minutes
-    case '1h':  return 60 * 60;             // 1 hour
-    case '4h':  return 4 * 60 * 60;         // 4 hours
-    case '1d':  return 24 * 60 * 60;        // 24 hours
-    default:    return 15 * 60;             // fallback (15 min)
-  }
-}
+  // === Lifetimes: 5m→8m, 15m→20m, 1h→1h, 4h→4h, 1d→24h ===
+  // private expiryHorizonSec(tf: TF): number {
+  //   switch (tf) {
+  //     case '5m':  return 8 * 60;              // 8 minutes
+  //     case '15m': return 20 * 60;             // 20 minutes
+  //     case '1h':  return 60 * 60;             // 1 hour
+  //     case '4h':  return 4 * 60 * 60;         // 4 hours
+  //     case '1d':  return 24 * 60 * 60;        // 24 hours
+  //     default:    return 15 * 60;             // fallback (15 min)
+  //   }
+  // }
 
+  private expiryHorizonSec(tf: TF): number {
+  switch (tf) {
+    case '5m':  return 20 * 60;              // 20 minutes lifespan
+    case '15m': return 60 * 60;              // 1 hour lifespan
+    case '1h':  return 4 * 60 * 60;          // 4 hours lifespan
+    case '4h':  return 24 * 60 * 60;         // 24 hours lifespan
+    case '1d':  return 24 * 60 * 60;         // 24 hours (1 day)
+    default:    return 60 * 60;              // fallback (1 hour)
+    }
+  }
 
 
   private serializeErr(e: any): string {
     if (!e) return 'unknown';
     if (e instanceof Error) return `${e.name}: ${e.message}\n${e.stack}`;
     try { return JSON.stringify(e); } catch { return String(e); }
+  }
+
+  // %PnL based on entry→hitPrice, direction-aware
+  private calcPnL(sig: TradeSignal, hitPrice: number | null): number {
+    if (hitPrice == null) return 0;
+    const dir = (sig.side === 'Buy' || sig.side === 'Strong Buy') ? 1 : -1;
+    return ((hitPrice - sig.entry) / sig.entry) * dir; // e.g., 0.0123 = +1.23%
   }
 
   // evaluate one signal against ticker stream
@@ -50,11 +68,16 @@ export class SignalBacktestService {
     try {
       // Hold: only expire by time
       if (sig.side === 'Hold' || !sig.targets?.length) {
-        const now = Math.floor(Date.now()/1000);
+        const now = Math.floor(Date.now() / 1000);
         const horizon = this.expiryHorizonSec(sig.timeframe);
         this.logger.debug(`${tag} HOLD check: now=${now} gen=${sig.generated_at} horizonSec=${horizon}`);
         if (now - sig.generated_at > horizon) {
-          await this.repo.updateTradeSignalResult(sig._id.toString(), { status: 'expired' } as any);
+          await this.repo.updateTradeSignalResult(sig._id.toString(), {
+            status: 'expired',
+            // for HOLD we mark timeoutRate=1; expectancy=0
+            timeoutRate: 1,
+            expectancy: 0
+          } as any);
           this.logger.log(`${tag} → expired (hold) took=${Date.now()-started}ms`);
           return { updated: true };
         }
@@ -65,7 +88,7 @@ export class SignalBacktestService {
       const start = sig.generated_at;
       const end = Math.min(
         start + this.expiryHorizonSec(sig.timeframe),
-        Math.floor(Date.now()/1000)
+        Math.floor(Date.now() / 1000)
       );
 
       // --- Guard logs for connection & cursor
@@ -136,7 +159,9 @@ export class SignalBacktestService {
         this.logger.warn(`${tag} no prices found in window; leaving open`);
       }
 
+      // --- Case 1: A level was hit (T1/T2/T3/SL)
       if (hit) {
+        const pnl = this.calcPnL(sig, hitPrice);
         await this.repo.updateTradeSignalResult(sig._id.toString(), {
           status: hit === 'SL' ? 'stopped' : 'hit',
           hitLabel: hit,
@@ -144,22 +169,36 @@ export class SignalBacktestService {
           hitTime,
           durationSec: (hitTime ?? start) - start,
           reached,
+          // new fields
+          expectancy: pnl,     // store realized % move as expectancy contribution
+          timeoutRate: 0       // this signal did not time out
         } as any);
         this.logger.log(`${tag} → ${hit} @ ${hitPrice} t=${hitTime} took=${Date.now()-started}ms`);
         return { updated: true };
       }
 
-      // No hit: check expiry
-      const now = Math.floor(Date.now()/1000);
+      // --- Case 2: No hit → check expiry
+      const now = Math.floor(Date.now() / 1000);
       if (now >= start + this.expiryHorizonSec(sig.timeframe)) {
+        // Use last seen price (or entry if nothing streamed) as terminal price
+        const lastPrice = last?.price ?? sig.entry;
+        const lastTime  = last?.time ?? end;
+        const pnl = this.calcPnL(sig, lastPrice);
         await this.repo.updateTradeSignalResult(sig._id.toString(), {
           status: 'expired',
+          hitPrice: lastPrice,       // terminal price at expiry
+          hitTime: lastTime,         // terminal time at expiry
+          durationSec: lastTime - start,
           reached,
+          // new fields
+          expectancy: pnl,           // realized % drift vs entry
+          timeoutRate: 1             // this signal timed out
         } as any);
         this.logger.log(`${tag} → expired (no hit) took=${Date.now()-started}ms`);
         return { updated: true };
       }
 
+      // --- Case 3: Still open within horizon
       this.logger.debug(`${tag} still open; took=${Date.now()-started}ms`);
       return { updated: false };
     } catch (e) {
@@ -200,7 +239,7 @@ export class SignalBacktestService {
   // public: bulk mark obviously expired (no scan) — fast path for “finished timed”
   async expireTimedOutSignals(): Promise<number> {
     const started = Date.now();
-    const now = Math.floor(Date.now()/1000);
+    const now = Math.floor(Date.now() / 1000);
     try {
       const conn: any = (this.repo as any).connection;
       if (!conn) {
@@ -210,12 +249,13 @@ export class SignalBacktestService {
       const col = conn.collection('_tradesignals');
       const minHorizon = this.expiryHorizonSec('5m');
 
+      // NOTE: rough mass-expire — we set timeoutRate=1; expectancy left unchanged
       const res = await col.updateMany(
         {
           status: 'open',
           generated_at: { $lte: now - minHorizon },
         },
-        { $set: { status: 'expired' } }
+        { $set: { status: 'expired', timeoutRate: 1 } }
       );
 
       const modified = res?.modifiedCount ?? 0;

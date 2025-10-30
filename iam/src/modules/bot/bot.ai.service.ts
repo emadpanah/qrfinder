@@ -332,7 +332,7 @@ export class BotAIService implements OnModuleInit {
   }
 
 
-  async getChatGptResponse(prompt: string, chatId: string): Promise<{
+  async getChatGptResponse(promptt: string, chatId: string): Promise<{
     responseText?: string; calledFunc: string; queryType: string;
     newParameters?: string[]; language: string, advertingMsgId: string, responseArray?: string[]
   }> {
@@ -1091,7 +1091,7 @@ export class BotAIService implements OnModuleInit {
     ];
     const systemPrompt = this.constructSystemPrompt(this.currentUserAlias);
     console.log('system Prompt:', systemPrompt);
-    console.log('user prompt:', prompt);
+    console.log('user prompt:', promptt);
     try {
       const stream = await this.openai.chat.completions.create({
         messages: [
@@ -1100,7 +1100,7 @@ export class BotAIService implements OnModuleInit {
             content: systemPrompt
           },
           //          { role: 'system', content: systemMessage },
-          { role: "user", content: prompt }
+          { role: "user", content: promptt }
         ],
         model: "gpt-4o-mini-2024-07-18",
         functions: functions,
@@ -1300,7 +1300,7 @@ export class BotAIService implements OnModuleInit {
 
             const response = await this.getTopCoinsByCategoryAndAnySort(category, sort, limit, language);
             return {
-              responseText: await this.getDynamicInterpretation(null, prompt, response, `Top Cryptocurrency in selected category ${category} sorted by ${sort}`, '', parameters.date, parameters.language),
+              responseText: await this.getDynamicInterpretation(null, promptt, response, `Top Cryptocurrency in selected category ${category} sorted by ${sort}`, '', parameters.date, parameters.language),
               calledFunc,
               queryType,
               newParameters,
@@ -1331,7 +1331,7 @@ export class BotAIService implements OnModuleInit {
             // Now retrieve data from the repository
             const response = await this.getTopCryptosByAnySort(sort, limit, language);
             return {
-              responseText: await this.getDynamicInterpretation(null, prompt, response, `Top Cryptocurrency sorted by ${sort}`, '', parameters.date, parameters.language),
+              responseText: await this.getDynamicInterpretation(null, promptt, response, `Top Cryptocurrency sorted by ${sort}`, '', parameters.date, parameters.language),
               calledFunc,
               queryType,
               newParameters,
@@ -1368,7 +1368,7 @@ export class BotAIService implements OnModuleInit {
             const emaData = await this.dataRepository.getEMABySymbolAndDate(mappedSymbol, timestamp);
             const his = await this.dataRepository.getLast7DaysEMA(mappedSymbol, timestamp);
             return {
-              responseText: await this.getDynamicInterpretation(his, prompt, emaData, 'EMA', mappedSymbol, parameters.date, parameters.language),
+              responseText: await this.getDynamicInterpretation(his, promptt, emaData, 'EMA', mappedSymbol, parameters.date, parameters.language),
               calledFunc,
               queryType,
               newParameters,
@@ -1384,7 +1384,7 @@ export class BotAIService implements OnModuleInit {
             const topEMACryptos = await this.dataRepository.getTopNByIndicator('EMA', n, timestamp);
 
             return {
-              responseText: await this.getDynamicInterpretation(null, prompt, topEMACryptos, 'Top Cryptocurrency by EMA andicator', '', parameters.date, parameters.language),
+              responseText: await this.getDynamicInterpretation(null, promptt, topEMACryptos, 'Top Cryptocurrency by EMA andicator', '', parameters.date, parameters.language),
               calledFunc,
               queryType,
               newParameters,
@@ -1435,7 +1435,7 @@ export class BotAIService implements OnModuleInit {
             const stochasticData = await this.dataRepository.getStochasticBySymbolAndDate(mappedSymbol, timestamp);
             const his = await this.dataRepository.getLast7DaysStochastic(mappedSymbol, timestamp);
             return {
-              responseText: await this.getDynamicInterpretation(his, prompt, stochasticData, 'Stochastic', mappedSymbol, parameters.date, parameters.language),
+              responseText: await this.getDynamicInterpretation(his, promptt, stochasticData, 'Stochastic', mappedSymbol, parameters.date, parameters.language),
               calledFunc,
               queryType,
               newParameters,
@@ -1451,7 +1451,7 @@ export class BotAIService implements OnModuleInit {
             const topStochasticCryptos = await this.dataRepository.getTopNByIndicator('Stochastic', n, timestamp);
 
             return {
-              responseText: await this.getDynamicInterpretation(null, prompt, topStochasticCryptos, `Top Cryptocurrency by Stochastic andicator`, '', parameters.date, parameters.language),
+              responseText: await this.getDynamicInterpretation(null, promptt, topStochasticCryptos, `Top Cryptocurrency by Stochastic andicator`, '', parameters.date, parameters.language),
               calledFunc,
               queryType,
               newParameters,
@@ -1468,7 +1468,7 @@ export class BotAIService implements OnModuleInit {
             const cciData = await this.dataRepository.getCCIBySymbolAndDate(mappedSymbol, timestamp);
             const his = await this.dataRepository.getLast7DaysCCI(mappedSymbol, timestamp);
             return {
-              responseText: await this.getDynamicInterpretation(his, prompt, cciData, 'CCI', mappedSymbol, parameters.date, parameters.language),
+              responseText: await this.getDynamicInterpretation(his, promptt, cciData, 'CCI', mappedSymbol, parameters.date, parameters.language),
               calledFunc,
               queryType,
               newParameters,
@@ -1484,7 +1484,7 @@ export class BotAIService implements OnModuleInit {
             const topCCICryptos = await this.dataRepository.getTopNByIndicator('CCI', n, timestamp);
 
             return {
-              responseText: await this.getDynamicInterpretation(null, prompt, topCCICryptos, `Top Cryptocurrency by CCI andicator`, '', parameters.date, parameters.language),
+              responseText: await this.getDynamicInterpretation(null, promptt, topCCICryptos, `Top Cryptocurrency by CCI andicator`, '', parameters.date, parameters.language),
               calledFunc,
               queryType,
               newParameters,
@@ -1501,7 +1501,7 @@ export class BotAIService implements OnModuleInit {
             const adxData = await this.dataRepository.getADXBySymbolAndDate(mappedSymbol, timestamp);
             const his = await this.dataRepository.getLast7DaysADX(mappedSymbol, timestamp);
             return {
-              responseText: await this.getDynamicInterpretation(his, prompt, adxData, 'ADX', mappedSymbol, parameters.date, parameters.language),
+              responseText: await this.getDynamicInterpretation(his, promptt, adxData, 'ADX', mappedSymbol, parameters.date, parameters.language),
               calledFunc,
               queryType,
               newParameters,
@@ -1541,7 +1541,7 @@ export class BotAIService implements OnModuleInit {
             // Prepare the dynamic response
             const responseText = await this.getDynamicInterpretation(
               null,
-              prompt,
+              promptt,
               indicatorResults, // No specific data object for multiple indicators
               'Multiple Indicators',
               mappedSymbol,
@@ -1568,7 +1568,7 @@ export class BotAIService implements OnModuleInit {
             const topADXCryptos = await this.dataRepository.getTopNByIndicator('ADX', n, timestamp);
 
             return {
-              responseText: await this.getDynamicInterpretation(null, prompt, topADXCryptos, `Top Cryptocurrency by ADX andicator`, '', parameters.date, parameters.language),
+              responseText: await this.getDynamicInterpretation(null, promptt, topADXCryptos, `Top Cryptocurrency by ADX andicator`, '', parameters.date, parameters.language),
               calledFunc,
               queryType,
               newParameters,
@@ -1593,7 +1593,7 @@ export class BotAIService implements OnModuleInit {
             // );
             const his = await this.dataRepository.getLast7DaysRSI(mappedSymbol, timestamp1);
             // Generate AI response using getDynamicInterpretation
-            const aiResponse = await this.getDynamicInterpretation(his, prompt,
+            const aiResponse = await this.getDynamicInterpretation(his, promptt,
               functionResponse,
               'RSI',
               mappedSymbol,
@@ -1618,7 +1618,7 @@ export class BotAIService implements OnModuleInit {
             functionResponse = await this.getMACDForDate(mappedSymbol, timestamp2);
             const his = await this.dataRepository.getLast7DaysMACD(mappedSymbol, timestamp2);
             return {
-              responseText: await this.getDynamicInterpretation(his, prompt, functionResponse, 'MACD', mappedSymbol, parameters.date, parameters.language),
+              responseText: await this.getDynamicInterpretation(his, promptt, functionResponse, 'MACD', mappedSymbol, parameters.date, parameters.language),
               calledFunc,
               queryType,
               newParameters,
@@ -1633,7 +1633,7 @@ export class BotAIService implements OnModuleInit {
               functionResponse = await this.getFngForDate(timesta);
               const his = await this.dataRepository.getLast7DaysFngDataOptimized(timesta);
               return {
-                responseText: await this.getDynamicInterpretation(his, prompt, functionResponse, 'FNG', "", parameters.timestamp, parameters.language),
+                responseText: await this.getDynamicInterpretation(his, promptt, functionResponse, 'FNG', "", parameters.timestamp, parameters.language),
                 calledFunc,
                 queryType,
                 newParameters,
@@ -1652,7 +1652,7 @@ export class BotAIService implements OnModuleInit {
             const his = await this.dataRepository.getLast7DaysDailyPriceOptimized(mappedSymbol, timestamp1);
             //console.log('his:', his);
             return {
-              responseText: await this.getDynamicInterpretation(his, prompt, functionResponse, 'Crypto Price', mappedSymbol, parameters.date, parameters.language),
+              responseText: await this.getDynamicInterpretation(his, promptt, functionResponse, 'Crypto Price', mappedSymbol, parameters.date, parameters.language),
               calledFunc,
               queryType,
               newParameters,
@@ -1666,7 +1666,7 @@ export class BotAIService implements OnModuleInit {
             const timestamp1 = new Date(effectiveDate).getTime() / 1000;
             functionResponse = await this.getTopCryptosByPrice(parameters.limit, timestamp1);
             return {
-              responseText: await this.getDynamicInterpretation(null, prompt, functionResponse, `Top ${parameters.limit} Cryptocurrency by price`, '', parameters.date, parameters.language),
+              responseText: await this.getDynamicInterpretation(null, promptt, functionResponse, `Top ${parameters.limit} Cryptocurrency by price`, '', parameters.date, parameters.language),
               calledFunc,
               queryType,
               newParameters,
@@ -1681,7 +1681,7 @@ export class BotAIService implements OnModuleInit {
             const timestamp1 = new Date(effectiveDate).getTime() / 1000;
             functionResponse = await this.getCryptoPrices(parameters.symbols, timestamp1);
             return {
-              responseText: await this.getDynamicInterpretation(null, prompt, functionResponse, `Price of following ${parameters.symbols}`, '', parameters.date, parameters.language),
+              responseText: await this.getDynamicInterpretation(null, promptt, functionResponse, `Price of following ${parameters.symbols}`, '', parameters.date, parameters.language),
               calledFunc,
               queryType,
               newParameters,
@@ -1711,7 +1711,7 @@ export class BotAIService implements OnModuleInit {
             const { n, language } = parameters;
             functionResponse = await this.getTopNRSICryptos(n, timestamp, language);
             return {
-              responseText: await this.getDynamicInterpretation(null, prompt, functionResponse, `Top ${n} cryptocurrencies by RSI`, '', parameters.date, parameters.language),
+              responseText: await this.getDynamicInterpretation(null, promptt, functionResponse, `Top ${n} cryptocurrencies by RSI`, '', parameters.date, parameters.language),
               calledFunc,
               queryType,
               newParameters,
@@ -1742,7 +1742,7 @@ export class BotAIService implements OnModuleInit {
             const timestamp = new Date(effectiveDate).getTime() / 1000;
             functionResponse = await this.getTopNMACDCryptos(n, timestamp, language);
             return {
-              responseText: await this.getDynamicInterpretation(null, prompt, functionResponse, `Top ${n} cryptocurrencies by MACD`, '', parameters.date, parameters.language),
+              responseText: await this.getDynamicInterpretation(null, promptt, functionResponse, `Top ${n} cryptocurrencies by MACD`, '', parameters.date, parameters.language),
               calledFunc,
               queryType,
               newParameters,
@@ -1753,14 +1753,14 @@ export class BotAIService implements OnModuleInit {
 
           case 'analyzeAndCreateSignals': {
           //const functionResponse = await this.analyzeAndCreateSignals(
-          const analysis = await this.aiSignalService.analyzeAndCreateSignals(
+          const { responseText, prompt, systemPrompt }  = await this.aiSignalService.analyzeAndCreateSignals(
             parameters.symbols,
             parameters.language,
             parameters.timeframe,
-            prompt
+            promptt
           );
  
-          const sig = extractSignalJsonEnvelope(analysis); 
+          const sig = extractSignalJsonEnvelope(responseText); 
 
           if (sig) {
             const nowSec = Math.floor(Date.now() / 1000);
@@ -1776,7 +1776,7 @@ export class BotAIService implements OnModuleInit {
               source: 'gpt-4o-mini-2024-07-18-User',
               status: 'open',
               reached: { T1: false, T2: false, T3: false, SL: false },
-              extras: { prompt, analysis },
+              extras: { responseText,prompt,systemPrompt },
             };
 
             try {
@@ -1788,7 +1788,7 @@ export class BotAIService implements OnModuleInit {
             console.warn('No NABZAR_SIGNAL_JSON envelope found in analysis output.');
           }
 
-          const cleanedText = cleanNabzarSignalJsonSection(analysis);
+          const cleanedText = cleanNabzarSignalJsonSection(responseText);
 
           return {
             responseText: cleanedText, 
@@ -1835,7 +1835,7 @@ export class BotAIService implements OnModuleInit {
 
 
             return {
-              responseText: await this.getDynamicInterpretation(null, prompt, sorts, 'Crypto market and social parameters', mappedSymbol, parameters.date, parameters.language),
+              responseText: await this.getDynamicInterpretation(null, promptt, sorts, 'Crypto market and social parameters', mappedSymbol, parameters.date, parameters.language),
               calledFunc,
               queryType,
               newParameters,
@@ -1881,7 +1881,7 @@ export class BotAIService implements OnModuleInit {
             }
 
             return {
-              responseText: await this.getDynamicInterpretation(null, prompt, sorts, 'Crypto market and social parameters', mappedSymbols.join(', '), parameters.date, parameters.language),
+              responseText: await this.getDynamicInterpretation(null, promptt, sorts, 'Crypto market and social parameters', mappedSymbols.join(', '), parameters.date, parameters.language),
               calledFunc,
               queryType,
               newParameters,
@@ -3081,7 +3081,7 @@ private async sendQm2Buttons(chatId: number, symbol: string) {
             telegramId: telegramID,
             calledFunction: 'analyzeAndCreateSignals',
             query: `admin-cmd: send users: ${id} ${symbol} ${language}`,
-            response: analysis,
+            response: analysis[0],
             queryType: 'admin-broadcast',
             newParameters: [],
             save_at: Math.floor(Date.now() / 1000),
